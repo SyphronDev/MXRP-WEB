@@ -11,6 +11,9 @@ import {
   TrendingUp,
   DollarSign,
   Coins,
+  Package,
+  Clock,
+  Bell,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -56,11 +59,28 @@ interface EconomyData {
   lastCobro: string | null;
 }
 
+interface InventoryItem {
+  articulo: string;
+  cantidad: number;
+  identificador: string;
+  fechaCompra: string;
+}
+
+interface AlertItem {
+  servidor: string;
+  alerta: string;
+  messageId: string;
+  sended: boolean;
+}
+
 export default function Dashboard() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [economyData, setEconomyData] = useState<EconomyData | null>(null);
+  const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
+  const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -73,11 +93,25 @@ export default function Dashboard() {
     const userData = JSON.parse(savedUser);
     setUser(userData);
     fetchEconomyData(userData.id);
+    fetchInventoryData(userData.id);
+    fetchAlertsData();
   }, [router]);
+
+  // Efecto para rotar las alertas cada 3 minutos
+  useEffect(() => {
+    if (alertsData.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentAlertIndex((prevIndex) => 
+        (prevIndex + 1) % alertsData.length
+      );
+    }, 3 * 60 * 1000); // 3 minutos
+
+    return () => clearInterval(interval);
+  }, [alertsData.length]);
 
   const fetchEconomyData = async (discordId: string) => {
     try {
-      setLoading(true);
       const response = await fetch("/.netlify/functions/dashboard", {
         method: "POST",
         headers: {
@@ -96,6 +130,50 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error fetching economy data:", error);
       setError("Error de conexión. Intenta nuevamente.");
+    }
+  };
+
+  const fetchInventoryData = async (discordId: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/inventory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ discordId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setInventoryData(data.inventory);
+      } else {
+        console.error("Error fetching inventory data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching inventory data:", error);
+    }
+  };
+
+  const fetchAlertsData = async () => {
+    try {
+      const response = await fetch("/.netlify/functions/alerts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setAlertsData(data.alerts);
+      } else {
+        console.error("Error fetching alerts data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching alerts data:", error);
     } finally {
       setLoading(false);
     }
@@ -185,26 +263,91 @@ export default function Dashboard() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            {user && (
-              <Image
-                src={user.avatarUrl}
-                alt={user.username}
-                width={64}
-                height={64}
-                className="rounded-full border-2 border-discord/50"
-              />
-            )}
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
-                ¡Bienvenido, {user?.username}!
-              </h1>
-              <p className="text-white/60 text-lg">Panel de economía MXRP</p>
-            </div>
-          </div>
-        </div>
+         {/* Animated Alerts Banner */}
+         {alertsData.length > 0 && (
+           <div className="mb-6 overflow-hidden">
+             <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 backdrop-blur-md">
+               <div 
+                 key={currentAlertIndex}
+                 className="flex items-center gap-3 animate-slide-in"
+                 style={{
+                   animation: 'slideInFromRight 0.5s ease-out'
+                 }}
+               >
+                 <div className="p-2 bg-red-500/20 rounded-lg">
+                   <Bell className="h-5 w-5 text-red-400 animate-pulse" />
+                 </div>
+                 <div className="flex-1">
+                   <div className="text-white font-semibold">
+                     Servidor {alertsData[currentAlertIndex]?.servidor}
+                   </div>
+                   <div className="text-red-300 text-sm">
+                     {alertsData[currentAlertIndex]?.alerta}
+                   </div>
+                 </div>
+                 <div className="text-red-400 text-xs">
+                   {alertsData.filter(alert => !alert.sended).length} alertas activas
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+
+         {/* CSS for slide animation */}
+         <style jsx>{`
+           @keyframes slideInFromRight {
+             0% {
+               transform: translateX(100%);
+               opacity: 0;
+             }
+             100% {
+               transform: translateX(0);
+               opacity: 1;
+             }
+           }
+         `}</style>
+
+         {/* Header */}
+         <div className="mb-8">
+           <div className="flex items-center justify-between mb-6">
+             <div className="flex items-center gap-4">
+               {user && (
+                 <Image
+                   src={user.avatarUrl}
+                   alt={user.username}
+                   width={64}
+                   height={64}
+                   className="rounded-full border-2 border-discord/50"
+                 />
+               )}
+               <div>
+                 <h1 className="text-4xl font-bold text-white mb-2">
+                   ¡Bienvenido, {user?.username}!
+                 </h1>
+                 <p className="text-white/60 text-lg">Panel de economía MXRP</p>
+               </div>
+             </div>
+             
+             {/* MXRP Logo */}
+             <div
+               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+               onClick={() => {
+                 window.location.href = "/";
+               }}
+             >
+               <Image
+                 src="/images/Icon.png"
+                 alt="MXRP"
+                 width={48}
+                 height={48}
+                 className="rounded-md"
+               />
+               <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+                 MXRP
+               </h2>
+             </div>
+           </div>
+         </div>
 
         {/* Total Balance Card */}
         <div className="mb-8">
@@ -387,20 +530,141 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Status Badges */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          {economyData.sat && (
-            <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
-              ✓ SAT Registrado
-            </span>
-          )}
-          {economyData.empresarial && (
-            <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
-              ✓ Cuenta Empresarial
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+         {/* Status Badges */}
+         <div className="mt-8 flex flex-wrap gap-4">
+           {economyData.sat && (
+             <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
+               ✓ SAT Registrado
+             </span>
+           )}
+           {economyData.empresarial && (
+             <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
+               ✓ Cuenta Empresarial
+             </span>
+           )}
+         </div>
+
+         {/* Inventory Section */}
+         <div className="mt-12">
+           <div className="flex items-center gap-3 mb-6">
+             <div className="p-3 bg-purple-500/20 rounded-lg">
+               <Package className="h-6 w-6 text-purple-400" />
+             </div>
+             <h2 className="text-2xl font-bold text-white">Inventario</h2>
+             <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
+               {inventoryData.length} artículos
+             </span>
+           </div>
+
+           {inventoryData.length > 0 ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {inventoryData.map((item, index) => (
+                 <div
+                   key={index}
+                   className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl hover:bg-black/50 transition-all duration-300"
+                 >
+                   <div className="flex items-center justify-between mb-3">
+                     <h3 className="text-white font-semibold text-lg">
+                       {item.articulo}
+                     </h3>
+                     <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
+                       x{item.cantidad}
+                     </span>
+                   </div>
+                   <div className="space-y-2">
+                     <p className="text-white/60 text-sm">
+                       <span className="font-medium">ID:</span> {item.identificador}
+                     </p>
+                     <p className="text-white/60 text-sm">
+                       <span className="font-medium">Comprado:</span>{" "}
+                       {new Date(item.fechaCompra).toLocaleDateString("es-MX")}
+                     </p>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           ) : (
+             <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
+               <Package className="h-12 w-12 text-white/40 mx-auto mb-4" />
+               <p className="text-white/60 text-lg">No tienes artículos en tu inventario</p>
+               <p className="text-white/40 text-sm mt-2">
+                 Los artículos aparecerán aquí cuando los obtengas en el servidor
+               </p>
+             </div>
+           )}
+         </div>
+
+         {/* Server Alerts Section */}
+         <div className="mt-12">
+           <div className="flex items-center gap-3 mb-6">
+             <div className="p-3 bg-red-500/20 rounded-lg">
+               <Bell className="h-6 w-6 text-red-400" />
+             </div>
+             <h2 className="text-2xl font-bold text-white">Alertas de Servidores</h2>
+             <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+               {alertsData.filter(alert => !alert.sended).length} activas
+             </span>
+           </div>
+
+           {alertsData.length > 0 ? (
+             <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+               <div className="space-y-4">
+                 {alertsData.map((alert, index) => (
+                   <div
+                     key={index}
+                     className={`flex items-center justify-between p-4 rounded-lg border ${
+                       alert.sended
+                         ? "bg-gray-500/10 border-gray-500/30"
+                         : "bg-red-500/10 border-red-500/30"
+                     }`}
+                   >
+                     <div className="flex items-center gap-3">
+                       <div className={`p-2 rounded-lg ${
+                         alert.sended
+                           ? "bg-gray-500/20"
+                           : "bg-red-500/20"
+                       }`}>
+                         <Bell className={`h-4 w-4 ${
+                           alert.sended
+                             ? "text-gray-400"
+                             : "text-red-400"
+                         }`} />
+                       </div>
+                       <div>
+                         <h3 className="text-white font-semibold">
+                           Servidor {alert.servidor}
+                         </h3>
+                         <p className={`text-sm ${
+                           alert.sended
+                             ? "text-gray-400"
+                             : "text-red-300"
+                         }`}>
+                           {alert.alerta}
+                         </p>
+                       </div>
+                     </div>
+                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                       alert.sended
+                         ? "bg-gray-500/20 text-gray-400"
+                         : "bg-red-500/20 text-red-400"
+                     }`}>
+                       {alert.sended ? "Enviada" : "Pendiente"}
+                     </span>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           ) : (
+             <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
+               <Bell className="h-12 w-12 text-white/40 mx-auto mb-4" />
+               <p className="text-white/60 text-lg">No hay alertas activas</p>
+               <p className="text-white/40 text-sm mt-2">
+                 Las alertas de servidores aparecerán aquí cuando sea necesario
+               </p>
+             </div>
+           )}
+         </div>
+       </div>
+     </div>
+   );
+ }
