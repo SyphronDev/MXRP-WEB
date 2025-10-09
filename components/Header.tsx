@@ -54,12 +54,16 @@ export default function Header() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setUser(data.user);
         localStorage.setItem("discord_user", JSON.stringify(data.user));
+      } else {
+        console.error("Discord auth failed:", data);
+        alert(`Error de autenticación: ${data.error || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error("Error during Discord auth:", error);
+      alert("Error de conexión. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }

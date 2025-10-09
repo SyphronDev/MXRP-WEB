@@ -18,6 +18,22 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Validar variables de entorno
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error("Missing environment variables:", { CLIENT_ID: !!CLIENT_ID, CLIENT_SECRET: !!CLIENT_SECRET });
+    return {
+      statusCode: 500,
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        error: "Server configuration error",
+        message: "Missing Discord OAuth credentials",
+      }),
+    };
+  }
+
   try {
     if (event.httpMethod === "GET") {
       // Generar URL de autorización de Discord
@@ -38,9 +54,27 @@ exports.handler = async (event, context) => {
     }
 
     if (event.httpMethod === "POST") {
-      const { code } = JSON.parse(event.body);
+      let code;
+      try {
+        const body = JSON.parse(event.body);
+        code = body.code;
+      } catch (parseError) {
+        console.error("Failed to parse request body:", parseError);
+        return {
+          statusCode: 400,
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            error: "Invalid request body",
+            message: "Request body must be valid JSON",
+          }),
+        };
+      }
 
       if (!code) {
+        console.error("Missing authorization code");
         return {
           statusCode: 400,
           headers: {
@@ -72,7 +106,13 @@ exports.handler = async (event, context) => {
       );
 
       if (!tokenResponse.ok) {
-        throw new Error("Failed to exchange code for token");
+        const errorText = await tokenResponse.text();
+        console.error("Token exchange failed:", {
+          status: tokenResponse.status,
+          statusText: tokenResponse.statusText,
+          error: errorText,
+        });
+        throw new Error(`Failed to exchange code for token: ${tokenResponse.status} ${tokenResponse.statusText}`);
       }
 
       const tokenData = await tokenResponse.json();
@@ -85,7 +125,13 @@ exports.handler = async (event, context) => {
       });
 
       if (!userResponse.ok) {
-        throw new Error("Failed to fetch user data");
+        const errorText = await userResponse.text();
+        console.error("User data fetch failed:", {
+          status: userResponse.status,
+          statusText: userResponse.statusText,
+          error: errorText,
+        });
+        throw new Error(`Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`);
       }
 
       const userData = await userResponse.json();
