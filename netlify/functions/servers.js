@@ -3,17 +3,17 @@ const API_BASE_URL = "https://api.policeroleplay.community/v1/server";
 exports.handler = async (event, context) => {
   // Permitir CORS
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
   };
 
   // Manejar preflight OPTIONS
-  if (event.httpMethod === 'OPTIONS') {
+  if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
       headers,
-      body: '',
+      body: "",
     };
   }
 
@@ -93,7 +93,7 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers: {
         ...headers,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         success: true,
@@ -107,7 +107,7 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       headers: {
         ...headers,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         success: false,

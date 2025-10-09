@@ -5,10 +5,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Deshabilitar API routes para exportación estática
-  experimental: {
-    appDir: true,
-  },
 };
 
 export default nextConfig;
