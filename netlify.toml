@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  REDIRECT_URI = "https://mxrp.netlify.app"
 
 # Redirects para SPA
 [[redirects]]
