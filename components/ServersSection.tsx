@@ -45,9 +45,9 @@ export default function ServersSection() {
 
   const fetchServerData = async () => {
     try {
-      const response = await fetch("/api/servers");
+      const response = await fetch("/.netlify/functions/servers");
       const data = await response.json();
-
+      
       if (data.success) {
         setServers(data.servers);
         setLastUpdate(data.timestamp);

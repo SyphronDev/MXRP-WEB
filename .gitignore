@@ -43,6 +43,8 @@ next-env.d.ts
 
 # netlify
 .netlify
+# Keep netlify functions
+!netlify/functions/
 
 # IDE
 .vscode/

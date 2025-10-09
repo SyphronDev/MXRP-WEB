@@ -1,18 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-
 const API_BASE_URL = "https://api.policeroleplay.community/v1/server";
 
-interface ServerData {
-  name: string;
-  players: number;
-  maxPlayers: number;
-  status: "online" | "offline" | "error";
-  serverKey: string;
-}
+exports.handler = async (event, context) => {
+  // Permitir CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  };
 
-export async function GET() {
+  // Manejar preflight OPTIONS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: '',
+    };
+  }
+
   try {
-    const servers: ServerData[] = [
+    const servers = [
       {
         name: "MXRP",
         players: 0,
@@ -41,7 +47,7 @@ export async function GET() {
       if (!server.serverKey) {
         return {
           ...server,
-          status: "error" as const,
+          status: "error",
           error: "Server key not configured",
         };
       }
@@ -68,15 +74,14 @@ export async function GET() {
           ...server,
           players: currentPlayers,
           maxPlayers: maxPlayers,
-          status:
-            currentPlayers > 0 ? ("online" as const) : ("offline" as const),
+          status: currentPlayers > 0 ? "online" : "offline",
           lastUpdated: new Date().toISOString(),
         };
       } catch (error) {
         console.error(`Error fetching data for ${server.name}:`, error);
         return {
           ...server,
-          status: "error" as const,
+          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
         };
       }
@@ -84,20 +89,31 @@ export async function GET() {
 
     const results = await Promise.all(serverPromises);
 
-    return NextResponse.json({
-      success: true,
-      servers: results,
-      timestamp: new Date().toISOString(),
-    });
+    return {
+      statusCode: 200,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+        servers: results,
+        timestamp: new Date().toISOString(),
+      }),
+    };
   } catch (error) {
-    console.error("Error in servers API:", error);
-    return NextResponse.json(
-      {
+    console.error("Error in servers function:", error);
+    return {
+      statusCode: 500,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         success: false,
         error: "Internal server error",
         timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+      }),
+    };
   }
-}
+};
