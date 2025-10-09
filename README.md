@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MXRP Web Platform
 
-## Getting Started
+Una plataforma web moderna para la comunidad MXRP de roleplay en Roblox.
 
-First, run the development server:
+## 🚀 Características
+
+- **Diseño Responsive**: Optimizado para móvil y desktop
+- **Tema Día de Muertos**: Efectos especiales con humo animado y velas
+- **Servidores en Tiempo Real**: Estado de servidores MXRP, MXRP B y MXRP C
+- **Navegación Intuitiva**: Header con logo clickeable y footer completo
+- **Páginas Legales**: Términos y Condiciones y Política de Privacidad
+
+## 🛠️ Tecnologías
+
+- **Next.js 15.5.4** - Framework React
+- **TypeScript** - Tipado estático
+- **Tailwind CSS 4** - Estilos utilitarios
+- **Radix UI** - Componentes accesibles
+- **Lucide React** - Iconos
+
+## 📦 Instalación
 
 ```bash
+# Clonar el repositorio
+git clone https://github.com/tu-usuario/mxrp-web.git
+
+# Instalar dependencias
+npm install
+
+# Ejecutar en desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔧 Variables de Entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Crea un archivo `.env` basado en `env.example`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+MXRP=tu_server_key_mxrp
+MXRPB=tu_server_key_mxrp_b
+MXRPC=tu_server_key_mxrp_c
+```
 
-## Learn More
+## 🚀 Despliegue
 
-To learn more about Next.js, take a look at the following resources:
+### Netlify
+El proyecto está configurado para desplegarse automáticamente en Netlify.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Build Manual
+```bash
+npm run build
+npm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Estructura del Proyecto
 
-## Deploy on Vercel
+```
+mxrp-web/
+├── app/                 # App Router de Next.js
+│   ├── api/            # API Routes
+│   ├── globals.css     # Estilos globales
+│   ├── layout.tsx      # Layout principal
+│   └── page.tsx        # Página principal
+├── components/         # Componentes React
+│   ├── ui/            # Componentes de UI
+│   ├── Header.tsx     # Header con navegación
+│   ├── Hero.tsx       # Sección principal
+│   └── ...
+├── public/            # Archivos estáticos
+│   └── images/        # Imágenes del proyecto
+└── lib/               # Utilidades
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎨 Características Especiales
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Efectos de Humo**: Animaciones CSS para temática Día de Muertos
+- **Velas Animadas**: Efectos de parpadeo con sombras
+- **API de Servidores**: Integración con api.policeroleplay.community
+- **Responsive Design**: Adaptable a todos los dispositivos
+
+## 📄 Licencia
+
+Este proyecto es privado y pertenece a MXRP Community.
+
+## 🤝 Contribución
+
+Para contribuir al proyecto, contacta con el equipo de desarrollo de MXRP.
+
+---
+
+**MXRP ER:LC** - Servidor de roleplay de Roblox Liberty County
