@@ -20,7 +20,10 @@ exports.handler = async (event, context) => {
 
   // Validar variables de entorno
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.error("Missing environment variables:", { CLIENT_ID: !!CLIENT_ID, CLIENT_SECRET: !!CLIENT_SECRET });
+    console.error("Missing environment variables:", {
+      CLIENT_ID: !!CLIENT_ID,
+      CLIENT_SECRET: !!CLIENT_SECRET,
+    });
     return {
       statusCode: 500,
       headers: {
@@ -112,7 +115,9 @@ exports.handler = async (event, context) => {
           statusText: tokenResponse.statusText,
           error: errorText,
         });
-        throw new Error(`Failed to exchange code for token: ${tokenResponse.status} ${tokenResponse.statusText}`);
+        throw new Error(
+          `Failed to exchange code for token: ${tokenResponse.status} ${tokenResponse.statusText}`
+        );
       }
 
       const tokenData = await tokenResponse.json();
@@ -131,10 +136,58 @@ exports.handler = async (event, context) => {
           statusText: userResponse.statusText,
           error: errorText,
         });
-        throw new Error(`Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`);
+        throw new Error(
+          `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
+        );
       }
 
       const userData = await userResponse.json();
+
+      // Verificar membresía al servidor específico
+      const guildId = process.env.GUILD_ID || "1193021133981765632";
+      const guildsResponse = await fetch(
+        "https://discord.com/api/users/@me/guilds",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        }
+      );
+
+      if (!guildsResponse.ok) {
+        const errorText = await guildsResponse.text();
+        console.error("Guilds fetch failed:", {
+          status: guildsResponse.status,
+          statusText: guildsResponse.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to fetch user guilds: ${guildsResponse.status} ${guildsResponse.statusText}`
+        );
+      }
+
+      const guilds = await guildsResponse.json();
+      const isMember = guilds.some((guild) => guild.id === guildId);
+
+      if (!isMember) {
+        console.log(`User ${userData.id} is not a member of guild ${guildId}`);
+        return {
+          statusCode: 403,
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            error: "Guild membership required",
+            message:
+              "Debes ser miembro del servidor MXRP para acceder a esta aplicación.",
+          }),
+        };
+      }
+
+      console.log(
+        `User ${userData.id} successfully authenticated and verified guild membership`
+      );
 
       return {
         statusCode: 200,

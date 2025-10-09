@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Menu, X, Mail, Calendar, FileText, LogOut } from "lucide-react";
+import {
+  Menu,
+  X,
+  Mail,
+  Calendar,
+  FileText,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+} from "lucide-react";
 
 interface DiscordUser {
   id: string;
@@ -18,6 +27,8 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -59,7 +70,7 @@ export default function Header() {
         localStorage.setItem("discord_user", JSON.stringify(data.user));
       } else {
         console.error("Discord auth failed:", data);
-        alert(`Error de autenticación: ${data.error || 'Error desconocido'}`);
+        alert(`Error de autenticación: ${data.error || "Error desconocido"}`);
       }
     } catch (error) {
       console.error("Error during Discord auth:", error);
@@ -141,8 +152,18 @@ export default function Header() {
           <div className="flex items-center space-x-2">
             {/* Discord Auth Button */}
             {user ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-discord/20 border border-discord/30">
+              <div
+                className="relative"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => {
+                  setIsHovering(false);
+                  setShowDropdown(false);
+                }}
+              >
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-discord/20 border border-discord/30 cursor-pointer hover:bg-discord/30 transition-colors"
+                  onClick={() => setShowDropdown(!showDropdown)}
+                >
                   <Image
                     src={user.avatarUrl}
                     alt={user.username}
@@ -153,16 +174,33 @@ export default function Header() {
                   <span className="text-white text-sm font-medium">
                     {user.username}
                   </span>
+                  <ChevronDown className="h-4 w-4 text-white/60" />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={handleLogout}
-                  title="Cerrar sesión"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+
+                {(showDropdown || isHovering) && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-black/95 backdrop-blur-md border border-white/20 rounded-lg shadow-xl z-50">
+                    <div className="py-2">
+                      <button
+                        className="w-full px-4 py-2 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          window.location.href = "/dashboard";
+                          setShowDropdown(false);
+                        }}
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </button>
+                      <hr className="my-2 border-white/20" />
+                      <button
+                        className="w-full px-4 py-2 text-left text-red-400 hover:bg-red-400/10 transition-colors flex items-center gap-2"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <Button
