@@ -23,7 +23,7 @@ export default function PrivacidadPage() {
         <main className="container mx-auto px-4 py-20">
           {/* Main Title */}
           <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold text-primary mb-4 drop-shadow-lg">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               Política de Privacidad
             </h1>
             <p className="text-xl text-white/90 max-w-3xl mx-auto drop-shadow-md">
@@ -39,8 +39,8 @@ export default function PrivacidadPage() {
               {/* 1. Información que Recopilamos */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
                 <div className="flex items-center mb-6">
-                  <Database className="h-8 w-8 text-primary mr-3" />
-                  <h2 className="text-2xl font-bold text-primary">
+                  <Database className="h-8 w-8 text-white mr-3" />
+                  <h2 className="text-2xl font-bold text-white">
                     1. Información que Recopilamos
                   </h2>
                 </div>
@@ -52,30 +52,30 @@ export default function PrivacidadPage() {
 
                 <ul className="text-white/90 space-y-3">
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Información de cuenta:</strong> Nombre de usuario,
+                      <strong className="text-white">Información de cuenta:</strong> Nombre de usuario,
                       email, fecha de registro
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Datos de juego:</strong> Progreso, estadísticas,
+                      <strong className="text-white">Datos de juego:</strong> Progreso, estadísticas,
                       configuraciones
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Información de pago:</strong> Método de pago,
+                      <strong className="text-white">Información de pago:</strong> Método de pago,
                       historial de transacciones
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Datos técnicos:</strong> IP, navegador,
+                      <strong className="text-white">Datos técnicos:</strong> IP, navegador,
                       dispositivo (anónimos)
                     </div>
                   </li>
@@ -85,8 +85,8 @@ export default function PrivacidadPage() {
               {/* 2. Cómo Protegemos tus Datos */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
                 <div className="flex items-center mb-6">
-                  <Shield className="h-8 w-8 text-primary mr-3" />
-                  <h2 className="text-2xl font-bold text-primary">
+                  <Shield className="h-8 w-8 text-white mr-3" />
+                  <h2 className="text-2xl font-bold text-white">
                     2. Cómo Protegemos tus Datos
                   </h2>
                 </div>
@@ -98,30 +98,30 @@ export default function PrivacidadPage() {
 
                 <ul className="text-white/90 space-y-3">
                   <li className="flex items-start">
-                    <Lock className="h-5 w-5 text-primary mr-2 mt-1" />
+                    <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong>Encriptación SSL/TLS:</strong> Todos los datos se
+                      <strong className="text-white">Encriptación SSL/TLS:</strong> Todos los datos se
                       transmiten de forma segura
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <Lock className="h-5 w-5 text-primary mr-2 mt-1" />
+                    <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong>Encriptación de base de datos:</strong> Datos
+                      <strong className="text-white">Encriptación de base de datos:</strong> Datos
                       sensibles encriptados en reposo
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <Lock className="h-5 w-5 text-primary mr-2 mt-1" />
+                    <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong>Acceso restringido:</strong> Solo personal
+                      <strong className="text-white">Acceso restringido:</strong> Solo personal
                       autorizado puede acceder a datos
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <Lock className="h-5 w-5 text-primary mr-2 mt-1" />
+                    <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong>Monitoreo continuo:</strong> Sistemas de detección
+                      <strong className="text-white">Monitoreo continuo:</strong> Sistemas de detección
                       de intrusiones 24/7
                     </div>
                   </li>
@@ -131,8 +131,8 @@ export default function PrivacidadPage() {
               {/* 3. Uso de Cookies */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
                 <div className="flex items-center mb-6">
-                  <Eye className="h-8 w-8 text-primary mr-3" />
-                  <h2 className="text-2xl font-bold text-primary">
+                  <Eye className="h-8 w-8 text-white mr-3" />
+                  <h2 className="text-2xl font-bold text-white">
                     3. Uso de Cookies
                   </h2>
                 </div>
