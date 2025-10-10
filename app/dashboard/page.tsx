@@ -483,6 +483,25 @@ export default function Dashboard() {
     setUnidadCompra(item.unidad);
   };
 
+  // Función para calcular cantidad máxima disponible
+  const getCantidadMaxima = (item: TiendaItem, unidadSeleccionada: string) => {
+    if (item.unidad === unidadSeleccionada) {
+      return item.cantidad;
+    }
+
+    // Convertir a gramos para comparación
+    let cantidadEnGramos = item.cantidad;
+    if (item.unidad === "kg") cantidadEnGramos = item.cantidad * 1000;
+    if (item.unidad === "mg") cantidadEnGramos = item.cantidad / 1000;
+
+    // Convertir de gramos a la unidad seleccionada
+    if (unidadSeleccionada === "kg") return cantidadEnGramos / 1000;
+    if (unidadSeleccionada === "mg") return cantidadEnGramos * 1000;
+    if (unidadSeleccionada === "g") return cantidadEnGramos;
+
+    return item.cantidad; // Para unidades (x)
+  };
+
   const handleConfirmarCompra = () => {
     if (!selectedItem) return;
 
@@ -490,6 +509,22 @@ export default function Dashboard() {
     if (isNaN(cantidad) || cantidad <= 0) {
       alert("Por favor ingresa una cantidad válida");
       return;
+    }
+
+    // Buscar el artículo en la tienda para obtener la cantidad máxima
+    const tienda = tiendaData.find((t) => t.tipo === selectedItem.tipoTienda);
+    const item = tienda?.inventario.find(
+      (i) => i.articulo === selectedItem.articulo
+    );
+
+    if (item) {
+      const cantidadMaxima = getCantidadMaxima(item, unidadCompra);
+      if (cantidad > cantidadMaxima) {
+        alert(
+          `No hay suficiente stock. Máximo disponible: ${cantidadMaxima}${unidadCompra}`
+        );
+        return;
+      }
     }
 
     comprarArticulo(
@@ -1757,102 +1792,154 @@ export default function Dashboard() {
               </div>
 
               {tiendaData.length > 0 ? (
-                <div className="space-y-6">
-                  {tiendaData.map((tienda, tiendaIndex) => (
-                    <div
-                      key={tiendaIndex}
-                      className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl"
-                    >
-                      <div className="flex items-center gap-3 mb-4">
-                        <div
-                          className={`p-2 sm:p-3 rounded-lg ${
-                            tienda.tipo === "legal"
-                              ? "bg-blue-500/20"
-                              : "bg-red-500/20"
-                          }`}
-                        >
-                          <ShoppingCart
-                            className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                              tienda.tipo === "legal"
-                                ? "text-blue-400"
-                                : "text-red-400"
-                            }`}
-                          />
+                <div className="space-y-8">
+                  {/* Tienda Legal */}
+                  {tiendaData.find((t) => t.tipo === "legal") && (
+                    <div className="bg-black/40 backdrop-blur-md border border-blue-500/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-blue-500/20 rounded-lg">
+                          <ShoppingCart className="h-6 w-6 text-blue-400" />
                         </div>
                         <div>
-                          <h3 className="text-white font-semibold text-lg sm:text-xl">
-                            Tienda{" "}
-                            {tienda.tipo === "legal" ? "Legal" : "Ilegal"}
+                          <h3 className="text-white font-semibold text-xl sm:text-2xl">
+                            Tienda Legal
                           </h3>
                           <p className="text-white/60 text-sm">
-                            {tienda.totalItems} artículos • Valor total:{" "}
-                            {formatCurrency(tienda.totalValue)}
+                            Productos legales • Solo unidades
                           </p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {tienda.inventario.map((item, itemIndex) => (
-                          <div
-                            key={itemIndex}
-                            className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-white font-semibold text-sm sm:text-base break-words">
-                                {item.articulo}
-                              </h4>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  tienda.tipo === "legal"
-                                    ? "bg-blue-500/20 text-blue-400"
-                                    : "bg-red-500/20 text-red-400"
-                                }`}
-                              >
-                                {item.cantidadFormateada}
-                              </span>
-                            </div>
-
-                            <div className="space-y-2 mb-4">
-                              <div className="flex justify-between">
-                                <span className="text-white/60 text-xs sm:text-sm">
-                                  Precio:
-                                </span>
-                                <span className="text-white text-xs sm:text-sm font-semibold">
-                                  {formatCurrency(item.precio)}
+                        {tiendaData
+                          .find((t) => t.tipo === "legal")
+                          ?.inventario.map((item, itemIndex) => (
+                            <div
+                              key={itemIndex}
+                              className="bg-white/5 border border-blue-500/20 rounded-lg p-4 hover:bg-white/10 transition-colors"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-white font-semibold text-sm sm:text-base break-words">
+                                  {item.articulo}
+                                </h4>
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                                  {item.cantidadFormateada}
                                 </span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-white/60 text-xs sm:text-sm">
-                                  ID:
-                                </span>
-                                <span className="text-white text-xs sm:text-sm truncate">
-                                  {item.identificador}
-                                </span>
+
+                              <div className="space-y-2 mb-4">
+                                <div className="flex justify-between">
+                                  <span className="text-white/60 text-xs sm:text-sm">
+                                    Precio:
+                                  </span>
+                                  <span className="text-white text-xs sm:text-sm font-semibold">
+                                    {formatCurrency(item.precio)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/60 text-xs sm:text-sm">
+                                    ID:
+                                  </span>
+                                  <span className="text-white text-xs sm:text-sm truncate">
+                                    {item.identificador}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    handleComprarClick(item, "legal")
+                                  }
+                                  disabled={isComprando || item.cantidad < 1}
+                                  className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                                    isComprando || item.cantidad < 1
+                                      ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                                      : "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                                  }`}
+                                >
+                                  {isComprando ? "Comprando..." : "Comprar"}
+                                </button>
                               </div>
                             </div>
-
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() =>
-                                  handleComprarClick(item, tienda.tipo)
-                                }
-                                disabled={isComprando || item.cantidad < 1}
-                                className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                                  isComprando || item.cantidad < 1
-                                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
-                                    : tienda.tipo === "legal"
-                                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
-                                    : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                                }`}
-                              >
-                                {isComprando ? "Comprando..." : "Comprar"}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Mercado Ilegal */}
+                  {tiendaData.find((t) => t.tipo === "ilegal") && (
+                    <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-red-500/20 rounded-lg">
+                          <ShoppingCart className="h-6 w-6 text-red-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-xl sm:text-2xl">
+                            Mercado Ilegal
+                          </h3>
+                          <p className="text-white/60 text-sm">
+                            Productos ilegales • Gramos, Kilos, Miligramos
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {tiendaData
+                          .find((t) => t.tipo === "ilegal")
+                          ?.inventario.map((item, itemIndex) => (
+                            <div
+                              key={itemIndex}
+                              className="bg-white/5 border border-red-500/20 rounded-lg p-4 hover:bg-white/10 transition-colors"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-white font-semibold text-sm sm:text-base break-words">
+                                  {item.articulo}
+                                </h4>
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+                                  {item.cantidadFormateada}
+                                </span>
+                              </div>
+
+                              <div className="space-y-2 mb-4">
+                                <div className="flex justify-between">
+                                  <span className="text-white/60 text-xs sm:text-sm">
+                                    Precio:
+                                  </span>
+                                  <span className="text-white text-xs sm:text-sm font-semibold">
+                                    {formatCurrency(item.precio)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/60 text-xs sm:text-sm">
+                                    ID:
+                                  </span>
+                                  <span className="text-white text-xs sm:text-sm truncate">
+                                    {item.identificador}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    handleComprarClick(item, "ilegal")
+                                  }
+                                  disabled={isComprando || item.cantidad < 1}
+                                  className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                                    isComprando || item.cantidad < 1
+                                      ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                                      : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                                  }`}
+                                >
+                                  {isComprando ? "Comprando..." : "Comprar"}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 text-center">
@@ -1870,85 +1957,116 @@ export default function Dashboard() {
         )}
 
         {/* Modal de Compra */}
-        {selectedItem && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-black/90 backdrop-blur-md border border-white/20 rounded-xl p-6 w-full max-w-md">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-white">
-                  Comprar {selectedItem.articulo}
-                </h3>
-                <button
-                  onClick={() => setSelectedItem(null)}
-                  className="text-white/60 hover:text-white transition-colors"
-                >
-                  ✕
-                </button>
+        {selectedItem &&
+          (() => {
+            const tienda = tiendaData.find(
+              (t) => t.tipo === selectedItem.tipoTienda
+            );
+            const item = tienda?.inventario.find(
+              (i) => i.articulo === selectedItem.articulo
+            );
+            const cantidadMaxima = item
+              ? getCantidadMaxima(item, unidadCompra)
+              : 0;
+
+            return (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-black/90 backdrop-blur-md border border-white/20 rounded-xl p-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white">
+                      Comprar {selectedItem.articulo}
+                    </h3>
+                    <button
+                      onClick={() => setSelectedItem(null)}
+                      className="text-white/60 hover:text-white transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">
+                        Cantidad
+                      </label>
+                      <input
+                        type="number"
+                        value={cantidadCompra}
+                        onChange={(e) => setCantidadCompra(e.target.value)}
+                        min="0.1"
+                        max={cantidadMaxima}
+                        step="0.1"
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-discord"
+                        placeholder="Ingresa la cantidad"
+                      />
+                      <p className="text-white/60 text-xs mt-1">
+                        Máximo disponible: {cantidadMaxima}
+                        {unidadCompra}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">
+                        Unidad
+                      </label>
+                      <select
+                        value={unidadCompra}
+                        onChange={(e) => {
+                          setUnidadCompra(e.target.value);
+                          // Resetear cantidad cuando cambie la unidad
+                          const nuevaCantidadMaxima = item
+                            ? getCantidadMaxima(item, e.target.value)
+                            : 0;
+                          if (
+                            parseFloat(cantidadCompra) > nuevaCantidadMaxima
+                          ) {
+                            setCantidadCompra(nuevaCantidadMaxima.toString());
+                          }
+                        }}
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-discord"
+                      >
+                        {getUnidadesDisponibles(selectedItem.tipoTienda).map(
+                          (unidad) => (
+                            <option
+                              key={unidad}
+                              value={unidad}
+                              className="bg-black text-white"
+                            >
+                              {unidad === "x"
+                                ? "Unidades"
+                                : unidad.toUpperCase()}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => setSelectedItem(null)}
+                        className="flex-1 px-4 py-2 bg-gray-500/20 text-gray-400 rounded-lg hover:bg-gray-500/30 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleConfirmarCompra}
+                        disabled={isComprando}
+                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                          isComprando
+                            ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                            : selectedItem.tipoTienda === "legal"
+                            ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                        }`}
+                      >
+                        {isComprando ? "Comprando..." : "Confirmar Compra"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-white/80 text-sm mb-2">
-                    Cantidad
-                  </label>
-                  <input
-                    type="number"
-                    value={cantidadCompra}
-                    onChange={(e) => setCantidadCompra(e.target.value)}
-                    min="0.1"
-                    step="0.1"
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-discord"
-                    placeholder="Ingresa la cantidad"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white/80 text-sm mb-2">
-                    Unidad
-                  </label>
-                  <select
-                    value={unidadCompra}
-                    onChange={(e) => setUnidadCompra(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-discord"
-                  >
-                    {getUnidadesDisponibles(selectedItem.tipoTienda).map(
-                      (unidad) => (
-                        <option
-                          key={unidad}
-                          value={unidad}
-                          className="bg-black text-white"
-                        >
-                          {unidad === "x" ? "Unidades" : unidad.toUpperCase()}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={() => setSelectedItem(null)}
-                    className="flex-1 px-4 py-2 bg-gray-500/20 text-gray-400 rounded-lg hover:bg-gray-500/30 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleConfirmarCompra}
-                    disabled={isComprando}
-                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isComprando
-                        ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
-                        : selectedItem.tipoTienda === "legal"
-                        ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
-                        : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                    }`}
-                  >
-                    {isComprando ? "Comprando..." : "Confirmar Compra"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            );
+          })()}
 
         {/* Server Alerts Section */}
         <div className="mt-8 sm:mt-12">

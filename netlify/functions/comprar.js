@@ -122,13 +122,28 @@ exports.handler = async (event, context) => {
     );
 
     if (item.Cantidad < cantidadEnUnidadArticulo) {
+      // Calcular cantidad máxima disponible en la unidad solicitada
+      let cantidadMaximaEnUnidadSolicitada = item.Cantidad;
+      if (item.Unidad === "kg" && unidad === "g")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad * 1000;
+      if (item.Unidad === "g" && unidad === "kg")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad / 1000;
+      if (item.Unidad === "mg" && unidad === "g")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad / 1000;
+      if (item.Unidad === "g" && unidad === "mg")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad * 1000;
+      if (item.Unidad === "kg" && unidad === "mg")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad * 1000000;
+      if (item.Unidad === "mg" && unidad === "kg")
+        cantidadMaximaEnUnidadSolicitada = item.Cantidad / 1000000;
+
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
           error: "Insufficient stock",
-          message: "No hay suficiente stock disponible",
+          message: `No hay suficiente stock disponible. Máximo: ${cantidadMaximaEnUnidadSolicitada}${unidad}`,
         }),
       };
     }
