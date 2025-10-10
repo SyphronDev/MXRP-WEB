@@ -1,9 +1,17 @@
 import React, { useState } from "react";
 import { Settings, Save, AlertCircle, CheckCircle } from "lucide-react";
 
+interface AdminConfigData {
+  guildId: string;
+  cacheTimeout: number;
+  enableRedis: boolean;
+  autoRefresh: boolean;
+  refreshInterval: number;
+}
+
 interface AdminConfigProps {
   guildId: string;
-  onConfigUpdate?: (config: any) => void;
+  onConfigUpdate?: (config: AdminConfigData) => void;
 }
 
 export default function AdminConfig({
@@ -44,7 +52,7 @@ export default function AdminConfig({
         text: "Configuración guardada exitosamente",
       });
       onConfigUpdate?.(config);
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Error al guardar la configuración" });
     } finally {
       setSaving(false);

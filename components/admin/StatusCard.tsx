@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, TrendingUp } from "lucide-react";
+import { Shield } from "lucide-react";
 
 interface StatusCardProps {
   title: string;

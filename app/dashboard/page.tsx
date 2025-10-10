@@ -226,7 +226,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
-  const [checkingAdminAccess, setCheckingAdminAccess] = useState(true);
+  const [, setCheckingAdminAccess] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");

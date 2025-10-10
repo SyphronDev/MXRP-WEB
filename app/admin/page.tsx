@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Shield,
@@ -17,7 +17,6 @@ import {
   Award,
   Activity,
   BarChart3,
-  Settings,
   ArrowLeft,
 } from "lucide-react";
 import Image from "next/image";
@@ -74,7 +73,7 @@ interface Permissions {
 export default function AdminPanel() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [profile, setProfile] = useState<AdminProfile | null>(null);
-  const [permissions, setPermissions] = useState<Permissions | null>(null);
+  const [, setPermissions] = useState<Permissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
@@ -83,19 +82,7 @@ export default function AdminPanel() {
   );
   const router = useRouter();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("discord_user");
-    if (!savedUser) {
-      router.push("/");
-      return;
-    }
-
-    const userData = JSON.parse(savedUser);
-    setUser(userData);
-    checkPermissions(userData.id);
-  }, [router]);
-
-  const checkPermissions = async (discordId: string) => {
+  const checkPermissions = useCallback(async (discordId: string) => {
     try {
       setLoading(true);
 
@@ -129,7 +116,19 @@ export default function AdminPanel() {
       setError("Error al verificar permisos.");
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("discord_user");
+    if (!savedUser) {
+      router.push("/");
+      return;
+    }
+
+    const userData = JSON.parse(savedUser);
+    setUser(userData);
+    checkPermissions(userData.id);
+  }, [router, checkPermissions]);
 
   const fetchProfile = async (discordId: string) => {
     try {

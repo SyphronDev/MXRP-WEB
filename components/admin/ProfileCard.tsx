@@ -1,5 +1,4 @@
 import React from "react";
-import { Clock, Star, Users, FileText, Activity, Award } from "lucide-react";
 
 interface ProfileCardProps {
   title: string;
@@ -7,7 +6,6 @@ interface ProfileCardProps {
   subtitle?: string;
   icon: React.ReactNode;
   color: "blue" | "green" | "yellow" | "purple" | "orange" | "pink" | "red";
-  trend?: "up" | "down" | "neutral";
 }
 
 const colorClasses = {
@@ -54,7 +52,6 @@ export default function ProfileCard({
   subtitle,
   icon,
   color,
-  trend = "neutral",
 }: ProfileCardProps) {
   const colors = colorClasses[color];
 
