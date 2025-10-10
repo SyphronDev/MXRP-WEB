@@ -102,7 +102,6 @@ interface AntecedenteItem {
   motivo: string;
   arrestadoPor: string;
   arrestadoPorTag: string;
-  canal: string;
   duracion: number;
   activo: boolean;
 }
@@ -1650,12 +1649,6 @@ export default function Dashboard() {
                                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-white/60 flex-shrink-0" />
                                 <span className="text-white/80 text-xs sm:text-sm">
                                   {formatDate(antecedente.fecha)}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Hash className="h-3 w-3 sm:h-4 sm:w-4 text-white/60 flex-shrink-0" />
-                                <span className="text-white/80 text-xs sm:text-sm truncate">
-                                  Canal: {antecedente.canal}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
