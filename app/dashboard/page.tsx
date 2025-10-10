@@ -14,6 +14,12 @@ import {
   Package,
   Clock,
   Bell,
+  IdCard,
+  FileText,
+  User,
+  MapPin,
+  Calendar,
+  Hash,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -73,15 +79,61 @@ interface AlertItem {
   sended: boolean;
 }
 
+interface IneData {
+  userId: string;
+  robloxName: string;
+  nombre: string;
+  apellido: string;
+  edad: number;
+  estado: string;
+  municipio: string;
+  curp: string;
+  seccion: string;
+  localidad: string;
+  fechaNacimiento: string;
+  creada: string;
+  imageUrl: string;
+  number: number;
+  type: string;
+  pendiente: boolean;
+  sended: boolean;
+  aprobada: boolean;
+  aprobadaPor: string | null;
+  aprobadaEn: string | null;
+}
+
+interface PasaporteData {
+  userId: string;
+  robloxName: string;
+  nombre: string;
+  apellido: string;
+  edad: number;
+  fechaNacimiento: string;
+  creada: string;
+  pais: string;
+  number: number;
+  type: string;
+  pendiente: boolean;
+  sended: boolean;
+  aprobada: boolean;
+}
+
 export default function Dashboard() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [economyData, setEconomyData] = useState<EconomyData | null>(null);
   const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
   const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
+  const [ineData, setIneData] = useState<IneData | null>(null);
+  const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [economyLoading, setEconomyLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<
+    "economy" | "inventory" | "documents"
+  >("economy");
   const router = useRouter();
 
   useEffect(() => {
@@ -96,6 +148,8 @@ export default function Dashboard() {
     fetchEconomyData(userData.id);
     fetchInventoryData(userData.id);
     fetchAlertsData();
+    fetchIneData(userData.id);
+    fetchPasaporteData(userData.id);
   }, [router]);
 
   // Efecto para rotar las alertas cada 3 minutos
@@ -178,6 +232,50 @@ export default function Dashboard() {
       console.error("Error fetching alerts data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchIneData = async (discordId: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/ine", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ discordId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIneData(data.ine);
+      } else {
+        console.error("Error fetching INE data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching INE data:", error);
+    }
+  };
+
+  const fetchPasaporteData = async (discordId: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/pasaporte", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ discordId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setPasaporteData(data.pasaporte);
+      } else {
+        console.error("Error fetching Pasaporte data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Pasaporte data:", error);
     }
   };
 
@@ -366,253 +464,523 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Total Balance Card */}
+        {/* Navigation Tabs */}
         <div className="mb-8">
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-white/60 text-sm uppercase tracking-wider mb-2">
-                  Balance Total
-                </h2>
-                <p className="text-4xl font-bold text-white">
-                  {formatCurrency(totalBalance)}
+          <div className="flex space-x-1 bg-black/20 backdrop-blur-md border border-white/20 rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab("economy")}
+              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === "economy"
+                  ? "bg-discord text-white shadow-lg"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Wallet className="h-4 w-4" />
+              Economía
+            </button>
+            <button
+              onClick={() => setActiveTab("inventory")}
+              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === "inventory"
+                  ? "bg-discord text-white shadow-lg"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              Inventario
+            </button>
+            <button
+              onClick={() => setActiveTab("documents")}
+              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === "documents"
+                  ? "bg-discord text-white shadow-lg"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <IdCard className="h-4 w-4" />
+              Documentos
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "economy" && (
+          <>
+            {/* Total Balance Card */}
+            <div className="mb-8">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                      Balance Total
+                    </h2>
+                    <p className="text-4xl font-bold text-white">
+                      {formatCurrency(totalBalance)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-xl">
+                    <TrendingUp className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Accounts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Cuenta de Salario */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-green-500/20 rounded-lg">
+                    <Wallet className="h-6 w-6 text-green-400" />
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      economyData.cuentas.salario.activa
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {economyData.cuentas.salario.activa ? "Activa" : "Inactiva"}
+                  </span>
+                </div>
+                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                  Cuenta de Salario
+                </h3>
+                <p className="text-2xl font-bold text-white mb-1">
+                  {formatCurrency(economyData.cuentas.salario.balance)}
+                </p>
+                <p className="text-white/40 text-xs">
+                  Tipo: {economyData.tipoCuenta}
                 </p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-xl">
-                <TrendingUp className="h-8 w-8 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Accounts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Cuenta de Salario */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-500/20 rounded-lg">
-                <Wallet className="h-6 w-6 text-green-400" />
-              </div>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  economyData.cuentas.salario.activa
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-gray-500/20 text-gray-400"
-                }`}
-              >
-                {economyData.cuentas.salario.activa ? "Activa" : "Inactiva"}
-              </span>
-            </div>
-            <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
-              Cuenta de Salario
-            </h3>
-            <p className="text-2xl font-bold text-white mb-1">
-              {formatCurrency(economyData.cuentas.salario.balance)}
-            </p>
-            <p className="text-white/40 text-xs">
-              Tipo: {economyData.tipoCuenta}
-            </p>
-          </div>
-
-          {/* Cuenta Corriente */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-500/20 rounded-lg">
-                <CreditCard className="h-6 w-6 text-blue-400" />
-              </div>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  economyData.cuentas.corriente.activa
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-gray-500/20 text-gray-400"
-                }`}
-              >
-                {economyData.cuentas.corriente.activa ? "Activa" : "Inactiva"}
-              </span>
-            </div>
-            <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
-              Cuenta Corriente
-            </h3>
-            <p className="text-2xl font-bold text-white mb-1">
-              {formatCurrency(economyData.cuentas.corriente.balance)}
-            </p>
-            <p className="text-white/40 text-xs">Cuenta principal</p>
-          </div>
-
-          {/* Efectivo */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-yellow-500/20 rounded-lg">
-                <Banknote className="h-6 w-6 text-yellow-400" />
-              </div>
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
-                Disponible
-              </span>
-            </div>
-            <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
-              Efectivo
-            </h3>
-            <p className="text-2xl font-bold text-white mb-1">
-              {formatCurrency(economyData.efectivo)}
-            </p>
-            <p className="text-white/40 text-xs">Dinero en mano</p>
-          </div>
-
-          {/* Dinero Negro */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-500/20 rounded-lg">
-                <Coins className="h-6 w-6 text-red-400" />
-              </div>
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                Oculto
-              </span>
-            </div>
-            <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
-              Dinero Negro
-            </h3>
-            <p className="text-2xl font-bold text-white mb-1">
-              {formatCurrency(economyData.dineroNegro)}
-            </p>
-            <p className="text-white/40 text-xs">Fondos no declarados</p>
-          </div>
-        </div>
-
-        {/* Additional Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Deuda */}
-          {economyData.deuda > 0 && (
-            <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-red-500/20 rounded-lg">
-                  <AlertCircle className="h-6 w-6 text-red-400" />
+              {/* Cuenta Corriente */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-blue-500/20 rounded-lg">
+                    <CreditCard className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      economyData.cuentas.corriente.activa
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {economyData.cuentas.corriente.activa
+                      ? "Activa"
+                      : "Inactiva"}
+                  </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider">
-                  Deuda Pendiente
+                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                  Cuenta Corriente
                 </h3>
+                <p className="text-2xl font-bold text-white mb-1">
+                  {formatCurrency(economyData.cuentas.corriente.balance)}
+                </p>
+                <p className="text-white/40 text-xs">Cuenta principal</p>
               </div>
-              <p className="text-2xl font-bold text-red-400">
-                {formatCurrency(economyData.deuda)}
-              </p>
-            </div>
-          )}
 
-          {/* Divisa USD */}
-          {economyData.divisas.usd > 0 && (
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-green-500/20 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-400" />
+              {/* Efectivo */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-yellow-500/20 rounded-lg">
+                    <Banknote className="h-6 w-6 text-yellow-400" />
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                    Disponible
+                  </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider">
-                  Divisa USD
+                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                  Efectivo
                 </h3>
+                <p className="text-2xl font-bold text-white mb-1">
+                  {formatCurrency(economyData.efectivo)}
+                </p>
+                <p className="text-white/40 text-xs">Dinero en mano</p>
               </div>
-              <p className="text-2xl font-bold text-white">
-                ${economyData.divisas.usd.toFixed(2)} USD
-              </p>
-            </div>
-          )}
 
-          {/* Divisa BTC */}
-          {economyData.divisas.btc > 0 && (
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-orange-500/20 rounded-lg">
-                  <Coins className="h-6 w-6 text-orange-400" />
+              {/* Dinero Negro */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-red-500/20 rounded-lg">
+                    <Coins className="h-6 w-6 text-red-400" />
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+                    Oculto
+                  </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider">
-                  Divisa BTC
+                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                  Dinero Negro
                 </h3>
+                <p className="text-2xl font-bold text-white mb-1">
+                  {formatCurrency(economyData.dineroNegro)}
+                </p>
+                <p className="text-white/40 text-xs">Fondos no declarados</p>
               </div>
-              <p className="text-2xl font-bold text-white">
-                ₿{economyData.divisas.btc.toFixed(8)} BTC
-              </p>
             </div>
-          )}
 
-          {/* Last Payment */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-500/20 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-blue-400" />
-              </div>
-              <h3 className="text-white/60 text-sm uppercase tracking-wider">
-                Último Cobro
-              </h3>
-            </div>
-            <p className="text-lg font-semibold text-white">
-              {formatDate(economyData.lastCobro)}
-            </p>
-          </div>
-        </div>
-
-        {/* Status Badges */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          {economyData.sat && (
-            <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
-              ✓ SAT Registrado
-            </span>
-          )}
-          {economyData.empresarial && (
-            <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
-              ✓ Cuenta Empresarial
-            </span>
-          )}
-        </div>
-
-        {/* Inventory Section */}
-        <div className="mt-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-purple-500/20 rounded-lg">
-              <Package className="h-6 w-6 text-purple-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Inventario</h2>
-            <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
-              {inventoryData.length} artículos
-            </span>
-          </div>
-
-          {inventoryData.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {inventoryData.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl hover:bg-black/50 transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white font-semibold text-lg">
-                      {item.articulo}
+            {/* Additional Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Deuda */}
+              {economyData.deuda > 0 && (
+                <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-3 bg-red-500/20 rounded-lg">
+                      <AlertCircle className="h-6 w-6 text-red-400" />
+                    </div>
+                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                      Deuda Pendiente
                     </h3>
-                    <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
-                      x{item.cantidad}
-                    </span>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-white/60 text-sm">
-                      <span className="font-medium">ID:</span>{" "}
-                      {item.identificador}
-                    </p>
-                    <p className="text-white/60 text-sm">
-                      <span className="font-medium">Comprado:</span>{" "}
-                      {new Date(item.fechaCompra).toLocaleDateString("es-MX")}
-                    </p>
-                  </div>
+                  <p className="text-2xl font-bold text-red-400">
+                    {formatCurrency(economyData.deuda)}
+                  </p>
                 </div>
-              ))}
+              )}
+
+              {/* Divisa USD */}
+              {economyData.divisas.usd > 0 && (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-3 bg-green-500/20 rounded-lg">
+                      <DollarSign className="h-6 w-6 text-green-400" />
+                    </div>
+                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                      Divisa USD
+                    </h3>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    ${economyData.divisas.usd.toFixed(2)} USD
+                  </p>
+                </div>
+              )}
+
+              {/* Divisa BTC */}
+              {economyData.divisas.btc > 0 && (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-3 bg-orange-500/20 rounded-lg">
+                      <Coins className="h-6 w-6 text-orange-400" />
+                    </div>
+                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                      Divisa BTC
+                    </h3>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    ₿{economyData.divisas.btc.toFixed(8)} BTC
+                  </p>
+                </div>
+              )}
+
+              {/* Last Payment */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-blue-500/20 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Último Cobro
+                  </h3>
+                </div>
+                <p className="text-lg font-semibold text-white">
+                  {formatDate(economyData.lastCobro)}
+                </p>
+              </div>
             </div>
-          ) : (
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
-              <Package className="h-12 w-12 text-white/40 mx-auto mb-4" />
-              <p className="text-white/60 text-lg">
-                No tienes artículos en tu inventario
-              </p>
-              <p className="text-white/40 text-sm mt-2">
-                Los artículos aparecerán aquí cuando los obtengas en el servidor
-              </p>
+
+            {/* Status Badges */}
+            <div className="mt-8 flex flex-wrap gap-4">
+              {economyData.sat && (
+                <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
+                  ✓ SAT Registrado
+                </span>
+              )}
+              {economyData.empresarial && (
+                <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
+                  ✓ Cuenta Empresarial
+                </span>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {/* Inventory Tab */}
+        {activeTab === "inventory" && (
+          <>
+            {/* Inventory Section */}
+            <div className="mt-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-purple-500/20 rounded-lg">
+                  <Package className="h-6 w-6 text-purple-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">Inventario</h2>
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
+                  {inventoryData.length} artículos
+                </span>
+              </div>
+
+              {inventoryData.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {inventoryData.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl hover:bg-black/50 transition-all duration-300"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-white font-semibold text-lg">
+                          {item.articulo}
+                        </h3>
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
+                          x{item.cantidad}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-white/60 text-sm">
+                          <span className="font-medium">ID:</span>{" "}
+                          {item.identificador}
+                        </p>
+                        <p className="text-white/60 text-sm">
+                          <span className="font-medium">Comprado:</span>{" "}
+                          {new Date(item.fechaCompra).toLocaleDateString(
+                            "es-MX"
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
+                  <Package className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                  <p className="text-white/60 text-lg">
+                    No tienes artículos en tu inventario
+                  </p>
+                  <p className="text-white/40 text-sm mt-2">
+                    Los artículos aparecerán aquí cuando los obtengas en el
+                    servidor
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Documents Tab */}
+        {activeTab === "documents" && (
+          <>
+            {/* Documents Section */}
+            <div className="space-y-8">
+              {/* INE Section */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-green-500/20 rounded-lg">
+                    <IdCard className="h-6 w-6 text-green-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">INE</h2>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      ineData?.aprobada
+                        ? "bg-green-500/20 text-green-400"
+                        : ineData?.pendiente
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {ineData?.aprobada
+                      ? "Aprobada"
+                      : ineData?.pendiente
+                      ? "Pendiente"
+                      : "No registrada"}
+                  </span>
+                </div>
+
+                {ineData ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Nombre Completo
+                          </p>
+                          <p className="text-white font-semibold">
+                            {ineData.nombre} {ineData.apellido}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Fecha de Nacimiento
+                          </p>
+                          <p className="text-white font-semibold">
+                            {ineData.fechaNacimiento}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Hash className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">CURP</p>
+                          <p className="text-white font-semibold font-mono text-sm">
+                            {ineData.curp}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">Estado</p>
+                          <p className="text-white font-semibold">
+                            {ineData.estado}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">Municipio</p>
+                          <p className="text-white font-semibold">
+                            {ineData.municipio}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Hash className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">Número de INE</p>
+                          <p className="text-white font-semibold">
+                            {ineData.number}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <IdCard className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      No tienes INE registrada
+                    </h3>
+                    <p className="text-white/60">
+                      Solicita tu INE en el servidor para verla aquí
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pasaporte Section */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-blue-500/20 rounded-lg">
+                    <FileText className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Pasaporte</h2>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      pasaporteData?.aprobada
+                        ? "bg-green-500/20 text-green-400"
+                        : pasaporteData?.pendiente
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {pasaporteData?.aprobada
+                      ? "Aprobado"
+                      : pasaporteData?.pendiente
+                      ? "Pendiente"
+                      : "No registrado"}
+                  </span>
+                </div>
+
+                {pasaporteData ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Nombre Completo
+                          </p>
+                          <p className="text-white font-semibold">
+                            {pasaporteData.nombre} {pasaporteData.apellido}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Fecha de Nacimiento
+                          </p>
+                          <p className="text-white font-semibold">
+                            {pasaporteData.fechaNacimiento}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">País</p>
+                          <p className="text-white font-semibold">
+                            {pasaporteData.pais}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Hash className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Número de Pasaporte
+                          </p>
+                          <p className="text-white font-semibold">
+                            {pasaporteData.number}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">
+                            Fecha de Creación
+                          </p>
+                          <p className="text-white font-semibold">
+                            {formatDate(pasaporteData.creada)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-white/60" />
+                        <div>
+                          <p className="text-white/60 text-sm">Tipo</p>
+                          <p className="text-white font-semibold">
+                            {pasaporteData.type}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      No tienes Pasaporte registrado
+                    </h3>
+                    <p className="text-white/60">
+                      Solicita tu Pasaporte en el servidor para verlo aquí
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Server Alerts Section */}
         <div className="mt-12">
