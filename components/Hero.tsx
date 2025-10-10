@@ -60,7 +60,7 @@ export default function Hero() {
           {/* Texto de bienvenida */}
           <div className="mt-4">
             <h2 className="text-2xl md:text-3xl font-semibold text-white drop-shadow-lg">
-              Bienvenido a MXRP
+              Bienvenido A
             </h2>
           </div>
         </div>
