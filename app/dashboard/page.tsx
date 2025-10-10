@@ -610,42 +610,50 @@ export default function Dashboard() {
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Animated Alerts Banner */}
         {alertsData.length > 0 && (
-          <div className="mb-6 overflow-hidden">
+          <div className="mb-4 sm:mb-6 overflow-hidden">
             {(() => {
               const currentAlert = alertsData[currentAlertIndex];
               const colors = getAlertColor(currentAlert?.alerta || "");
 
               return (
                 <div
-                  className={`${colors.bg} ${colors.border} rounded-lg p-4 backdrop-blur-md`}
+                  className={`${colors.bg} ${colors.border} rounded-lg p-3 sm:p-4 backdrop-blur-md`}
                 >
                   <div
                     key={currentAlertIndex}
-                    className="flex items-center gap-3 animate-slide-in"
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 animate-slide-in"
                     style={{
                       animation: "slideInFromRight 0.5s ease-out",
                     }}
                   >
-                    <div className={`p-2 ${colors.iconBg} rounded-lg`}>
-                      <Bell
-                        className={`h-5 w-5 ${colors.iconColor} animate-pulse`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white font-semibold">
-                        {currentAlert?.servidor}
-                        {getServerProtocolo(currentAlert?.servidor || "") && (
-                          <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
-                            Protocolo{" "}
-                            {getServerProtocolo(currentAlert?.servidor || "")}
-                          </span>
-                        )}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div
+                        className={`p-1.5 sm:p-2 ${colors.iconBg} rounded-lg flex-shrink-0`}
+                      >
+                        <Bell
+                          className={`h-4 w-4 sm:h-5 sm:w-5 ${colors.iconColor} animate-pulse`}
+                        />
                       </div>
-                      <div className={`${colors.textColor} text-sm`}>
-                        {currentAlert?.alerta}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-semibold text-sm sm:text-base">
+                          {currentAlert?.servidor}
+                          {getServerProtocolo(currentAlert?.servidor || "") && (
+                            <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/10 text-white/80 text-xs rounded">
+                              Protocolo{" "}
+                              {getServerProtocolo(currentAlert?.servidor || "")}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`${colors.textColor} text-xs sm:text-sm break-words`}
+                        >
+                          {currentAlert?.alerta}
+                        </div>
                       </div>
                     </div>
-                    <div className={`${colors.badgeText} text-xs`}>
+                    <div
+                      className={`${colors.badgeText} text-xs self-start sm:self-auto`}
+                    >
                       {alertsData.filter((alert) => !alert.sended).length}{" "}
                       alertas activas
                     </div>
@@ -671,23 +679,23 @@ export default function Dashboard() {
         `}</style>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3 sm:gap-4">
               {user && (
                 <Image
                   src={user.avatarUrl}
                   alt={user.username}
-                  width={64}
-                  height={64}
-                  className="rounded-full border-2 border-discord/50"
+                  width={48}
+                  height={48}
+                  className="rounded-full border-2 border-discord/50 sm:w-16 sm:h-16"
                 />
               )}
               <div>
-                <h1 className="text-4xl font-bold text-white mb-2">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
                   ¡Bienvenido, {user?.username}!
                 </h1>
-                <p className="text-white/60 text-lg">
+                <p className="text-white/60 text-sm sm:text-base md:text-lg">
                   Panel General MXRP ER:LC
                 </p>
               </div>
@@ -695,7 +703,7 @@ export default function Dashboard() {
 
             {/* MXRP Logo */}
             <div
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity self-start sm:self-auto"
               onClick={() => {
                 window.location.href = "/";
               }}
@@ -703,11 +711,11 @@ export default function Dashboard() {
               <Image
                 src="/images/Icon.png"
                 alt="MXRP"
-                width={48}
-                height={48}
-                className="rounded-md"
+                width={32}
+                height={32}
+                className="rounded-md sm:w-12 sm:h-12"
               />
-              <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
                 MXRP
               </h2>
             </div>
@@ -715,52 +723,54 @@ export default function Dashboard() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-black/20 backdrop-blur-md border border-white/20 rounded-lg p-1">
-            <button
-              onClick={() => setActiveTab("economy")}
-              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === "economy"
-                  ? "bg-discord text-white shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Wallet className="h-4 w-4" />
-              Economía
-            </button>
-            <button
-              onClick={() => setActiveTab("inventory")}
-              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === "inventory"
-                  ? "bg-discord text-white shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Package className="h-4 w-4" />
-              Inventario
-            </button>
-            <button
-              onClick={() => setActiveTab("documents")}
-              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === "documents"
-                  ? "bg-discord text-white shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <IdCard className="h-4 w-4" />
-              Documentos
-            </button>
-            <button
-              onClick={() => setActiveTab("antecedentes")}
-              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === "antecedentes"
-                  ? "bg-discord text-white shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Scale className="h-4 w-4" />
-              Antecedentes
-            </button>
+        <div className="mb-6 md:mb-8">
+          <div className="overflow-x-auto">
+            <div className="flex space-x-1 bg-black/20 backdrop-blur-md border border-white/20 rounded-lg p-1 min-w-max">
+              <button
+                onClick={() => setActiveTab("economy")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "economy"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Wallet className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Economía</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("inventory")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "inventory"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Package className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Inventario</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("documents")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "documents"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <IdCard className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Documentos</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("antecedentes")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "antecedentes"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Scale className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Antecedentes</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -768,31 +778,31 @@ export default function Dashboard() {
         {activeTab === "economy" && (
           <>
             {/* Total Balance Card */}
-            <div className="mb-8">
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
+            <div className="mb-6 md:mb-8">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                    <h2 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
                       Balance Total
                     </h2>
-                    <p className="text-4xl font-bold text-white">
+                    <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
                       {formatCurrency(totalBalance)}
                     </p>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-xl">
-                    <TrendingUp className="h-8 w-8 text-white" />
+                  <div className="p-2 sm:p-3 md:p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-lg md:rounded-xl">
+                    <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Accounts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 md:mb-8">
               {/* Cuenta de Salario */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-green-500/20 rounded-lg">
-                    <Wallet className="h-6 w-6 text-green-400" />
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
+                    <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -804,10 +814,10 @@ export default function Dashboard() {
                     {economyData.cuentas.salario.activa ? "Activa" : "Inactiva"}
                   </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
                   Cuenta de Salario
                 </h3>
-                <p className="text-2xl font-bold text-white mb-1">
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
                   {formatCurrency(economyData.cuentas.salario.balance)}
                 </p>
                 <p className="text-white/40 text-xs">
@@ -816,10 +826,10 @@ export default function Dashboard() {
               </div>
 
               {/* Cuenta Corriente */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-blue-500/20 rounded-lg">
-                    <CreditCard className="h-6 w-6 text-blue-400" />
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
+                    <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -833,48 +843,48 @@ export default function Dashboard() {
                       : "Inactiva"}
                   </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
                   Cuenta Corriente
                 </h3>
-                <p className="text-2xl font-bold text-white mb-1">
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
                   {formatCurrency(economyData.cuentas.corriente.balance)}
                 </p>
                 <p className="text-white/40 text-xs">Cuenta principal</p>
               </div>
 
               {/* Efectivo */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-yellow-500/20 rounded-lg">
-                    <Banknote className="h-6 w-6 text-yellow-400" />
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-lg">
+                    <Banknote className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
                   </div>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
                     Disponible
                   </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
                   Efectivo
                 </h3>
-                <p className="text-2xl font-bold text-white mb-1">
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
                   {formatCurrency(economyData.efectivo)}
                 </p>
                 <p className="text-white/40 text-xs">Dinero en mano</p>
               </div>
 
               {/* Dinero Negro */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-red-500/20 rounded-lg">
-                    <Coins className="h-6 w-6 text-red-400" />
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
+                    <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
                   </div>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
                     Oculto
                   </span>
                 </div>
-                <h3 className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
                   Dinero Negro
                 </h3>
-                <p className="text-2xl font-bold text-white mb-1">
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
                   {formatCurrency(economyData.dineroNegro)}
                 </p>
                 <p className="text-white/40 text-xs">Fondos no declarados</p>
@@ -882,19 +892,19 @@ export default function Dashboard() {
             </div>
 
             {/* Additional Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {/* Deuda */}
               {economyData.deuda > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-2xl p-6 shadow-xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-red-500/20 rounded-lg">
-                      <AlertCircle className="h-6 w-6 text-red-400" />
+                <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
+                      <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
                     </div>
-                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
                       Deuda Pendiente
                     </h3>
                   </div>
-                  <p className="text-2xl font-bold text-red-400">
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">
                     {formatCurrency(economyData.deuda)}
                   </p>
                 </div>
@@ -902,16 +912,16 @@ export default function Dashboard() {
 
               {/* Divisa USD */}
               {economyData.divisas.usd > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-green-500/20 rounded-lg">
-                      <DollarSign className="h-6 w-6 text-green-400" />
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
+                      <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
                     </div>
-                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
                       Divisa USD
                     </h3>
                   </div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                     ${economyData.divisas.usd.toFixed(2)} USD
                   </p>
                 </div>
@@ -919,32 +929,32 @@ export default function Dashboard() {
 
               {/* Divisa BTC */}
               {economyData.divisas.btc > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-orange-500/20 rounded-lg">
-                      <Coins className="h-6 w-6 text-orange-400" />
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg">
+                      <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400" />
                     </div>
-                    <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
                       Divisa BTC
                     </h3>
                   </div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                     ₿{economyData.divisas.btc.toFixed(8)} BTC
                   </p>
                 </div>
               )}
 
               {/* Last Payment */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-blue-500/20 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-blue-400" />
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
                   </div>
-                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
                     Último Cobro
                   </h3>
                 </div>
-                <p className="text-lg font-semibold text-white">
+                <p className="text-base sm:text-lg font-semibold text-white">
                   {formatDate(economyData.lastCobro)}
                 </p>
               </div>
@@ -1286,22 +1296,22 @@ export default function Dashboard() {
           <>
             {/* Estadísticas de Antecedentes */}
             {estadisticasAntecedentes && (
-              <div className="mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="mb-6 md:mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {/* Total de Arrestos */}
-                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 bg-red-500/20 rounded-lg">
-                        <AlertTriangle className="h-6 w-6 text-red-400" />
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
                       </div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white">
                         Total Arrestos
                       </h3>
                     </div>
-                    <div className="text-3xl font-bold text-white mb-2">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
                       {estadisticasAntecedentes.totalArrestos}
                     </div>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-white/60 text-xs sm:text-sm">
                       {estadisticasAntecedentes.totalArrestos === 0
                         ? "Sin antecedentes"
                         : `${estadisticasAntecedentes.arrestosActivos} activos`}
@@ -1309,19 +1319,19 @@ export default function Dashboard() {
                   </div>
 
                   {/* Arrestos Activos */}
-                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 bg-yellow-500/20 rounded-lg">
-                        <Clock className="h-6 w-6 text-yellow-400" />
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-lg">
+                        <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
                       </div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white">
                         Activos
                       </h3>
                     </div>
-                    <div className="text-3xl font-bold text-white mb-2">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
                       {estadisticasAntecedentes.arrestosActivos}
                     </div>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-white/60 text-xs sm:text-sm">
                       {estadisticasAntecedentes.arrestosActivos === 0
                         ? "Sin arrestos activos"
                         : "Arrestos vigentes"}
@@ -1329,19 +1339,19 @@ export default function Dashboard() {
                   </div>
 
                   {/* Arrestos Último Mes */}
-                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 bg-blue-500/20 rounded-lg">
-                        <Calendar className="h-6 w-6 text-blue-400" />
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
+                        <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
                       </div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white">
                         Último Mes
                       </h3>
                     </div>
-                    <div className="text-3xl font-bold text-white mb-2">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
                       {estadisticasAntecedentes.arrestosUltimoMes}
                     </div>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-white/60 text-xs sm:text-sm">
                       {estadisticasAntecedentes.arrestosUltimoMes === 0
                         ? "Sin arrestos recientes"
                         : "Arrestos recientes"}
@@ -1349,29 +1359,29 @@ export default function Dashboard() {
                   </div>
 
                   {/* Estado de Peligrosidad */}
-                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div
-                        className={`p-3 rounded-lg ${
+                        className={`p-2 sm:p-3 rounded-lg ${
                           estadisticasAntecedentes.esUsuarioPeligroso
                             ? "bg-red-500/20"
                             : "bg-green-500/20"
                         }`}
                       >
                         <Shield
-                          className={`h-6 w-6 ${
+                          className={`h-5 w-5 sm:h-6 sm:w-6 ${
                             estadisticasAntecedentes.esUsuarioPeligroso
                               ? "text-red-400"
                               : "text-green-400"
                           }`}
                         />
                       </div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white">
                         Estado
                       </h3>
                     </div>
                     <div
-                      className={`text-2xl font-bold mb-2 ${
+                      className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 ${
                         estadisticasAntecedentes.esUsuarioPeligroso
                           ? "text-red-400"
                           : "text-green-400"
@@ -1381,7 +1391,7 @@ export default function Dashboard() {
                         ? "PELIGROSO"
                         : "SEGURO"}
                     </div>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-white/60 text-xs sm:text-sm">
                       {estadisticasAntecedentes.esUsuarioPeligroso
                         ? "Más de 3 arrestos"
                         : "Menos de 3 arrestos"}
@@ -1392,36 +1402,38 @@ export default function Dashboard() {
             )}
 
             {/* Lista de Antecedentes */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-orange-500/20 rounded-lg">
-                  <Scale className="h-6 w-6 text-orange-400" />
+            <div className="mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg">
+                    <Scale className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                    Historial de Antecedentes
+                  </h2>
                 </div>
-                <h2 className="text-2xl font-bold text-white">
-                  Historial de Antecedentes
-                </h2>
-                <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-medium">
+                <span className="px-2 sm:px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
                   {antecedentesData?.antecedentes.length || 0} registros
                 </span>
               </div>
 
               {antecedentesData && antecedentesData.antecedentes.length > 0 ? (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                  <div className="space-y-4">
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                  <div className="space-y-3 sm:space-y-4">
                     {antecedentesData.antecedentes.map((antecedente, index) => (
                       <div
                         key={index}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-3 sm:p-4 rounded-lg border ${
                           antecedente.activo
                             ? "bg-red-500/10 border-red-500/30"
                             : "bg-gray-500/10 border-gray-500/30"
                         }`}
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-start gap-2 sm:gap-3 mb-2">
                               <div
-                                className={`p-2 rounded-lg ${
+                                className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
                                   antecedente.activo
                                     ? "bg-red-500/20"
                                     : "bg-gray-500/20"
@@ -1435,39 +1447,39 @@ export default function Dashboard() {
                                   }`}
                                 />
                               </div>
-                              <div>
-                                <h3 className="text-white font-semibold">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-white font-semibold text-sm sm:text-base break-words">
                                   {antecedente.motivo}
                                 </h3>
-                                <p className="text-white/60 text-sm">
+                                <p className="text-white/60 text-xs sm:text-sm break-words">
                                   Arrestado por: {antecedente.arrestadoPor} (
                                   {antecedente.arrestadoPorTag})
                                 </p>
                               </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mt-2 sm:mt-3">
                               <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-white/60" />
-                                <span className="text-white/80 text-sm">
+                                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-white/60 flex-shrink-0" />
+                                <span className="text-white/80 text-xs sm:text-sm">
                                   {formatDate(antecedente.fecha)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Hash className="h-4 w-4 text-white/60" />
-                                <span className="text-white/80 text-sm">
+                                <Hash className="h-3 w-3 sm:h-4 sm:w-4 text-white/60 flex-shrink-0" />
+                                <span className="text-white/80 text-xs sm:text-sm truncate">
                                   Canal: {antecedente.canal}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-white/60" />
-                                <span className="text-white/80 text-sm">
+                                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white/60 flex-shrink-0" />
+                                <span className="text-white/80 text-xs sm:text-sm">
                                   Duración: {antecedente.duracion} min
                                 </span>
                               </div>
                             </div>
                           </div>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
                               antecedente.activo
                                 ? "bg-red-500/20 text-red-400"
                                 : "bg-gray-500/20 text-gray-400"
@@ -1481,12 +1493,12 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
-                  <Scale className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 text-center">
+                  <Scale className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
                     Sin antecedentes registrados
                   </h3>
-                  <p className="text-white/60">
+                  <p className="text-white/60 text-sm sm:text-base">
                     No tienes antecedentes en tu historial
                   </p>
                 </div>
@@ -1494,46 +1506,48 @@ export default function Dashboard() {
             </div>
 
             {/* Lista de Usuarios Peligrosos */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-red-500/20 rounded-lg">
-                  <Users className="h-6 w-6 text-red-400" />
+            <div className="mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                    Usuarios Peligrosos
+                  </h2>
                 </div>
-                <h2 className="text-2xl font-bold text-white">
-                  Usuarios Peligrosos
-                </h2>
-                <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+                <span className="px-2 sm:px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
                   {usuariosPeligrosos.length} usuarios
                 </span>
               </div>
 
               {usuariosPeligrosos.length > 0 ? (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                  <div className="space-y-4">
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+                  <div className="space-y-3 sm:space-y-4">
                     {usuariosPeligrosos.map((usuario, index) => (
                       <div
                         key={index}
-                        className="p-4 rounded-lg border bg-red-500/10 border-red-500/30"
+                        className="p-3 sm:p-4 rounded-lg border bg-red-500/10 border-red-500/30"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-500/20 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="p-1.5 sm:p-2 bg-red-500/20 rounded-lg flex-shrink-0">
                               <AlertTriangle className="h-4 w-4 text-red-400" />
                             </div>
-                            <div>
-                              <h3 className="text-white font-semibold">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-white font-semibold text-sm sm:text-base">
                                 Usuario {usuario.userId}
                               </h3>
-                              <p className="text-white/60 text-sm">
+                              <p className="text-white/60 text-xs sm:text-sm">
                                 {usuario.totalArrestos} arrestos totales
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-red-400 font-semibold">
+                          <div className="text-left sm:text-right">
+                            <div className="text-red-400 font-semibold text-sm sm:text-base">
                               {usuario.antecedentesActivos} activos
                             </div>
-                            <div className="text-white/60 text-sm">
+                            <div className="text-white/60 text-xs sm:text-sm">
                               Último:{" "}
                               {usuario.fechaUltimoArresto
                                 ? formatDate(usuario.fechaUltimoArresto)
@@ -1546,12 +1560,12 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
-                  <Users className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 text-center">
+                  <Users className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
                     No hay usuarios peligrosos
                   </h3>
-                  <p className="text-white/60">
+                  <p className="text-white/60 text-sm sm:text-base">
                     Todos los usuarios están en buen estado
                   </p>
                 </div>
@@ -1561,22 +1575,24 @@ export default function Dashboard() {
         )}
 
         {/* Server Alerts Section */}
-        <div className="mt-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-red-500/20 rounded-lg">
-              <Bell className="h-6 w-6 text-red-400" />
+        <div className="mt-8 sm:mt-12">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
+                <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
+              </div>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                Alertas de Servidores
+              </h2>
             </div>
-            <h2 className="text-2xl font-bold text-white">
-              Alertas de Servidores
-            </h2>
-            <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+            <span className="px-2 sm:px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
               {alertsData.filter((alert) => !alert.sended).length} activas
             </span>
           </div>
 
           {alertsData.length > 0 ? (
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-              <div className="space-y-4">
+            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl">
+              <div className="space-y-3 sm:space-y-4">
                 {alertsData.map((alert, index) => {
                   const colors = getAlertColor(alert.alerta);
                   const isSent = alert.sended;
@@ -1584,15 +1600,15 @@ export default function Dashboard() {
                   return (
                     <div
                       key={index}
-                      className={`flex items-center justify-between p-4 rounded-lg border ${
+                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg border gap-3 ${
                         isSent
                           ? "bg-gray-500/10 border-gray-500/30"
                           : `${colors.bg} ${colors.border}`
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         <div
-                          className={`p-2 rounded-lg ${
+                          className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
                             isSent ? "bg-gray-500/20" : colors.iconBg
                           }`}
                         >
@@ -1602,17 +1618,17 @@ export default function Dashboard() {
                             }`}
                           />
                         </div>
-                        <div>
-                          <h3 className="text-white font-semibold">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-semibold text-sm sm:text-base">
                             {alert.servidor}
                             {getServerProtocolo(alert.servidor) && (
-                              <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
+                              <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/10 text-white/80 text-xs rounded">
                                 Protocolo {getServerProtocolo(alert.servidor)}
                               </span>
                             )}
                           </h3>
                           <p
-                            className={`text-sm ${
+                            className={`text-xs sm:text-sm break-words ${
                               isSent ? "text-gray-400" : colors.textColor
                             }`}
                           >
@@ -1621,7 +1637,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
                           isSent
                             ? "bg-gray-500/20 text-gray-400"
                             : `${colors.badgeBg} ${colors.badgeText}`
@@ -1635,10 +1651,12 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
-              <Bell className="h-12 w-12 text-white/40 mx-auto mb-4" />
-              <p className="text-white/60 text-lg">No hay alertas activas</p>
-              <p className="text-white/40 text-sm mt-2">
+            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 text-center">
+              <Bell className="h-10 w-10 sm:h-12 sm:w-12 text-white/40 mx-auto mb-3 sm:mb-4" />
+              <p className="text-white/60 text-base sm:text-lg">
+                No hay alertas activas
+              </p>
+              <p className="text-white/40 text-xs sm:text-sm mt-2">
                 Las alertas de servidores aparecerán aquí cuando sea necesario
               </p>
             </div>

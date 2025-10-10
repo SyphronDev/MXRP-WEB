@@ -112,3 +112,4 @@ AntecedentesSchema.methods.getEstadisticas = function () {
 };
 
 module.exports = mongoose.model("Antecedentes", AntecedentesSchema);
+
