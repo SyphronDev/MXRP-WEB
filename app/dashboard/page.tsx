@@ -81,6 +81,13 @@ interface AlertItem {
   sended: boolean;
 }
 
+interface ProtocoloItem {
+  servidor: string;
+  protocolo: number;
+  vc: string;
+  sended: boolean;
+}
+
 interface IneData {
   userId: string;
   robloxName: string;
@@ -126,6 +133,7 @@ export default function Dashboard() {
   const [economyData, setEconomyData] = useState<EconomyData | null>(null);
   const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
   const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
+  const [protocoloData, setProtocoloData] = useState<ProtocoloItem[]>([]);
   const [ineData, setIneData] = useState<IneData | null>(null);
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
@@ -155,6 +163,7 @@ export default function Dashboard() {
     fetchEconomyData(userData.id);
     fetchInventoryData(userData.id);
     fetchAlertsData();
+    fetchProtocoloData();
     fetchIneData(userData.id);
     fetchPasaporteData(userData.id);
   }, [router]);
@@ -239,6 +248,28 @@ export default function Dashboard() {
       console.error("Error fetching alerts data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProtocoloData = async () => {
+    try {
+      const response = await fetch("/.netlify/functions/protocolo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setProtocoloData(data.protocolos || []);
+      } else {
+        console.error("Error fetching protocolo data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching protocolo data:", error);
     }
   };
 
@@ -335,6 +366,65 @@ export default function Dashboard() {
     });
   };
 
+  const getAlertColor = (alerta: string) => {
+    const alertaLower = alerta.toLowerCase();
+
+    // Alertas rojas
+    if (alertaLower.includes("roja") || alertaLower.includes("rojo")) {
+      return {
+        bg: "bg-red-500/10",
+        border: "border-red-500/30",
+        iconBg: "bg-red-500/20",
+        iconColor: "text-red-400",
+        textColor: "text-red-300",
+        badgeBg: "bg-red-500/20",
+        badgeText: "text-red-400",
+      };
+    }
+
+    // Alertas amarillas
+    if (alertaLower.includes("amarilla") || alertaLower.includes("amarillo")) {
+      return {
+        bg: "bg-yellow-500/10",
+        border: "border-yellow-500/30",
+        iconBg: "bg-yellow-500/20",
+        iconColor: "text-yellow-400",
+        textColor: "text-yellow-300",
+        badgeBg: "bg-yellow-500/20",
+        badgeText: "text-yellow-400",
+      };
+    }
+
+    // Alertas verdes
+    if (alertaLower.includes("verde")) {
+      return {
+        bg: "bg-green-500/10",
+        border: "border-green-500/30",
+        iconBg: "bg-green-500/20",
+        iconColor: "text-green-400",
+        textColor: "text-green-300",
+        badgeBg: "bg-green-500/20",
+        badgeText: "text-green-400",
+      };
+    }
+
+    // Por defecto, alertas azules
+    return {
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/30",
+      iconBg: "bg-blue-500/20",
+      iconColor: "text-blue-400",
+      textColor: "text-blue-300",
+      badgeBg: "bg-blue-500/20",
+      badgeText: "text-blue-400",
+    };
+  };
+
+  const getServerProtocolo = (servidor: string) => {
+    const protocolo = protocoloData.find((p) => p.servidor === servidor);
+    return protocolo ? protocolo.protocolo : null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
@@ -418,31 +508,48 @@ export default function Dashboard() {
         {/* Animated Alerts Banner */}
         {alertsData.length > 0 && (
           <div className="mb-6 overflow-hidden">
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 backdrop-blur-md">
-              <div
-                key={currentAlertIndex}
-                className="flex items-center gap-3 animate-slide-in"
-                style={{
-                  animation: "slideInFromRight 0.5s ease-out",
-                }}
-              >
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <Bell className="h-5 w-5 text-red-400 animate-pulse" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-white font-semibold">
-                    Servidor {alertsData[currentAlertIndex]?.servidor}
+            {(() => {
+              const currentAlert = alertsData[currentAlertIndex];
+              const colors = getAlertColor(currentAlert?.alerta || "");
+
+              return (
+                <div
+                  className={`${colors.bg} ${colors.border} rounded-lg p-4 backdrop-blur-md`}
+                >
+                  <div
+                    key={currentAlertIndex}
+                    className="flex items-center gap-3 animate-slide-in"
+                    style={{
+                      animation: "slideInFromRight 0.5s ease-out",
+                    }}
+                  >
+                    <div className={`p-2 ${colors.iconBg} rounded-lg`}>
+                      <Bell
+                        className={`h-5 w-5 ${colors.iconColor} animate-pulse`}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-semibold">
+                        Servidor {currentAlert?.servidor}
+                        {getServerProtocolo(currentAlert?.servidor || "") && (
+                          <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
+                            Protocolo{" "}
+                            {getServerProtocolo(currentAlert?.servidor || "")}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`${colors.textColor} text-sm`}>
+                        {currentAlert?.alerta}
+                      </div>
+                    </div>
+                    <div className={`${colors.badgeText} text-xs`}>
+                      {alertsData.filter((alert) => !alert.sended).length}{" "}
+                      alertas activas
+                    </div>
                   </div>
-                  <div className="text-red-300 text-sm">
-                    {alertsData[currentAlertIndex]?.alerta}
-                  </div>
                 </div>
-                <div className="text-red-400 text-xs">
-                  {alertsData.filter((alert) => !alert.sended).length} alertas
-                  activas
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         )}
 
@@ -477,7 +584,9 @@ export default function Dashboard() {
                 <h1 className="text-4xl font-bold text-white mb-2">
                   ¡Bienvenido, {user?.username}!
                 </h1>
-                <p className="text-white/60 text-lg">Panel de economía MXRP</p>
+                <p className="text-white/60 text-lg">
+                  Panel General MXRP ER:LC
+                </p>
               </div>
             </div>
 
@@ -1075,51 +1184,61 @@ export default function Dashboard() {
           {alertsData.length > 0 ? (
             <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
               <div className="space-y-4">
-                {alertsData.map((alert, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      alert.sended
-                        ? "bg-gray-500/10 border-gray-500/30"
-                        : "bg-red-500/10 border-red-500/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          alert.sended ? "bg-gray-500/20" : "bg-red-500/20"
-                        }`}
-                      >
-                        <Bell
-                          className={`h-4 w-4 ${
-                            alert.sended ? "text-gray-400" : "text-red-400"
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-semibold">
-                          Servidor {alert.servidor}
-                        </h3>
-                        <p
-                          className={`text-sm ${
-                            alert.sended ? "text-gray-400" : "text-red-300"
-                          }`}
-                        >
-                          {alert.alerta}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        alert.sended
-                          ? "bg-gray-500/20 text-gray-400"
-                          : "bg-red-500/20 text-red-400"
+                {alertsData.map((alert, index) => {
+                  const colors = getAlertColor(alert.alerta);
+                  const isSent = alert.sended;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-4 rounded-lg border ${
+                        isSent
+                          ? "bg-gray-500/10 border-gray-500/30"
+                          : `${colors.bg} ${colors.border}`
                       }`}
                     >
-                      {alert.sended ? "Enviada" : "Pendiente"}
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${
+                            isSent ? "bg-gray-500/20" : colors.iconBg
+                          }`}
+                        >
+                          <Bell
+                            className={`h-4 w-4 ${
+                              isSent ? "text-gray-400" : colors.iconColor
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold">
+                            Servidor {alert.servidor}
+                            {getServerProtocolo(alert.servidor) && (
+                              <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
+                                Protocolo {getServerProtocolo(alert.servidor)}
+                              </span>
+                            )}
+                          </h3>
+                          <p
+                            className={`text-sm ${
+                              isSent ? "text-gray-400" : colors.textColor
+                            }`}
+                          >
+                            {alert.alerta}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          isSent
+                            ? "bg-gray-500/20 text-gray-400"
+                            : `${colors.badgeBg} ${colors.badgeText}`
+                        }`}
+                      >
+                        {isSent ? "Enviada" : "Pendiente"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (

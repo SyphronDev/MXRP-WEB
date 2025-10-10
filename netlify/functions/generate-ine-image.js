@@ -223,8 +223,9 @@ async function generateIneImage(ineData) {
     // Volver a fuente grande para otros datos
     ctx.font = "bold 50px Arial";
 
-    // Mostrar la clave del estado
-    ctx.fillText(ineData.Estado, 758, 1023);
+    // Mostrar la clave del estado (abreviatura)
+    const estadoClave = getEstadoClave(ineData.Estado);
+    ctx.fillText(estadoClave, 758, 1023);
     ctx.fillText(`INE${ineData.Number}`, 970, 865);
     ctx.fillText(ineData.Seccion, 1500, 1028);
     ctx.fillText(ineData.Municipio, 1200, 1028);
@@ -287,4 +288,76 @@ async function uploadImageToSupabase(imageBuffer, userId) {
     console.error("Error in uploadImageToSupabase:", error);
     throw error;
   }
+}
+
+/**
+ * Obtiene la clave/abreviatura del estado mexicano
+ * @param {string} estadoNombre - Nombre completo del estado
+ * @returns {string} Clave del estado (abreviatura)
+ */
+function getEstadoClave(estadoNombre) {
+  const estadosMap = {
+    // Estados principales
+    Aguascalientes: "AGS",
+    "Baja California": "BC",
+    "Baja California Sur": "BCS",
+    Campeche: "CAM",
+    Chiapas: "CHIS",
+    Chihuahua: "CHIH",
+    "Ciudad de México": "CDMX",
+    Coahuila: "COAH",
+    Colima: "COL",
+    Durango: "DGO",
+    Guanajuato: "GTO",
+    Guerrero: "GRO",
+    Hidalgo: "HGO",
+    Jalisco: "JAL",
+    México: "MEX",
+    Michoacán: "MICH",
+    Morelos: "MOR",
+    Nayarit: "NAY",
+    "Nuevo León": "NL",
+    Oaxaca: "OAX",
+    Puebla: "PUE",
+    Querétaro: "QRO",
+    "Quintana Roo": "QR",
+    "San Luis Potosí": "SLP",
+    Sinaloa: "SIN",
+    Sonora: "SON",
+    Tabasco: "TAB",
+    Tamaulipas: "TAM",
+    Tlaxcala: "TLAX",
+    Veracruz: "VER",
+    Yucatán: "YUC",
+    Zacatecas: "ZAC",
+
+    // Variaciones comunes
+    "Ciudad de Mexico": "CDMX",
+    Mexico: "MEX",
+    Michoacan: "MICH",
+    "Nuevo Leon": "NL",
+    Queretaro: "QRO",
+    "Quintana Roo": "QR",
+    "San Luis Potosi": "SLP",
+    Tamaulipas: "TAM",
+    Veracruz: "VER",
+    Yucatan: "YUC",
+    Zacatecas: "ZAC",
+  };
+
+  // Buscar coincidencia exacta primero
+  if (estadosMap[estadoNombre]) {
+    return estadosMap[estadoNombre];
+  }
+
+  // Buscar coincidencia parcial (case insensitive)
+  const estadoLower = estadoNombre.toLowerCase();
+  for (const [nombre, clave] of Object.entries(estadosMap)) {
+    if (nombre.toLowerCase() === estadoLower) {
+      return clave;
+    }
+  }
+
+  // Si no se encuentra, devolver las primeras 3 letras en mayúsculas
+  return estadoNombre.substring(0, 3).toUpperCase();
 }
