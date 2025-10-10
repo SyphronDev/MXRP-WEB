@@ -27,6 +27,75 @@ redisClient.on("connect", () => console.log("Connected to Redis"));
 
 const TTL_USER_DATA = 300; // 5 minutos
 
+// Función para obtener información de usuario desde Discord API
+const getUserInfo = async (userId) => {
+  try {
+    // Intentar obtener desde caché Redis primero
+    const cachedUser = await redisClient.get(`user:${userId}`);
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+
+    // Si no hay caché, obtener desde Discord API
+    const response = await fetch(
+      `https://discord.com/api/v10/users/${userId}`,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const userData = await response.json();
+      const userInfo = {
+        id: userData.id,
+        username: userData.username,
+        discriminator: userData.discriminator,
+        tag: `${userData.username}${
+          userData.discriminator !== "0" ? `#${userData.discriminator}` : ""
+        }`,
+        avatar: userData.avatar,
+        avatarUrl: userData.avatar
+          ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png?size=512`
+          : `https://cdn.discordapp.com/embed/avatars/${
+              parseInt(userData.discriminator) % 5
+            }.png`,
+      };
+
+      // Guardar en caché Redis
+      await redisClient.setEx(
+        `user:${userId}`,
+        TTL_USER_DATA,
+        JSON.stringify(userInfo)
+      );
+
+      return userInfo;
+    } else {
+      console.error(`Error fetching user ${userId}:`, response.status);
+      return {
+        id: userId,
+        username: "Usuario desconocido",
+        discriminator: "0000",
+        tag: "Usuario desconocido",
+        avatar: null,
+        avatarUrl: "https://cdn.discordapp.com/embed/avatars/0.png",
+      };
+    }
+  } catch (error) {
+    console.error(`Error in getUserInfo for ${userId}:`, error);
+    return {
+      id: userId,
+      username: "Usuario desconocido",
+      discriminator: "0000",
+      tag: "Usuario desconocido",
+      avatar: null,
+      avatarUrl: "https://cdn.discordapp.com/embed/avatars/0.png",
+    };
+  }
+};
+
 const getStarRating = (rating) => {
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 >= 0.5;
@@ -172,6 +241,39 @@ exports.handler = async (event, context) => {
     const tiempoHoras = Math.floor(tiempoParaMostrar / 3600);
     const cumpleHoras = tiempoHoras >= 14;
 
+    // Procesar notas administrativas con información de usuario
+    const notasConUsuarios = await Promise.all(
+      (perfil.NotaAdministrativa || []).map(async (nota) => {
+        const aplicadorInfo = await getUserInfo(nota.Aplicador);
+        return {
+          Nota: nota.Nota,
+          Aplicado: nota.Aplicado,
+          Aplicador: nota.Aplicador,
+          AplicadorInfo: aplicadorInfo,
+        };
+      })
+    );
+
+    // Procesar warns administrativos con información de usuario
+    const warnsConUsuarios = await Promise.all(
+      (perfil.WarnAdministrativo || []).map(async (warnGroup) => {
+        const warnsProcesados = await Promise.all(
+          (warnGroup.Warn || []).map(async (warn) => {
+            const aplicadorInfo = await getUserInfo(warn.Aplicador);
+            return {
+              Warn: warn.Warn,
+              Aplicador: warn.Aplicador,
+              Aplicado: warn.Aplicado,
+              AplicadorInfo: aplicadorInfo,
+            };
+          })
+        );
+        return {
+          Warn: warnsProcesados,
+        };
+      })
+    );
+
     // Formatear datos del perfil
     const profileData = {
       userId: perfil.UserId,
@@ -187,8 +289,8 @@ exports.handler = async (event, context) => {
       tiempoTotalHoy: perfil.TiempoTotalHoy || 0,
       calificacion: perfil.Calificacion || 0,
       calificacionEstrellas: getStarRating(perfil.Calificacion || 0),
-      notasAdministrativas: perfil.NotaAdministrativa || [],
-      warnsAdministrativos: perfil.WarnAdministrativo || [],
+      notasAdministrativas: notasConUsuarios,
+      warnsAdministrativos: warnsConUsuarios,
       robuxReclamados: perfil.RobuxReclamados,
       // Estadísticas calculadas
       progresoSemanal: Math.min(100, Math.round((tiempoHoras / 14) * 100)),

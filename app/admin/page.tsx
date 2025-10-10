@@ -30,6 +30,15 @@ interface DiscordUser {
   avatarUrl: string;
 }
 
+interface UserInfo {
+  id: string;
+  username: string;
+  discriminator: string;
+  tag: string;
+  avatar: string | null;
+  avatarUrl: string;
+}
+
 interface AdminProfile {
   userId: string;
   tiempoTotal: number;
@@ -48,12 +57,14 @@ interface AdminProfile {
     Nota: string;
     Aplicado: string;
     Aplicador: string;
+    AplicadorInfo: UserInfo;
   }>;
   warnsAdministrativos: Array<{
     Warn: Array<{
       Warn: string;
       Aplicador: string;
       Aplicado: string;
+      AplicadorInfo: UserInfo;
     }>;
   }>;
   robuxReclamados: boolean | null;
@@ -532,7 +543,8 @@ export default function AdminPanel() {
                           {warn.Warn}
                         </p>
                         <p className="text-white/60 text-xs">
-                          Aplicado por: {warn.Aplicador}
+                          Aplicado por:{" "}
+                          {warn.AplicadorInfo?.tag || warn.Aplicador}
                         </p>
                       </div>
                     ))}
@@ -573,7 +585,8 @@ export default function AdminPanel() {
                           {nota.Nota}
                         </p>
                         <p className="text-white/60 text-xs">
-                          Aplicado por: {nota.Aplicador}
+                          Aplicado por:{" "}
+                          {nota.AplicadorInfo?.tag || nota.Aplicador}
                         </p>
                       </div>
                     ))}

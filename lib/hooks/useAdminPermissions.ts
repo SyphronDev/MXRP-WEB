@@ -13,6 +13,15 @@ interface AdminPermissions {
   error: string | null;
 }
 
+interface UserInfo {
+  id: string;
+  username: string;
+  discriminator: string;
+  tag: string;
+  avatar: string | null;
+  avatarUrl: string;
+}
+
 interface AdminProfile {
   userId: string;
   tiempoTotal: number;
@@ -31,12 +40,14 @@ interface AdminProfile {
     Nota: string;
     Aplicado: string;
     Aplicador: string;
+    AplicadorInfo: UserInfo;
   }>;
   warnsAdministrativos: Array<{
     Warn: Array<{
       Warn: string;
       Aplicador: string;
       Aplicado: string;
+      AplicadorInfo: UserInfo;
     }>;
   }>;
   robuxReclamados: boolean | null;
