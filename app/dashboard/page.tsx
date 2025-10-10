@@ -264,6 +264,7 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        console.log("Protocolos recibidos:", data.protocolos);
         setProtocoloData(data.protocolos || []);
       } else {
         console.error("Error fetching protocolo data:", data.message);
@@ -421,7 +422,12 @@ export default function Dashboard() {
   };
 
   const getServerProtocolo = (servidor: string) => {
+    // Buscar el protocolo que coincida con el servidor
     const protocolo = protocoloData.find((p) => p.servidor === servidor);
+    console.log(
+      `Buscando protocolo para servidor: ${servidor}, encontrado:`,
+      protocolo
+    );
     return protocolo ? protocolo.protocolo : null;
   };
 
@@ -530,7 +536,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1">
                       <div className="text-white font-semibold">
-                        Servidor {currentAlert?.servidor}
+                        {currentAlert?.servidor}
                         {getServerProtocolo(currentAlert?.servidor || "") && (
                           <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
                             Protocolo{" "}
@@ -1211,7 +1217,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <h3 className="text-white font-semibold">
-                            Servidor {alert.servidor}
+                            {alert.servidor}
                             {getServerProtocolo(alert.servidor) && (
                               <span className="ml-2 px-2 py-1 bg-white/10 text-white/80 text-xs rounded">
                                 Protocolo {getServerProtocolo(alert.servidor)}
