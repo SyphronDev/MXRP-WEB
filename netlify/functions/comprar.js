@@ -215,8 +215,16 @@ exports.handler = async (event, context) => {
       usuario.Efectivo -= dineroRestante;
     }
 
-    // Marcar el documento como modificado para forzar la actualización
-    economyData.markModified("Usuario");
+    // Actualizar economía usando updateOne para evitar problemas de validación
+    await EconomyUser.updateOne(
+      { GuildId: guildId, "Usuario.UserId": discordId },
+      {
+        $set: {
+          "Usuario.$.CuentaCorriente.Balance": usuario.CuentaCorriente.Balance,
+          "Usuario.$.Efectivo": usuario.Efectivo,
+        },
+      }
+    );
 
     // Actualizar stock en la tienda
     item.Cantidad -= cantidadEnUnidadArticulo;
@@ -258,7 +266,6 @@ exports.handler = async (event, context) => {
     }
 
     // Guardar cambios
-    await economyData.save();
     await tiendaData.save();
     await inventarioData.save();
 
@@ -286,13 +293,34 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error("Comprar error:", error);
+
+    let errorMessage = "Error interno del servidor al procesar la compra.";
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      if (error.message.includes("Path `Usuario.UserId` is required")) {
+        errorMessage =
+          "Error de datos: Parece que hay un problema con tu registro de economía. Por favor, contacta a un administrador.";
+        statusCode = 400;
+      } else if (error.message.includes("Insufficient funds")) {
+        errorMessage = "No tienes suficiente dinero para esta compra.";
+        statusCode = 400;
+      } else if (error.message.includes("Insufficient stock")) {
+        errorMessage = "No hay suficiente stock disponible.";
+        statusCode = 400;
+      } else if (error.message.includes("Item not found")) {
+        errorMessage = "El artículo no está disponible.";
+        statusCode = 404;
+      }
+    }
+
     return {
-      statusCode: 500,
+      statusCode,
       headers,
       body: JSON.stringify({
         success: false,
-        error: "Internal server error",
-        message: error.message,
+        error: "Purchase error",
+        message: errorMessage,
       }),
     };
   }

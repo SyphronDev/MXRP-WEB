@@ -824,12 +824,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`${colors.badgeText} text-xs self-start sm:self-auto`}
-                    >
-                      {alertsData.filter((alert) => !alert.sended).length}{" "}
-                      alertas activas
-                    </div>
                   </div>
                 </div>
               );
