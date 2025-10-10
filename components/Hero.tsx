@@ -60,15 +60,10 @@ export default function Hero() {
           {/* Texto de bienvenida */}
           <div className="mt-4">
             <h2 className="text-2xl md:text-3xl font-semibold text-white drop-shadow-lg">
-              Bienvenido A
+              Bienvenido A MXRP ER:LC
             </h2>
           </div>
         </div>
-
-        {/* Título principal */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg">
-          MXRP
-        </h1>
 
         {/* Subtítulo */}
         <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl drop-shadow-lg">
