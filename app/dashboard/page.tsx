@@ -22,6 +22,10 @@ import {
   Hash,
   Image as ImageIcon,
   Download,
+  Shield,
+  AlertTriangle,
+  Users,
+  Scale,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -88,6 +92,43 @@ interface ProtocoloItem {
   sended: boolean;
 }
 
+interface AntecedenteItem {
+  fecha: string;
+  motivo: string;
+  arrestadoPor: string;
+  arrestadoPorTag: string;
+  canal: string;
+  duracion: number;
+  activo: boolean;
+}
+
+interface AntecedentesData {
+  userId: string;
+  totalArrestos: number;
+  usuarioPeligroso: boolean;
+  fechaUltimoArresto: string | null;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  antecedentes: AntecedenteItem[];
+}
+
+interface EstadisticasAntecedentes {
+  totalArrestos: number;
+  arrestosActivos: number;
+  arrestosUltimoMes: number;
+  esUsuarioPeligroso: boolean;
+  fechaUltimoArresto: string | null;
+}
+
+interface UsuarioPeligroso {
+  userId: string;
+  totalArrestos: number;
+  fechaUltimoArresto: string | null;
+  fechaCreacion: string;
+  antecedentesActivos: number;
+  estadisticas: EstadisticasAntecedentes;
+}
+
 interface IneData {
   userId: string;
   robloxName: string;
@@ -134,6 +175,13 @@ export default function Dashboard() {
   const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
   const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
   const [protocoloData, setProtocoloData] = useState<ProtocoloItem[]>([]);
+  const [antecedentesData, setAntecedentesData] =
+    useState<AntecedentesData | null>(null);
+  const [estadisticasAntecedentes, setEstadisticasAntecedentes] =
+    useState<EstadisticasAntecedentes | null>(null);
+  const [usuariosPeligrosos, setUsuariosPeligrosos] = useState<
+    UsuarioPeligroso[]
+  >([]);
   const [ineData, setIneData] = useState<IneData | null>(null);
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
@@ -147,7 +195,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<
-    "economy" | "inventory" | "documents"
+    "economy" | "inventory" | "documents" | "antecedentes"
   >("economy");
   const router = useRouter();
 
@@ -164,6 +212,8 @@ export default function Dashboard() {
     fetchInventoryData(userData.id);
     fetchAlertsData();
     fetchProtocoloData();
+    fetchAntecedentesData(userData.id);
+    fetchUsuariosPeligrosos();
     fetchIneData(userData.id);
     fetchPasaporteData(userData.id);
   }, [router]);
@@ -271,6 +321,53 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching protocolo data:", error);
+    }
+  };
+
+  const fetchAntecedentesData = async (discordId: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/antecedentes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ discordId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("Antecedentes recibidos:", data.antecedentes);
+        setAntecedentesData(data.antecedentes);
+        setEstadisticasAntecedentes(data.estadisticas);
+      } else {
+        console.error("Error fetching antecedentes data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching antecedentes data:", error);
+    }
+  };
+
+  const fetchUsuariosPeligrosos = async () => {
+    try {
+      const response = await fetch("/.netlify/functions/usuarios-peligrosos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("Usuarios peligrosos recibidos:", data.usuariosPeligrosos);
+        setUsuariosPeligrosos(data.usuariosPeligrosos || []);
+      } else {
+        console.error("Error fetching usuarios peligrosos data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching usuarios peligrosos data:", error);
     }
   };
 
@@ -652,6 +749,17 @@ export default function Dashboard() {
             >
               <IdCard className="h-4 w-4" />
               Documentos
+            </button>
+            <button
+              onClick={() => setActiveTab("antecedentes")}
+              className={`flex-1 px-6 py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === "antecedentes"
+                  ? "bg-discord text-white shadow-lg"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Scale className="h-4 w-4" />
+              Antecedentes
             </button>
           </div>
         </div>
@@ -1166,6 +1274,285 @@ export default function Dashboard() {
                   </h3>
                   <p className="text-white/60">
                     Solicita tu INE o Pasaporte en el servidor para verlos aquí
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Antecedentes Tab */}
+        {activeTab === "antecedentes" && (
+          <>
+            {/* Estadísticas de Antecedentes */}
+            {estadisticasAntecedentes && (
+              <div className="mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Total de Arrestos */}
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-red-500/20 rounded-lg">
+                        <AlertTriangle className="h-6 w-6 text-red-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">
+                        Total Arrestos
+                      </h3>
+                    </div>
+                    <div className="text-3xl font-bold text-white mb-2">
+                      {estadisticasAntecedentes.totalArrestos}
+                    </div>
+                    <p className="text-white/60 text-sm">
+                      {estadisticasAntecedentes.totalArrestos === 0
+                        ? "Sin antecedentes"
+                        : `${estadisticasAntecedentes.arrestosActivos} activos`}
+                    </p>
+                  </div>
+
+                  {/* Arrestos Activos */}
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-yellow-500/20 rounded-lg">
+                        <Clock className="h-6 w-6 text-yellow-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">
+                        Activos
+                      </h3>
+                    </div>
+                    <div className="text-3xl font-bold text-white mb-2">
+                      {estadisticasAntecedentes.arrestosActivos}
+                    </div>
+                    <p className="text-white/60 text-sm">
+                      {estadisticasAntecedentes.arrestosActivos === 0
+                        ? "Sin arrestos activos"
+                        : "Arrestos vigentes"}
+                    </p>
+                  </div>
+
+                  {/* Arrestos Último Mes */}
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-blue-500/20 rounded-lg">
+                        <Calendar className="h-6 w-6 text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">
+                        Último Mes
+                      </h3>
+                    </div>
+                    <div className="text-3xl font-bold text-white mb-2">
+                      {estadisticasAntecedentes.arrestosUltimoMes}
+                    </div>
+                    <p className="text-white/60 text-sm">
+                      {estadisticasAntecedentes.arrestosUltimoMes === 0
+                        ? "Sin arrestos recientes"
+                        : "Arrestos recientes"}
+                    </p>
+                  </div>
+
+                  {/* Estado de Peligrosidad */}
+                  <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className={`p-3 rounded-lg ${
+                          estadisticasAntecedentes.esUsuarioPeligroso
+                            ? "bg-red-500/20"
+                            : "bg-green-500/20"
+                        }`}
+                      >
+                        <Shield
+                          className={`h-6 w-6 ${
+                            estadisticasAntecedentes.esUsuarioPeligroso
+                              ? "text-red-400"
+                              : "text-green-400"
+                          }`}
+                        />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">
+                        Estado
+                      </h3>
+                    </div>
+                    <div
+                      className={`text-2xl font-bold mb-2 ${
+                        estadisticasAntecedentes.esUsuarioPeligroso
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      {estadisticasAntecedentes.esUsuarioPeligroso
+                        ? "PELIGROSO"
+                        : "SEGURO"}
+                    </div>
+                    <p className="text-white/60 text-sm">
+                      {estadisticasAntecedentes.esUsuarioPeligroso
+                        ? "Más de 3 arrestos"
+                        : "Menos de 3 arrestos"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Antecedentes */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-orange-500/20 rounded-lg">
+                  <Scale className="h-6 w-6 text-orange-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">
+                  Historial de Antecedentes
+                </h2>
+                <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-medium">
+                  {antecedentesData?.antecedentes.length || 0} registros
+                </span>
+              </div>
+
+              {antecedentesData && antecedentesData.antecedentes.length > 0 ? (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                  <div className="space-y-4">
+                    {antecedentesData.antecedentes.map((antecedente, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg border ${
+                          antecedente.activo
+                            ? "bg-red-500/10 border-red-500/30"
+                            : "bg-gray-500/10 border-gray-500/30"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div
+                                className={`p-2 rounded-lg ${
+                                  antecedente.activo
+                                    ? "bg-red-500/20"
+                                    : "bg-gray-500/20"
+                                }`}
+                              >
+                                <AlertTriangle
+                                  className={`h-4 w-4 ${
+                                    antecedente.activo
+                                      ? "text-red-400"
+                                      : "text-gray-400"
+                                  }`}
+                                />
+                              </div>
+                              <div>
+                                <h3 className="text-white font-semibold">
+                                  {antecedente.motivo}
+                                </h3>
+                                <p className="text-white/60 text-sm">
+                                  Arrestado por: {antecedente.arrestadoPor} (
+                                  {antecedente.arrestadoPorTag})
+                                </p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-white/60" />
+                                <span className="text-white/80 text-sm">
+                                  {formatDate(antecedente.fecha)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Hash className="h-4 w-4 text-white/60" />
+                                <span className="text-white/80 text-sm">
+                                  Canal: {antecedente.canal}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-white/60" />
+                                <span className="text-white/80 text-sm">
+                                  Duración: {antecedente.duracion} min
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              antecedente.activo
+                                ? "bg-red-500/20 text-red-400"
+                                : "bg-gray-500/20 text-gray-400"
+                            }`}
+                          >
+                            {antecedente.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
+                  <Scale className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Sin antecedentes registrados
+                  </h3>
+                  <p className="text-white/60">
+                    No tienes antecedentes en tu historial
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Lista de Usuarios Peligrosos */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-red-500/20 rounded-lg">
+                  <Users className="h-6 w-6 text-red-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">
+                  Usuarios Peligrosos
+                </h2>
+                <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+                  {usuariosPeligrosos.length} usuarios
+                </span>
+              </div>
+
+              {usuariosPeligrosos.length > 0 ? (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
+                  <div className="space-y-4">
+                    {usuariosPeligrosos.map((usuario, index) => (
+                      <div
+                        key={index}
+                        className="p-4 rounded-lg border bg-red-500/10 border-red-500/30"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-red-500/20 rounded-lg">
+                              <AlertTriangle className="h-4 w-4 text-red-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-semibold">
+                                Usuario {usuario.userId}
+                              </h3>
+                              <p className="text-white/60 text-sm">
+                                {usuario.totalArrestos} arrestos totales
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-red-400 font-semibold">
+                              {usuario.antecedentesActivos} activos
+                            </div>
+                            <div className="text-white/60 text-sm">
+                              Último:{" "}
+                              {usuario.fechaUltimoArresto
+                                ? formatDate(usuario.fechaUltimoArresto)
+                                : "N/A"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
+                  <Users className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    No hay usuarios peligrosos
+                  </h3>
+                  <p className="text-white/60">
+                    Todos los usuarios están en buen estado
                   </p>
                 </div>
               )}
