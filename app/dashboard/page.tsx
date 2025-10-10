@@ -28,6 +28,7 @@ import {
   Scale,
   ShoppingCart,
   Store,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -224,6 +225,8 @@ export default function Dashboard() {
   const [economyLoading, setEconomyLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [checkingAdminAccess, setCheckingAdminAccess] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
@@ -247,6 +250,7 @@ export default function Dashboard() {
     fetchTiendaData();
     fetchIneData(userData.id);
     fetchPasaporteData(userData.id);
+    checkAdminAccess(userData.id);
   }, [router]);
 
   // Efecto para rotar las alertas cada 3 minutos
@@ -587,6 +591,35 @@ export default function Dashboard() {
     }
   };
 
+  const checkAdminAccess = async (discordId: string) => {
+    try {
+      setCheckingAdminAccess(true);
+      const response = await fetch("/.netlify/functions/admin-permissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          discordId,
+          guildId: process.env.NEXT_PUBLIC_GUILD_ID,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.hasAdminAccess) {
+        setHasAdminAccess(true);
+      } else {
+        setHasAdminAccess(false);
+      }
+    } catch (error) {
+      console.error("Error checking admin access:", error);
+      setHasAdminAccess(false);
+    } finally {
+      setCheckingAdminAccess(false);
+    }
+  };
+
   const generateIneImage = async (discordId: string) => {
     try {
       setIsGeneratingImage(true);
@@ -866,6 +899,17 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
+
+            {/* Admin Panel Button */}
+            {hasAdminAccess && (
+              <button
+                onClick={() => router.push("/admin")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-blue-500/30 transition-all duration-200 self-start sm:self-auto"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-sm font-medium">Panel Admin</span>
+              </button>
+            )}
 
             {/* MXRP Logo */}
             <div
