@@ -30,12 +30,13 @@ exports.handler = async (event, context) => {
     await connectDB();
 
     // Parsear el cuerpo de la petición
-    let { discordId, articulo, cantidad, tipoTienda } = {};
+    let { discordId, articulo, cantidad, unidad, tipoTienda } = {};
     try {
       const body = JSON.parse(event.body);
       discordId = body.discordId;
       articulo = body.articulo;
       cantidad = body.cantidad;
+      unidad = body.unidad || "x";
       tipoTienda = body.tipoTienda;
     } catch (parseError) {
       console.error("Failed to parse request body:", parseError);
@@ -97,7 +98,30 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (item.Cantidad < cantidad) {
+    // Función para convertir unidades a la unidad base del artículo
+    const convertToBaseUnit = (amount, fromUnit, toUnit) => {
+      if (fromUnit === toUnit) return amount;
+
+      // Convertir todo a gramos para comparación
+      let fromGrams = amount;
+      if (fromUnit === "kg") fromGrams = amount * 1000;
+      if (fromUnit === "mg") fromGrams = amount / 1000;
+
+      let toGrams = 1;
+      if (toUnit === "kg") toGrams = 1000;
+      if (toUnit === "mg") toGrams = 0.001;
+
+      return fromGrams / toGrams;
+    };
+
+    // Convertir la cantidad solicitada a la unidad del artículo
+    const cantidadEnUnidadArticulo = convertToBaseUnit(
+      cantidad,
+      unidad,
+      item.Unidad
+    );
+
+    if (item.Cantidad < cantidadEnUnidadArticulo) {
       return {
         statusCode: 400,
         headers,
@@ -109,7 +133,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const costoTotal = item.Precio * cantidad;
+    const costoTotal = item.Precio * cantidadEnUnidadArticulo;
 
     // Buscar los datos de economía del usuario
     const economyData = await EconomyUser.findOne({
@@ -176,8 +200,11 @@ exports.handler = async (event, context) => {
       usuario.Efectivo -= dineroRestante;
     }
 
+    // Marcar el documento como modificado para forzar la actualización
+    economyData.markModified("Usuario");
+
     // Actualizar stock en la tienda
-    item.Cantidad -= cantidad;
+    item.Cantidad -= cantidadEnUnidadArticulo;
 
     // Buscar o crear inventario del usuario
     let inventarioData = await InventarioUsuario.findOne({
@@ -193,7 +220,7 @@ exports.handler = async (event, context) => {
       });
     }
 
-    // Buscar si el usuario ya tiene este artículo
+    // Buscar si el usuario ya tiene este artículo con la misma unidad
     const articuloExistente = inventarioData.Inventario.find(
       (invItem) =>
         invItem.Articulo.toLowerCase() === articulo.toLowerCase() &&
@@ -202,12 +229,12 @@ exports.handler = async (event, context) => {
 
     if (articuloExistente) {
       // Si existe, sumar la cantidad
-      articuloExistente.Cantidad += cantidad;
+      articuloExistente.Cantidad += cantidadEnUnidadArticulo;
     } else {
       // Si no existe, añadir nuevo artículo
       inventarioData.Inventario.push({
         Articulo: articulo,
-        Cantidad: cantidad,
+        Cantidad: cantidadEnUnidadArticulo,
         Unidad: item.Unidad,
         Identificador: item.Identificador,
         FechaCompra: new Date(),
@@ -221,7 +248,7 @@ exports.handler = async (event, context) => {
     await inventarioData.save();
 
     console.log(
-      `Successful purchase: User ${discordId} bought ${cantidad} ${articulo} for ${costoTotal}`
+      `Successful purchase: User ${discordId} bought ${cantidad}${unidad} ${articulo} for ${costoTotal}`
     );
 
     return {
@@ -233,7 +260,9 @@ exports.handler = async (event, context) => {
         compra: {
           articulo: articulo,
           cantidad: cantidad,
-          unidad: item.Unidad,
+          unidadComprada: unidad,
+          cantidadEnInventario: cantidadEnUnidadArticulo,
+          unidadInventario: item.Unidad,
           precioUnitario: item.Precio,
           costoTotal: costoTotal,
           dineroRestante: usuario.CuentaCorriente.Balance + usuario.Efectivo,

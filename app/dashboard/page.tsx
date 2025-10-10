@@ -206,6 +206,13 @@ export default function Dashboard() {
   >([]);
   const [tiendaData, setTiendaData] = useState<TiendaData[]>([]);
   const [isComprando, setIsComprando] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{
+    articulo: string;
+    unidad: string;
+    tipoTienda: string;
+  } | null>(null);
+  const [cantidadCompra, setCantidadCompra] = useState<string>("1");
+  const [unidadCompra, setUnidadCompra] = useState<string>("x");
   const [ineData, setIneData] = useState<IneData | null>(null);
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
@@ -422,6 +429,7 @@ export default function Dashboard() {
   const comprarArticulo = async (
     articulo: string,
     cantidad: number,
+    unidad: string,
     tipoTienda: string
   ) => {
     if (!user) return;
@@ -437,6 +445,7 @@ export default function Dashboard() {
           discordId: user.id,
           articulo,
           cantidad,
+          unidad,
           tipoTienda,
         }),
       });
@@ -445,7 +454,9 @@ export default function Dashboard() {
 
       if (response.ok && data.success) {
         alert(
-          `¡Compra exitosa! Compraste ${cantidad} ${articulo} por $${data.compra.costoTotal}`
+          `¡Compra exitosa! Compraste ${cantidad}${unidad} ${articulo} por ${formatCurrency(
+            data.compra.costoTotal
+          )}`
         );
         // Recargar datos
         fetchEconomyData(user.id);
@@ -460,6 +471,42 @@ export default function Dashboard() {
     } finally {
       setIsComprando(false);
     }
+  };
+
+  const handleComprarClick = (item: TiendaItem, tipoTienda: string) => {
+    setSelectedItem({
+      articulo: item.articulo,
+      unidad: item.unidad,
+      tipoTienda: tipoTienda,
+    });
+    setCantidadCompra("1");
+    setUnidadCompra(item.unidad);
+  };
+
+  const handleConfirmarCompra = () => {
+    if (!selectedItem) return;
+
+    const cantidad = parseFloat(cantidadCompra);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      alert("Por favor ingresa una cantidad válida");
+      return;
+    }
+
+    comprarArticulo(
+      selectedItem.articulo,
+      cantidad,
+      unidadCompra,
+      selectedItem.tipoTienda
+    );
+
+    setSelectedItem(null);
+  };
+
+  const getUnidadesDisponibles = (tipoTienda: string) => {
+    if (tipoTienda === "legal") {
+      return ["x"];
+    }
+    return ["x", "g", "kg", "mg"];
   };
 
   const fetchIneData = async (discordId: string) => {
@@ -1738,7 +1785,7 @@ export default function Dashboard() {
                             {tienda.tipo === "legal" ? "Legal" : "Ilegal"}
                           </h3>
                           <p className="text-white/60 text-sm">
-                            {tienda.totalItems} artículos • Valor total: $
+                            {tienda.totalItems} artículos • Valor total:{" "}
                             {formatCurrency(tienda.totalValue)}
                           </p>
                         </div>
@@ -1771,7 +1818,7 @@ export default function Dashboard() {
                                   Precio:
                                 </span>
                                 <span className="text-white text-xs sm:text-sm font-semibold">
-                                  ${formatCurrency(item.precio)}
+                                  {formatCurrency(item.precio)}
                                 </span>
                               </div>
                               <div className="flex justify-between">
@@ -1787,7 +1834,7 @@ export default function Dashboard() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() =>
-                                  comprarArticulo(item.articulo, 1, tienda.tipo)
+                                  handleComprarClick(item, tienda.tipo)
                                 }
                                 disabled={isComprando || item.cantidad < 1}
                                 className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
@@ -1798,22 +1845,7 @@ export default function Dashboard() {
                                     : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                                 }`}
                               >
-                                {isComprando ? "Comprando..." : "Comprar 1"}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  comprarArticulo(item.articulo, 5, tienda.tipo)
-                                }
-                                disabled={isComprando || item.cantidad < 5}
-                                className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                                  isComprando || item.cantidad < 5
-                                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
-                                    : tienda.tipo === "legal"
-                                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
-                                    : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                                }`}
-                              >
-                                {isComprando ? "Comprando..." : "Comprar 5"}
+                                {isComprando ? "Comprando..." : "Comprar"}
                               </button>
                             </div>
                           </div>
@@ -1835,6 +1867,87 @@ export default function Dashboard() {
               )}
             </div>
           </>
+        )}
+
+        {/* Modal de Compra */}
+        {selectedItem && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-black/90 backdrop-blur-md border border-white/20 rounded-xl p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">
+                  Comprar {selectedItem.articulo}
+                </h3>
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-white/80 text-sm mb-2">
+                    Cantidad
+                  </label>
+                  <input
+                    type="number"
+                    value={cantidadCompra}
+                    onChange={(e) => setCantidadCompra(e.target.value)}
+                    min="0.1"
+                    step="0.1"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-discord"
+                    placeholder="Ingresa la cantidad"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/80 text-sm mb-2">
+                    Unidad
+                  </label>
+                  <select
+                    value={unidadCompra}
+                    onChange={(e) => setUnidadCompra(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-discord"
+                  >
+                    {getUnidadesDisponibles(selectedItem.tipoTienda).map(
+                      (unidad) => (
+                        <option
+                          key={unidad}
+                          value={unidad}
+                          className="bg-black text-white"
+                        >
+                          {unidad === "x" ? "Unidades" : unidad.toUpperCase()}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setSelectedItem(null)}
+                    className="flex-1 px-4 py-2 bg-gray-500/20 text-gray-400 rounded-lg hover:bg-gray-500/30 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmarCompra}
+                    disabled={isComprando}
+                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isComprando
+                        ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                        : selectedItem.tipoTienda === "legal"
+                        ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                        : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    }`}
+                  >
+                    {isComprando ? "Comprando..." : "Confirmar Compra"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Server Alerts Section */}
