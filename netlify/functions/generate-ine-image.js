@@ -176,7 +176,9 @@ exports.handler = async (event, context) => {
  */
 async function generateIneImage(ineData) {
   try {
-    // Cargar la plantilla de INE desde archivo local
+    // En Netlify Functions, necesitamos usar una URL pública o leer el archivo como buffer
+    // Primero intentamos leer el archivo desde el sistema de archivos
+    const fs = require("fs");
     const templatePath = path.join(
       process.cwd(),
       "public",
@@ -184,8 +186,19 @@ async function generateIneImage(ineData) {
       "Ine.png"
     );
 
-    // Usar loadImage con la ruta del archivo directamente
-    const template = await loadImage(templatePath);
+    let template;
+    try {
+      // Intentar leer el archivo como buffer primero
+      const imageBuffer = fs.readFileSync(templatePath);
+      template = await loadImage(imageBuffer);
+    } catch (fileError) {
+      console.error("Error reading template file:", fileError);
+      // Fallback: usar una URL pública si el archivo no está disponible
+      const publicUrl = `${
+        process.env.SITE_URL || "https://mxrp.netlify.app"
+      }/images/Ine.png`;
+      template = await loadImage(publicUrl);
+    }
 
     // Crear canvas con las dimensiones del template
     const canvas = createCanvas(template.width, template.height);
