@@ -243,22 +243,22 @@ exports.handler = async (event, context) => {
       });
     }
 
-    // Buscar si el usuario ya tiene este artículo con la misma unidad
+    // Buscar si el usuario ya tiene este artículo con la misma unidad solicitada
     const articuloExistente = inventarioData.Inventario.find(
       (invItem) =>
         invItem.Articulo.toLowerCase() === articulo.toLowerCase() &&
-        invItem.Unidad === item.Unidad
+        invItem.Unidad === unidad
     );
 
     if (articuloExistente) {
-      // Si existe, sumar la cantidad
-      articuloExistente.Cantidad += cantidadEnUnidadArticulo;
+      // Si existe, sumar la cantidad en la unidad solicitada
+      articuloExistente.Cantidad += cantidad;
     } else {
-      // Si no existe, añadir nuevo artículo
+      // Si no existe, añadir nuevo artículo con la unidad solicitada
       inventarioData.Inventario.push({
         Articulo: articulo,
-        Cantidad: cantidadEnUnidadArticulo,
-        Unidad: item.Unidad,
+        Cantidad: cantidad,
+        Unidad: unidad,
         Identificador: item.Identificador,
         FechaCompra: new Date(),
         PrecioCompra: item.Precio,
@@ -283,8 +283,6 @@ exports.handler = async (event, context) => {
           articulo: articulo,
           cantidad: cantidad,
           unidadComprada: unidad,
-          cantidadEnInventario: cantidadEnUnidadArticulo,
-          unidadInventario: item.Unidad,
           precioUnitario: item.Precio,
           costoTotal: costoTotal,
           dineroRestante: usuario.CuentaCorriente.Balance + usuario.Efectivo,
