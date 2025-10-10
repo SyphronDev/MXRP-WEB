@@ -20,6 +20,8 @@ import {
   MapPin,
   Calendar,
   Hash,
+  Image as ImageIcon,
+  Download,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -100,6 +102,7 @@ interface IneData {
   aprobada: boolean;
   aprobadaPor: string | null;
   aprobadaEn: string | null;
+  canGenerateImage: boolean;
 }
 
 interface PasaporteData {
@@ -127,6 +130,8 @@ export default function Dashboard() {
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
   );
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [economyLoading, setEconomyLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -276,6 +281,37 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching Pasaporte data:", error);
+    }
+  };
+
+  const generateIneImage = async (discordId: string) => {
+    try {
+      setIsGeneratingImage(true);
+      const response = await fetch("/.netlify/functions/generate-ine-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ discordId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setGeneratedImageUrl(data.imageUrl);
+        // Actualizar los datos de INE para incluir la nueva URL
+        if (ineData) {
+          setIneData({ ...ineData, imageUrl: data.imageUrl });
+        }
+      } else {
+        console.error("Error generating INE image:", data.message);
+        alert(data.message || "Error al generar la imagen del INE");
+      }
+    } catch (error) {
+      console.error("Error generating INE image:", error);
+      alert("Error de conexión. Intenta nuevamente.");
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -771,32 +807,52 @@ export default function Dashboard() {
           <>
             {/* Documents Section */}
             <div className="space-y-8">
-              {/* INE Section */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-green-500/20 rounded-lg">
-                    <IdCard className="h-6 w-6 text-green-400" />
+              {/* Mostrar solo INE o Pasaporte, no ambos */}
+              {ineData ? (
+                /* INE Section */
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-green-500/20 rounded-lg">
+                        <IdCard className="h-6 w-6 text-green-400" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-white">INE</h2>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          ineData?.aprobada
+                            ? "bg-green-500/20 text-green-400"
+                            : ineData?.pendiente
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-gray-500/20 text-gray-400"
+                        }`}
+                      >
+                        {ineData?.aprobada
+                          ? "Aprobada"
+                          : ineData?.pendiente
+                          ? "Pendiente"
+                          : "No registrada"}
+                      </span>
+                    </div>
+                    
+                    {/* Botón para generar imagen */}
+                    {ineData.canGenerateImage && (
+                      <button
+                        onClick={() => generateIneImage(user?.id || "")}
+                        disabled={isGeneratingImage}
+                        className="flex items-center gap-2 px-4 py-2 bg-discord hover:bg-discord/80 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isGeneratingImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4" />
+                        )}
+                        {isGeneratingImage ? "Generando..." : "Generar Imagen"}
+                      </button>
+                    )}
                   </div>
-                  <h2 className="text-2xl font-bold text-white">INE</h2>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      ineData?.aprobada
-                        ? "bg-green-500/20 text-green-400"
-                        : ineData?.pendiente
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {ineData?.aprobada
-                      ? "Aprobada"
-                      : ineData?.pendiente
-                      ? "Pendiente"
-                      : "No registrada"}
-                  </span>
-                </div>
 
-                {ineData ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Datos del INE */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <User className="h-5 w-5 text-white/60" />
@@ -860,44 +916,57 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <IdCard className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      No tienes INE registrada
-                    </h3>
-                    <p className="text-white/60">
-                      Solicita tu INE en el servidor para verla aquí
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* Pasaporte Section */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-blue-500/20 rounded-lg">
-                    <FileText className="h-6 w-6 text-blue-400" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-white">Pasaporte</h2>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      pasaporteData?.aprobada
-                        ? "bg-green-500/20 text-green-400"
-                        : pasaporteData?.pendiente
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {pasaporteData?.aprobada
-                      ? "Aprobado"
-                      : pasaporteData?.pendiente
-                      ? "Pendiente"
-                      : "No registrado"}
-                  </span>
+                  {/* Imagen generada */}
+                  {(generatedImageUrl || ineData.imageUrl) && (
+                    <div className="mt-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <ImageIcon className="h-5 w-5 text-white/60" />
+                        <h3 className="text-lg font-semibold text-white">Imagen del INE</h3>
+                        <a
+                          href={generatedImageUrl || ineData.imageUrl}
+                          download={`INE_${user?.username}.png`}
+                          className="flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 transition-colors"
+                        >
+                          <Download className="h-4 w-4" />
+                          Descargar
+                        </a>
+                      </div>
+                      <div className="bg-black/20 rounded-lg p-4 border border-white/10">
+                        <img
+                          src={generatedImageUrl || ineData.imageUrl}
+                          alt="INE Generada"
+                          className="max-w-full h-auto rounded-lg shadow-lg"
+                          style={{ maxHeight: "400px" }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {pasaporteData ? (
+              ) : pasaporteData ? (
+                /* Pasaporte Section */
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-blue-500/20 rounded-lg">
+                      <FileText className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Pasaporte</h2>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        pasaporteData?.aprobada
+                          ? "bg-green-500/20 text-green-400"
+                          : pasaporteData?.pendiente
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}
+                    >
+                      {pasaporteData?.aprobada
+                        ? "Aprobado"
+                        : pasaporteData?.pendiente
+                        ? "Pendiente"
+                        : "No registrado"}
+                    </span>
+                  {/* Datos del Pasaporte */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
@@ -966,18 +1035,19 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <FileText className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      No tienes Pasaporte registrado
-                    </h3>
-                    <p className="text-white/60">
-                      Solicita tu Pasaporte en el servidor para verlo aquí
-                    </p>
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                /* No hay documentos */
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl text-center">
+                  <IdCard className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    No tienes documentos registrados
+                  </h3>
+                  <p className="text-white/60">
+                    Solicita tu INE o Pasaporte en el servidor para verlos aquí
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}

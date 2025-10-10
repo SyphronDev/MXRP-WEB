@@ -89,6 +89,7 @@ exports.handler = async (event, context) => {
         aprobada: ine.Aprobada,
         aprobadaPor: ine.AprobadaPor,
         aprobadaEn: ine.AprobadaEn,
+        canGenerateImage: ine.Aprobada && !ine.Pendiente, // Solo puede generar imagen si está aprobada
       },
     };
 
