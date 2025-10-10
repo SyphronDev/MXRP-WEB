@@ -66,7 +66,7 @@ export default function Hero() {
         </div>
 
         {/* Título principal */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-mxrp-text bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg">
           MXRP
         </h1>
 

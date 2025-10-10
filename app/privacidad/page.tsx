@@ -54,29 +54,33 @@ export default function PrivacidadPage() {
                   <li className="flex items-start">
                     <span className="text-white mr-2">•</span>
                     <div>
-                      <strong className="text-white">Información de cuenta:</strong> Nombre de usuario,
-                      email, fecha de registro
+                      <strong className="text-white">
+                        Información de cuenta:
+                      </strong>{" "}
+                      Nombre de usuario, email, fecha de registro
                     </div>
                   </li>
                   <li className="flex items-start">
                     <span className="text-white mr-2">•</span>
                     <div>
-                      <strong className="text-white">Datos de juego:</strong> Progreso, estadísticas,
-                      configuraciones
+                      <strong className="text-white">Datos de juego:</strong>{" "}
+                      Progreso, estadísticas, configuraciones
                     </div>
                   </li>
                   <li className="flex items-start">
                     <span className="text-white mr-2">•</span>
                     <div>
-                      <strong className="text-white">Información de pago:</strong> Método de pago,
-                      historial de transacciones
+                      <strong className="text-white">
+                        Información de pago:
+                      </strong>{" "}
+                      Método de pago, historial de transacciones
                     </div>
                   </li>
                   <li className="flex items-start">
                     <span className="text-white mr-2">•</span>
                     <div>
-                      <strong className="text-white">Datos técnicos:</strong> IP, navegador,
-                      dispositivo (anónimos)
+                      <strong className="text-white">Datos técnicos:</strong>{" "}
+                      IP, navegador, dispositivo (anónimos)
                     </div>
                   </li>
                 </ul>
@@ -100,29 +104,37 @@ export default function PrivacidadPage() {
                   <li className="flex items-start">
                     <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong className="text-white">Encriptación SSL/TLS:</strong> Todos los datos se
-                      transmiten de forma segura
+                      <strong className="text-white">
+                        Encriptación SSL/TLS:
+                      </strong>{" "}
+                      Todos los datos se transmiten de forma segura
                     </div>
                   </li>
                   <li className="flex items-start">
                     <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong className="text-white">Encriptación de base de datos:</strong> Datos
-                      sensibles encriptados en reposo
+                      <strong className="text-white">
+                        Encriptación de base de datos:
+                      </strong>{" "}
+                      Datos sensibles encriptados en reposo
                     </div>
                   </li>
                   <li className="flex items-start">
                     <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong className="text-white">Acceso restringido:</strong> Solo personal
-                      autorizado puede acceder a datos
+                      <strong className="text-white">
+                        Acceso restringido:
+                      </strong>{" "}
+                      Solo personal autorizado puede acceder a datos
                     </div>
                   </li>
                   <li className="flex items-start">
                     <Lock className="h-5 w-5 text-white mr-2 mt-1" />
                     <div>
-                      <strong className="text-white">Monitoreo continuo:</strong> Sistemas de detección
-                      de intrusiones 24/7
+                      <strong className="text-white">
+                        Monitoreo continuo:
+                      </strong>{" "}
+                      Sistemas de detección de intrusiones 24/7
                     </div>
                   </li>
                 </ul>
@@ -200,38 +212,38 @@ export default function PrivacidadPage() {
 
                 <ul className="text-white/90 space-y-3">
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Acceso:</strong> Solicitar una copia de tus datos
-                      personales
+                      <strong className="text-white">Acceso:</strong> Solicitar
+                      una copia de tus datos personales
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Rectificación:</strong> Corregir datos inexactos o
-                      incompletos
+                      <strong className="text-white">Rectificación:</strong>{" "}
+                      Corregir datos inexactos o incompletos
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Eliminación:</strong> Solicitar la eliminación de
-                      tus datos
+                      <strong className="text-white">Eliminación:</strong>{" "}
+                      Solicitar la eliminación de tus datos
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Portabilidad:</strong> Transferir tus datos a otro
-                      servicio
+                      <strong className="text-white">Portabilidad:</strong>{" "}
+                      Transferir tus datos a otro servicio
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <div>
-                      <strong>Oposición:</strong> Oponerte al procesamiento de
-                      tus datos
+                      <strong className="text-white">Oposición:</strong>{" "}
+                      Oponerte al procesamiento de tus datos
                     </div>
                   </li>
                 </ul>
@@ -239,7 +251,7 @@ export default function PrivacidadPage() {
 
               {/* 5. Retención de Datos */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">
+                <h2 className="text-2xl font-bold text-white mb-6">
                   5. Retención de Datos
                 </h2>
 
@@ -277,7 +289,7 @@ export default function PrivacidadPage() {
 
               {/* 6. Contacto */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">
+                <h2 className="text-2xl font-bold text-white mb-6">
                   6. Contacto
                 </h2>
 
@@ -287,19 +299,19 @@ export default function PrivacidadPage() {
 
                 <div className="space-y-3">
                   <div className="flex items-center">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <span className="text-white/90">
                       Discord: Abre un ticket en nuestro servidor
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <span className="text-white/90">
                       Email: privacidad@mxrp.com
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-primary mr-2">•</span>
+                    <span className="text-white mr-2">•</span>
                     <span className="text-white/90">
                       Tiempo de respuesta: Máximo 72 horas
                     </span>
