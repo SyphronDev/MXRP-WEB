@@ -26,6 +26,8 @@ import {
   AlertTriangle,
   Users,
   Scale,
+  ShoppingCart,
+  Store,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -74,8 +76,11 @@ interface EconomyData {
 interface InventoryItem {
   articulo: string;
   cantidad: number;
+  unidad: string;
+  cantidadFormateada: string;
   identificador: string;
   fechaCompra: string;
+  precioCompra: number;
 }
 
 interface AlertItem {
@@ -127,6 +132,23 @@ interface UsuarioPeligroso {
   fechaCreacion: string;
   antecedentesActivos: number;
   estadisticas: EstadisticasAntecedentes;
+}
+
+interface TiendaItem {
+  articulo: string;
+  cantidad: number;
+  unidad: string;
+  cantidadFormateada: string;
+  precio: number;
+  identificador: string;
+  fechaAgregado: string;
+}
+
+interface TiendaData {
+  tipo: string;
+  inventario: TiendaItem[];
+  totalItems: number;
+  totalValue: number;
 }
 
 interface IneData {
@@ -182,6 +204,8 @@ export default function Dashboard() {
   const [usuariosPeligrosos, setUsuariosPeligrosos] = useState<
     UsuarioPeligroso[]
   >([]);
+  const [tiendaData, setTiendaData] = useState<TiendaData[]>([]);
+  const [isComprando, setIsComprando] = useState(false);
   const [ineData, setIneData] = useState<IneData | null>(null);
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
@@ -195,7 +219,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<
-    "economy" | "inventory" | "documents" | "antecedentes"
+    "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
   const router = useRouter();
 
@@ -214,6 +238,7 @@ export default function Dashboard() {
     fetchProtocoloData();
     fetchAntecedentesData(userData.id);
     fetchUsuariosPeligrosos();
+    fetchTiendaData();
     fetchIneData(userData.id);
     fetchPasaporteData(userData.id);
   }, [router]);
@@ -368,6 +393,72 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching usuarios peligrosos data:", error);
+    }
+  };
+
+  const fetchTiendaData = async () => {
+    try {
+      const response = await fetch("/.netlify/functions/tienda", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("Tienda data recibida:", data.tiendas);
+        setTiendaData(data.tiendas || []);
+      } else {
+        console.error("Error fetching tienda data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching tienda data:", error);
+    }
+  };
+
+  const comprarArticulo = async (
+    articulo: string,
+    cantidad: number,
+    tipoTienda: string
+  ) => {
+    if (!user) return;
+
+    setIsComprando(true);
+    try {
+      const response = await fetch("/.netlify/functions/comprar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          discordId: user.id,
+          articulo,
+          cantidad,
+          tipoTienda,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(
+          `¡Compra exitosa! Compraste ${cantidad} ${articulo} por $${data.compra.costoTotal}`
+        );
+        // Recargar datos
+        fetchEconomyData(user.id);
+        fetchInventoryData(user.id);
+        fetchTiendaData();
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error comprando artículo:", error);
+      alert("Error al realizar la compra");
+    } finally {
+      setIsComprando(false);
     }
   };
 
@@ -770,6 +861,17 @@ export default function Dashboard() {
                 <Scale className="h-4 w-4" />
                 <span className="text-sm sm:text-base">Antecedentes</span>
               </button>
+              <button
+                onClick={() => setActiveTab("tienda")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "tienda"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Store className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Tienda</span>
+              </button>
             </div>
           </div>
         </div>
@@ -980,43 +1082,53 @@ export default function Dashboard() {
         {activeTab === "inventory" && (
           <>
             {/* Inventory Section */}
-            <div className="mt-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-purple-500/20 rounded-lg">
-                  <Package className="h-6 w-6 text-purple-400" />
+            <div className="mt-8 sm:mt-12">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
+                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                    Inventario
+                  </h2>
                 </div>
-                <h2 className="text-2xl font-bold text-white">Inventario</h2>
-                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
+                <span className="px-2 sm:px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
                   {inventoryData.length} artículos
                 </span>
               </div>
 
               {inventoryData.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {inventoryData.map((item, index) => (
                     <div
                       key={index}
                       className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl hover:bg-black/50 transition-all duration-300"
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-white font-semibold text-lg">
+                        <h3 className="text-white font-semibold text-sm sm:text-base break-words">
                           {item.articulo}
                         </h3>
                         <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
-                          x{item.cantidad}
+                          {item.cantidadFormateada}
                         </span>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-white/60 text-sm">
+                        <p className="text-white/60 text-xs sm:text-sm">
                           <span className="font-medium">ID:</span>{" "}
-                          {item.identificador}
+                          <span className="truncate">{item.identificador}</span>
                         </p>
-                        <p className="text-white/60 text-sm">
+                        <p className="text-white/60 text-xs sm:text-sm">
                           <span className="font-medium">Comprado:</span>{" "}
                           {new Date(item.fechaCompra).toLocaleDateString(
                             "es-MX"
                           )}
                         </p>
+                        {item.precioCompra > 0 && (
+                          <p className="text-white/40 text-xs">
+                            <span className="font-medium">Precio:</span> $
+                            {formatCurrency(item.precioCompra)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1567,6 +1679,157 @@ export default function Dashboard() {
                   </h3>
                   <p className="text-white/60 text-sm sm:text-base">
                     Todos los usuarios están en buen estado
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Tienda Tab */}
+        {activeTab === "tienda" && (
+          <>
+            {/* Tienda Section */}
+            <div className="mt-8 sm:mt-12">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
+                    <Store className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                    Tienda MXRP
+                  </h2>
+                </div>
+                <span className="px-2 sm:px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
+                  {tiendaData.reduce(
+                    (sum, tienda) => sum + tienda.totalItems,
+                    0
+                  )}{" "}
+                  artículos
+                </span>
+              </div>
+
+              {tiendaData.length > 0 ? (
+                <div className="space-y-6">
+                  {tiendaData.map((tienda, tiendaIndex) => (
+                    <div
+                      key={tiendaIndex}
+                      className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div
+                          className={`p-2 sm:p-3 rounded-lg ${
+                            tienda.tipo === "legal"
+                              ? "bg-blue-500/20"
+                              : "bg-red-500/20"
+                          }`}
+                        >
+                          <ShoppingCart
+                            className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                              tienda.tipo === "legal"
+                                ? "text-blue-400"
+                                : "text-red-400"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-lg sm:text-xl">
+                            Tienda{" "}
+                            {tienda.tipo === "legal" ? "Legal" : "Ilegal"}
+                          </h3>
+                          <p className="text-white/60 text-sm">
+                            {tienda.totalItems} artículos • Valor total: $
+                            {formatCurrency(tienda.totalValue)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {tienda.inventario.map((item, itemIndex) => (
+                          <div
+                            key={itemIndex}
+                            className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-white font-semibold text-sm sm:text-base break-words">
+                                {item.articulo}
+                              </h4>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  tienda.tipo === "legal"
+                                    ? "bg-blue-500/20 text-blue-400"
+                                    : "bg-red-500/20 text-red-400"
+                                }`}
+                              >
+                                {item.cantidadFormateada}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                              <div className="flex justify-between">
+                                <span className="text-white/60 text-xs sm:text-sm">
+                                  Precio:
+                                </span>
+                                <span className="text-white text-xs sm:text-sm font-semibold">
+                                  ${formatCurrency(item.precio)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-white/60 text-xs sm:text-sm">
+                                  ID:
+                                </span>
+                                <span className="text-white text-xs sm:text-sm truncate">
+                                  {item.identificador}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() =>
+                                  comprarArticulo(item.articulo, 1, tienda.tipo)
+                                }
+                                disabled={isComprando || item.cantidad < 1}
+                                className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                                  isComprando || item.cantidad < 1
+                                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                                    : tienda.tipo === "legal"
+                                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                                    : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                                }`}
+                              >
+                                {isComprando ? "Comprando..." : "Comprar 1"}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  comprarArticulo(item.articulo, 5, tienda.tipo)
+                                }
+                                disabled={isComprando || item.cantidad < 5}
+                                className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                                  isComprando || item.cantidad < 5
+                                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                                    : tienda.tipo === "legal"
+                                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                                    : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                                }`}
+                              >
+                                {isComprando ? "Comprando..." : "Comprar 5"}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 text-center">
+                  <Store className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
+                    Tienda vacía
+                  </h3>
+                  <p className="text-white/60 text-sm sm:text-base">
+                    No hay artículos disponibles en la tienda
                   </p>
                 </div>
               )}

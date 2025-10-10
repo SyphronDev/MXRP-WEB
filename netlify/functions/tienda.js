@@ -1,5 +1,5 @@
 const { connectDB } = require("./utils/database");
-const InventarioUsuario = require("./models/InventarioUsuario");
+const TiendaSchema = require("./models/TiendaSchema");
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -47,65 +47,12 @@ exports.handler = async (event, context) => {
     // Conectar a la base de datos
     await connectDB();
 
-    // Parsear el cuerpo de la petición
-    let discordId;
-    try {
-      const body = JSON.parse(event.body);
-      discordId = body.discordId;
-    } catch (parseError) {
-      console.error("Failed to parse request body:", parseError);
-      return {
-        statusCode: 400,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          error: "Invalid request body",
-          message: "Request body must be valid JSON",
-        }),
-      };
-    }
-
-    if (!discordId) {
-      console.error("Missing discordId in request");
-      return {
-        statusCode: 400,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          error: "Discord ID is required",
-        }),
-      };
-    }
-
     const guildId = process.env.GUILD_ID;
 
-    // Buscar el inventario del usuario
-    const inventoryData = await InventarioUsuario.findOne({
+    // Buscar todas las tiendas del servidor
+    const tiendasData = await TiendaSchema.find({
       GuildId: guildId,
-      UserId: discordId,
     });
-
-    if (!inventoryData) {
-      console.log(
-        `No inventory data found for user ${discordId} in guild ${guildId}`
-      );
-      return {
-        statusCode: 200,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          success: true,
-          inventory: [],
-          totalItems: 0,
-        }),
-      };
-    }
 
     // Función para formatear cantidad con unidad
     const formatQuantity = (amount, unit) => {
@@ -125,26 +72,29 @@ exports.handler = async (event, context) => {
     };
 
     // Preparar los datos de respuesta
-    const inventoryResponse = {
+    const tiendaResponse = {
       success: true,
-      inventory: inventoryData.Inventario.map((item) => ({
-        articulo: item.Articulo,
-        cantidad: item.Cantidad,
-        unidad: item.Unidad || "x",
-        cantidadFormateada: formatQuantity(item.Cantidad, item.Unidad),
-        identificador: item.Identificador,
-        fechaCompra: item.FechaCompra,
-        precioCompra: item.PrecioCompra || 0,
+      tiendas: tiendasData.map((tienda) => ({
+        tipo: tienda.Tipo,
+        inventario: tienda.Inventario.map((item) => ({
+          articulo: item.Articulo,
+          cantidad: item.Cantidad,
+          unidad: item.Unidad || "x",
+          cantidadFormateada: formatQuantity(item.Cantidad, item.Unidad),
+          precio: item.Precio,
+          identificador: item.Identificador,
+          fechaAgregado: item.FechaAgregado,
+        })),
+        totalItems: tienda.Inventario.length,
+        totalValue: tienda.Inventario.reduce(
+          (sum, item) => sum + item.Precio * item.Cantidad,
+          0
+        ),
       })),
-      totalItems: inventoryData.Inventario.length,
-      totalQuantity: inventoryData.Inventario.reduce(
-        (sum, item) => sum + item.Cantidad,
-        0
-      ),
     };
 
     console.log(
-      `Successfully retrieved inventory data for user ${discordId}: ${inventoryResponse.totalItems} items`
+      `Successfully retrieved shop data for guild ${guildId}: ${tiendaResponse.tiendas.length} shops`
     );
 
     return {
@@ -153,10 +103,10 @@ exports.handler = async (event, context) => {
         ...headers,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(inventoryResponse),
+      body: JSON.stringify(tiendaResponse),
     };
   } catch (error) {
-    console.error("Inventory error:", error);
+    console.error("Tienda error:", error);
     return {
       statusCode: 500,
       headers: {

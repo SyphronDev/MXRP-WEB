@@ -21,6 +21,10 @@ const InventarioUsuarioSchema = new mongoose.Schema(
           required: true,
           default: 1,
         },
+        Unidad: {
+          type: String,
+          default: "x",
+        },
         Identificador: {
           type: String,
           required: true,
@@ -28,6 +32,10 @@ const InventarioUsuarioSchema = new mongoose.Schema(
         FechaCompra: {
           type: Date,
           default: Date.now,
+        },
+        PrecioCompra: {
+          type: Number,
+          default: 0,
         },
       },
     ],
