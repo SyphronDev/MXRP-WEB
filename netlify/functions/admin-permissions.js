@@ -286,10 +286,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Aquí normalmente harías una llamada a la API de Discord para obtener los roles del usuario
-    // Por ahora simularemos que tenemos los roles del usuario
-    // En producción, necesitarías hacer una llamada a Discord API con el token del bot
-
+    // Verificar que el usuario esté en el servidor y tenga roles administrativos
     const permisosManager = new PermisosManager(guildId);
     const permisoStatus = await permisosManager.loadPermisos();
 
@@ -305,9 +302,82 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Simular verificación de permisos - en producción necesitarías los roles reales del usuario
-    // Por ahora retornamos true para usuarios con cualquier rol administrativo
-    const hasAdminAccess = true; // Cambiar por verificación real de roles
+    // Obtener información del usuario desde Discord API
+    let userRoles = [];
+    let isInGuild = false;
+
+    try {
+      // Verificar si el usuario está en el servidor
+      const guildMemberResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (guildMemberResponse.ok) {
+        const memberData = await guildMemberResponse.json();
+        isInGuild = true;
+        userRoles = memberData.roles || [];
+      } else if (guildMemberResponse.status === 404) {
+        // Usuario no está en el servidor
+        isInGuild = false;
+      } else {
+        console.error(
+          "Error fetching guild member:",
+          guildMemberResponse.status
+        );
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: "Error al verificar membresía del servidor",
+            hasAdminAccess: false,
+          }),
+        };
+      }
+    } catch (error) {
+      console.error("Error in Discord API call:", error);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Error de conexión con Discord",
+          hasAdminAccess: false,
+        }),
+      };
+    }
+
+    // Verificar que el usuario esté en el servidor
+    if (!isInGuild) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Usuario no está en el servidor",
+          hasAdminAccess: false,
+        }),
+      };
+    }
+
+    // Verificar permisos usando la misma lógica que el comando /perfil del bot
+    const allowedRoles = [
+      ...permisosManager.highRoles,
+      ...permisosManager.mediumRoles,
+      ...permisosManager.SpecialPerm,
+      ...permisosManager.HighEnd,
+      ...permisosManager.CharacterKill,
+    ];
+
+    const hasAdminAccess = userRoles.some((roleId) =>
+      allowedRoles.includes(roleId)
+    );
 
     return {
       statusCode: 200,
