@@ -29,6 +29,7 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -98,7 +99,17 @@ export default function Header() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("discord_user");
+    setShowDropdown(false);
   };
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+    };
+  }, [hoverTimeout]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-black/20 backdrop-blur-md supports-[backdrop-filter]:bg-black/10">
@@ -154,10 +165,24 @@ export default function Header() {
             {user ? (
               <div
                 className="relative"
-                onMouseEnter={() => setIsHovering(true)}
+                onMouseEnter={() => {
+                  setIsHovering(true);
+                  // Limpiar timeout si existe
+                  if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                    setHoverTimeout(null);
+                  }
+                }}
                 onMouseLeave={() => {
                   setIsHovering(false);
-                  setShowDropdown(false);
+                  // Solo cerrar si no está abierto por click
+                  if (!showDropdown) {
+                    // Cerrar después de un pequeño delay
+                    const timeout = setTimeout(() => {
+                      setShowDropdown(false);
+                    }, 150);
+                    setHoverTimeout(timeout);
+                  }
                 }}
               >
                 <div
@@ -178,7 +203,28 @@ export default function Header() {
                 </div>
 
                 {(showDropdown || isHovering) && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-black/95 backdrop-blur-md border border-white/20 rounded-lg shadow-xl z-50">
+                  <div
+                    className="absolute top-full right-0 mt-2 w-48 bg-black/95 backdrop-blur-md border border-white/20 rounded-lg shadow-xl z-50"
+                    onMouseEnter={() => {
+                      setIsHovering(true);
+                      // Limpiar timeout si existe
+                      if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        setHoverTimeout(null);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setIsHovering(false);
+                      // Solo cerrar si no está abierto por click
+                      if (!showDropdown) {
+                        // Cerrar después de un pequeño delay
+                        const timeout = setTimeout(() => {
+                          setShowDropdown(false);
+                        }, 150);
+                        setHoverTimeout(timeout);
+                      }
+                    }}
+                  >
                     <div className="py-2">
                       <button
                         className="w-full px-4 py-2 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-2"
