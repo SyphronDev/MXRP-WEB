@@ -130,7 +130,9 @@ export default function Dashboard() {
   const [pasaporteData, setPasaporteData] = useState<PasaporteData | null>(
     null
   );
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(
+    null
+  );
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [economyLoading, setEconomyLoading] = useState(true);
@@ -833,7 +835,7 @@ export default function Dashboard() {
                           : "No registrada"}
                       </span>
                     </div>
-                    
+
                     {/* Botón para generar imagen */}
                     {ineData.canGenerateImage && (
                       <button
@@ -922,7 +924,9 @@ export default function Dashboard() {
                     <div className="mt-6">
                       <div className="flex items-center gap-3 mb-4">
                         <ImageIcon className="h-5 w-5 text-white/60" />
-                        <h3 className="text-lg font-semibold text-white">Imagen del INE</h3>
+                        <h3 className="text-lg font-semibold text-white">
+                          Imagen del INE
+                        </h3>
                         <a
                           href={generatedImageUrl || ineData.imageUrl}
                           download={`INE_${user?.username}.png`}
@@ -966,6 +970,8 @@ export default function Dashboard() {
                         ? "Pendiente"
                         : "No registrado"}
                     </span>
+                  </div>
+
                   {/* Datos del Pasaporte */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
