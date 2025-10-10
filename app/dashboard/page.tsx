@@ -1172,7 +1172,7 @@ export default function Dashboard() {
                         </p>
                         {item.precioCompra > 0 && (
                           <p className="text-white/40 text-xs">
-                            <span className="font-medium">Precio:</span> $
+                            <span className="font-medium">Precio:</span>
                             {formatCurrency(item.precioCompra)}
                           </p>
                         )}
