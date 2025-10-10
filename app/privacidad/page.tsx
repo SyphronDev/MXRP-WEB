@@ -190,7 +190,7 @@ export default function PrivacidadPage() {
 
               {/* 4. Tus Derechos */}
               <section className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">
+                <h2 className="text-2xl font-bold text-white mb-6">
                   4. Tus Derechos
                 </h2>
 
