@@ -1447,9 +1447,11 @@ export default function Dashboard() {
                         </a>
                       </div>
                       <div className="bg-black/20 rounded-lg p-4 border border-white/10">
-                        <img
+                        <Image
                           src={generatedImageUrl || ineData.imageUrl}
                           alt="INE Generada"
+                          width={400}
+                          height={400}
                           className="max-w-full h-auto rounded-lg shadow-lg"
                           style={{ maxHeight: "400px" }}
                         />
