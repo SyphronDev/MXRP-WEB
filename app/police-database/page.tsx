@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Card,
@@ -65,7 +65,7 @@ interface AntecedentesCompletos {
   };
 }
 
-export default function PoliceDatabasePage() {
+function PoliceDatabaseContent() {
   const searchParams = useSearchParams();
   const discordId = searchParams.get("discordId");
   const guildId = searchParams.get("guildId");
@@ -77,10 +77,18 @@ export default function PoliceDatabasePage() {
 
   // Estados para gestión de cargos
   const [showAddCargo, setShowAddCargo] = useState(false);
-  const [newCargo, setNewCargo] = useState({
+  const [newCargo, setNewCargo] = useState<{
+    nombre: string;
+    descripcion: string;
+    severidad: "Leve" | "Moderado" | "Grave" | "Muy Grave";
+    tiempoMinimo: string;
+    tiempoMaximo: string;
+    multaMinima: string;
+    multaMaxima: string;
+  }>({
     nombre: "",
     descripcion: "",
-    severidad: "Leve" as const,
+    severidad: "Leve",
     tiempoMinimo: "",
     tiempoMaximo: "",
     multaMinima: "",
@@ -93,12 +101,6 @@ export default function PoliceDatabasePage() {
   const [selectedUser, setSelectedUser] =
     useState<AntecedentesCompletos | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
-
-  useEffect(() => {
-    if (discordId && guildId) {
-      loadCargos();
-    }
-  }, [discordId, guildId, loadCargos]);
 
   const loadCargos = useCallback(async () => {
     try {
@@ -129,6 +131,12 @@ export default function PoliceDatabasePage() {
       setLoading(false);
     }
   }, [discordId, guildId]);
+
+  useEffect(() => {
+    if (discordId && guildId) {
+      loadCargos();
+    }
+  }, [discordId, guildId, loadCargos]);
 
   const handleAddCargo = async () => {
     try {
@@ -769,5 +777,24 @@ export default function PoliceDatabasePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PoliceDatabasePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-white/80 text-lg">
+              Cargando base de datos policial...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <PoliceDatabaseContent />
+    </Suspense>
   );
 }
