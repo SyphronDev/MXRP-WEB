@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Card,
@@ -98,9 +98,9 @@ export default function PoliceDatabasePage() {
     if (discordId && guildId) {
       loadCargos();
     }
-  }, [discordId, guildId]);
+  }, [discordId, guildId, loadCargos]);
 
-  const loadCargos = async () => {
+  const loadCargos = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/.netlify/functions/police-database", {
@@ -128,7 +128,7 @@ export default function PoliceDatabasePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [discordId, guildId]);
 
   const handleAddCargo = async () => {
     try {
@@ -377,7 +377,11 @@ export default function PoliceDatabasePage() {
                         onChange={(e) =>
                           setNewCargo({
                             ...newCargo,
-                            severidad: e.target.value as any,
+                            severidad: e.target.value as
+                              | "Leve"
+                              | "Moderado"
+                              | "Grave"
+                              | "Muy Grave",
                           })
                         }
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
