@@ -198,41 +198,109 @@ function PoliceDatabaseContent() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Background particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-discord/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
       </div>
+
+      {/* Grid background */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+            linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+          `,
+            backgroundSize: "50px 50px",
+          }}
+        ></div>
+      </div>
+
+      {/* Scanning effect overlay */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 via-transparent to-transparent animate-scan"></div>
+      </div>
+
+      <style jsx>{`
+        @keyframes scan {
+          0% {
+            transform: translateY(-100%);
+          }
+          100% {
+            transform: translateY(100vh);
+          }
+        }
+        .animate-scan {
+          animation: scan 8s linear infinite;
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+      `}</style>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            {/* Logo y título */}
-            <div className="flex items-center gap-4">
-              <Image
-                src="/images/Icon.png"
-                alt="MXRP"
-                width={48}
-                height={48}
-                className="rounded-md"
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-white">
-                  Base de Datos Policial
-                </h1>
-                <p className="text-white/60">
-                  Sistema de consulta de antecedentes
-                </p>
+          <div className="bg-black/40 backdrop-blur-md border border-blue-500/30 rounded-xl p-6 shadow-lg shadow-blue-500/10">
+            <div className="flex items-center justify-between">
+              {/* Logo y título */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Image
+                    src="/images/Icon.png"
+                    alt="MXRP"
+                    width={56}
+                    height={56}
+                    className="rounded-md"
+                  />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-white mb-1">
+                    Base de Datos Policial
+                  </h1>
+                  <div className="flex items-center gap-3">
+                    <p className="text-white/60">
+                      Sistema de consulta de antecedentes
+                    </p>
+                    <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30 animate-pulse">
+                      SISTEMA ACTIVO
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Botón de regreso */}
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Volver al Dashboard</span>
-            </Button>
+              {/* Botón de regreso */}
+              <Button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Volver al Dashboard</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -252,11 +320,11 @@ function PoliceDatabaseContent() {
 
         {/* Barra de búsqueda */}
         <div className="mb-6">
-          <Card className="bg-black/40 backdrop-blur-md border-white/20">
+          <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10">
             <CardContent className="p-4">
               <div className="flex space-x-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400/60" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -264,14 +332,14 @@ function PoliceDatabaseContent() {
                     onKeyPress={(e) =>
                       e.key === "Enter" && handleSearchAntecedentes()
                     }
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-discord transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="Buscar por ID o username (dejar vacío para ver todos)..."
                   />
                 </div>
                 <Button
                   onClick={handleSearchAntecedentes}
                   disabled={searchLoading}
-                  className="bg-discord hover:bg-discord/80 text-white px-6"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 font-medium shadow-lg shadow-blue-500/20 transition-all duration-200"
                 >
                   {searchLoading ? "Buscando..." : "Buscar"}
                 </Button>
@@ -283,14 +351,37 @@ function PoliceDatabaseContent() {
         {/* Resultados */}
         {searchResults.length > 0 ? (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">
-              Resultados ({searchResults.length})
-            </h3>
+            <div className="flex items-center justify-between bg-black/40 backdrop-blur-md border border-blue-500/20 rounded-lg p-4 shadow-lg shadow-blue-500/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Shield className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Resultados de Búsqueda
+                  </h3>
+                  <p className="text-white/40 text-sm">
+                    {searchResults.length}{" "}
+                    {searchResults.length === 1
+                      ? "usuario encontrado"
+                      : "usuarios encontrados"}
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full border border-blue-500/30">
+                {searchResults.length}
+              </span>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResults.map((result) => (
+              {searchResults.map((result, index) => (
                 <Card
                   key={result.userId}
-                  className="bg-black/40 backdrop-blur-md border-white/20 hover:bg-black/50 transition-all duration-300"
+                  className={`bg-black/40 backdrop-blur-md hover:bg-black/50 transition-all duration-300 animate-fadeInUp hover:shadow-lg ${
+                    result.usuarioPeligroso
+                      ? "border-red-500/40 hover:border-red-500/60 hover:shadow-red-500/20"
+                      : "border-white/20 hover:border-blue-500/40 hover:shadow-blue-500/20"
+                  }`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -303,8 +394,8 @@ function PoliceDatabaseContent() {
                         </p>
                       </div>
                       {result.usuarioPeligroso && (
-                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30">
-                          PELIGROSO
+                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse">
+                          ⚠ PELIGROSO
                         </span>
                       )}
                     </div>
@@ -348,7 +439,7 @@ function PoliceDatabaseContent() {
 
                     <Button
                       onClick={() => handleViewDetails(result.userId)}
-                      className="w-full bg-discord hover:bg-discord/80"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200"
                     >
                       Ver Detalles
                     </Button>
@@ -379,29 +470,43 @@ function PoliceDatabaseContent() {
 
         {/* Modal de Detalles del Usuario */}
         {selectedUser && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-white/20 rounded-xl w-full max-w-6xl my-8">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-fadeIn">
+            <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/40 rounded-xl w-full max-w-6xl my-8 shadow-2xl shadow-blue-500/20 animate-fadeInUp">
               <div className="p-6">
                 {/* Header del Modal */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
                   <div className="flex items-center gap-4">
-                    <Image
-                      src="/images/Icon.png"
-                      alt="MXRP"
-                      width={48}
-                      height={48}
-                      className="rounded-md"
-                    />
+                    <div className="relative">
+                      <Image
+                        src="/images/Icon.png"
+                        alt="MXRP"
+                        width={48}
+                        height={48}
+                        className="rounded-md"
+                      />
+                      {selectedUser.usuarioPeligroso && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+                      )}
+                    </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white">
-                        {selectedUser.username || "Usuario Desconocido"}
-                      </h2>
-                      <p className="text-white/60">ID: {selectedUser.userId}</p>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-white">
+                          {selectedUser.username || "Usuario Desconocido"}
+                        </h2>
+                        {selectedUser.usuarioPeligroso && (
+                          <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse">
+                            ⚠ PELIGROSO
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-white/60 text-sm">
+                        ID: {selectedUser.userId}
+                      </p>
                     </div>
                   </div>
                   <Button
                     onClick={() => setSelectedUser(null)}
-                    className="bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-white/10"
+                    className="bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
                   >
                     Cerrar
                   </Button>
@@ -409,7 +514,7 @@ function PoliceDatabaseContent() {
 
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <Card className="bg-black/40 backdrop-blur-md border-white/20">
+                  <Card className="bg-black/40 backdrop-blur-md border-red-500/20 shadow-lg shadow-red-500/10 hover:border-red-500/40 transition-all duration-200">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-red-500/20 rounded-lg">
@@ -425,7 +530,7 @@ function PoliceDatabaseContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-black/40 backdrop-blur-md border-white/20">
+                  <Card className="bg-black/40 backdrop-blur-md border-yellow-500/20 shadow-lg shadow-yellow-500/10 hover:border-yellow-500/40 transition-all duration-200">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -441,7 +546,7 @@ function PoliceDatabaseContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-black/40 backdrop-blur-md border-white/20">
+                  <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 hover:border-blue-500/40 transition-all duration-200">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -458,10 +563,10 @@ function PoliceDatabaseContent() {
                   </Card>
 
                   <Card
-                    className={`backdrop-blur-md ${
+                    className={`backdrop-blur-md shadow-lg transition-all duration-200 ${
                       selectedUser.usuarioPeligroso
-                        ? "bg-red-500/10 border-red-500/30"
-                        : "bg-green-500/10 border-green-500/30"
+                        ? "bg-red-500/10 border-red-500/40 shadow-red-500/20 hover:border-red-500/60"
+                        : "bg-green-500/10 border-green-500/40 shadow-green-500/20 hover:border-green-500/60"
                     }`}
                   >
                     <CardContent className="p-6">
@@ -497,11 +602,19 @@ function PoliceDatabaseContent() {
                 </div>
 
                 {/* Historial de Antecedentes */}
-                <Card className="bg-black/40 backdrop-blur-md border-white/20">
+                <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10">
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-4">
-                      Historial de Antecedentes
-                    </h3>
+                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
+                      <div className="p-2 bg-blue-500/20 rounded-lg">
+                        <Shield className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white">
+                        Historial de Antecedentes
+                      </h3>
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30">
+                        {selectedUser.antecedentes.length} registros
+                      </span>
+                    </div>
 
                     {selectedUser.antecedentes.length === 0 ? (
                       <div className="text-center py-8">
