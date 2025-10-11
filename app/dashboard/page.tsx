@@ -227,6 +227,7 @@ export default function Dashboard() {
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [, setCheckingAdminAccess] = useState(true);
+  const [hasPoliceAccess, setHasPoliceAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
@@ -251,6 +252,7 @@ export default function Dashboard() {
     fetchIneData(userData.id);
     fetchPasaporteData(userData.id);
     checkAdminAccess(userData.id);
+    checkPoliceAccess(userData.id);
   }, [router]);
 
   // Efecto para rotar las alertas cada 3 minutos
@@ -620,6 +622,33 @@ export default function Dashboard() {
     }
   };
 
+  const checkPoliceAccess = async (discordId: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/police-database", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "checkAccess",
+          discordId,
+          guildId: process.env.NEXT_PUBLIC_GUILD_ID,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.hasAccess) {
+        setHasPoliceAccess(true);
+      } else {
+        setHasPoliceAccess(false);
+      }
+    } catch (error) {
+      console.error("Error checking police access:", error);
+      setHasPoliceAccess(false);
+    }
+  };
+
   const generateIneImage = async (discordId: string) => {
     try {
       setIsGeneratingImage(true);
@@ -908,6 +937,23 @@ export default function Dashboard() {
               >
                 <Settings className="h-4 w-4" />
                 <span className="text-sm font-medium">Panel Admin</span>
+              </button>
+            )}
+
+            {/* Police Database Button */}
+            {hasPoliceAccess && (
+              <button
+                onClick={() =>
+                  router.push(
+                    `/police-database?discordId=${user?.id}&guildId=${process.env.NEXT_PUBLIC_GUILD_ID}`
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 text-blue-400 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-200 self-start sm:self-auto"
+              >
+                <Shield className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Base de Datos Policial
+                </span>
               </button>
             )}
 

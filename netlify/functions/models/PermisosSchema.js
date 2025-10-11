@@ -30,3 +30,4 @@ const PermisosSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Permisos", PermisosSchema);
+
