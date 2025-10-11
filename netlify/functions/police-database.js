@@ -457,21 +457,29 @@ async function searchAntecedentes(guildId, searchData, headers) {
       .sort({ FechaUltimoArresto: -1 })
       .limit(parseInt(limit));
 
-    const results = antecedentes.map((antecedente) => ({
-      userId: antecedente.UserId,
-      totalArrestos: antecedente.TotalArrestos,
-      usuarioPeligroso: antecedente.UsuarioPeligroso,
-      fechaUltimoArresto: antecedente.FechaUltimoArresto,
-      estadisticas: antecedente.getEstadisticas(),
-    }));
+    // Obtener información de usuarios de Discord
+    const resultsWithUsernames = await Promise.all(
+      antecedentes.map(async (antecedente) => {
+        const userInfo = await fetchDiscordUser(antecedente.UserId);
+        return {
+          userId: antecedente.UserId,
+          username: userInfo?.username || "Usuario Desconocido",
+          userTag: userInfo?.tag || antecedente.UserId,
+          totalArrestos: antecedente.TotalArrestos,
+          usuarioPeligroso: antecedente.UsuarioPeligroso,
+          fechaUltimoArresto: antecedente.FechaUltimoArresto,
+          estadisticas: antecedente.getEstadisticas(),
+        };
+      })
+    );
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        resultados: results,
-        total: results.length,
+        resultados: resultsWithUsernames,
+        total: resultsWithUsernames.length,
       }),
     };
   } catch (error) {
