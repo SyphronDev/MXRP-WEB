@@ -472,217 +472,235 @@ function PoliceDatabaseContent() {
 
         {/* Modal de Detalles del Usuario */}
         {selectedUser && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto animate-fadeIn">
-            <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/40 rounded-xl w-full max-w-6xl my-4 sm:my-8 shadow-2xl shadow-blue-500/20 animate-fadeInUp">
-              <div className="p-4 sm:p-6">
-                {/* Header del Modal */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 pb-4 border-b border-white/10 gap-3 sm:gap-0">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="relative">
-                      <Image
-                        src="/images/Icon.png"
-                        alt="MXRP"
-                        width={40}
-                        height={40}
-                        className="rounded-md sm:w-12 sm:h-12"
-                      />
-                      {selectedUser.usuarioPeligroso && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
-                          {selectedUser.username || "Usuario Desconocido"}
-                        </h2>
-                        {selectedUser.usuarioPeligroso && (
-                          <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse w-fit">
-                            ⚠ PELIGROSO
-                          </span>
-                        )}
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto animate-fadeIn">
+            <div className="min-h-screen flex items-start sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border-t sm:border border-blue-500/40 sm:rounded-xl w-full max-w-6xl sm:my-4 shadow-2xl shadow-blue-500/20 animate-fadeInUp min-h-screen sm:min-h-0">
+                <div className="p-4 sm:p-6">
+                  {/* Header del Modal */}
+                  <div className="sticky top-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-white/10 mb-4 sm:mb-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="relative">
+                          <Image
+                            src="/images/Icon.png"
+                            alt="MXRP"
+                            width={40}
+                            height={40}
+                            className="rounded-md sm:w-12 sm:h-12"
+                          />
+                          {selectedUser.usuarioPeligroso && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
+                              {selectedUser.username || "Usuario Desconocido"}
+                            </h2>
+                            {selectedUser.usuarioPeligroso && (
+                              <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse w-fit">
+                                ⚠ PELIGROSO
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-white/60 text-xs sm:text-sm truncate">
+                            ID: {selectedUser.userId}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-white/60 text-xs sm:text-sm truncate">
-                        ID: {selectedUser.userId}
-                      </p>
+                      <Button
+                        onClick={() => setSelectedUser(null)}
+                        className="bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/40 transition-all duration-200 px-4 sm:px-6 ml-2"
+                      >
+                        ✕
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => setSelectedUser(null)}
-                    className="bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200 w-full sm:w-auto justify-center"
-                  >
-                    Cerrar
-                  </Button>
-                </div>
 
-                {/* Estadísticas */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <Card className="bg-black/40 backdrop-blur-md border-red-500/20 shadow-lg shadow-red-500/10 hover:border-red-500/40 transition-all duration-200">
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <div className="p-1.5 sm:p-2 bg-red-500/20 rounded-lg">
-                          <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                  {/* Estadísticas */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <Card className="bg-black/40 backdrop-blur-md border-red-500/20 shadow-lg shadow-red-500/10 hover:border-red-500/40 transition-all duration-200">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                          <div className="p-1.5 sm:p-2 bg-red-500/20 rounded-lg">
+                            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                          </div>
+                          <span className="text-white/60 text-xs sm:text-sm">
+                            Total Arrestos
+                          </span>
                         </div>
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Total Arrestos
-                        </span>
-                      </div>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                        {selectedUser.totalArrestos}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-black/40 backdrop-blur-md border-yellow-500/20 shadow-lg shadow-yellow-500/10 hover:border-yellow-500/40 transition-all duration-200">
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <div className="p-1.5 sm:p-2 bg-yellow-500/20 rounded-lg">
-                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-                        </div>
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Arrestos Activos
-                        </span>
-                      </div>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                        {selectedUser.estadisticas.arrestosActivos}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 hover:border-blue-500/40 transition-all duration-200">
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-lg">
-                          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                        </div>
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Último Mes
-                        </span>
-                      </div>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                        {selectedUser.estadisticas.arrestosUltimoMes}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card
-                    className={`backdrop-blur-md shadow-lg transition-all duration-200 ${
-                      selectedUser.usuarioPeligroso
-                        ? "bg-red-500/10 border-red-500/40 shadow-red-500/20 hover:border-red-500/60"
-                        : "bg-green-500/10 border-green-500/40 shadow-green-500/20 hover:border-green-500/60"
-                    }`}
-                  >
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <div
-                          className={`p-1.5 sm:p-2 rounded-lg ${
-                            selectedUser.usuarioPeligroso
-                              ? "bg-red-500/20"
-                              : "bg-green-500/20"
-                          }`}
-                        >
-                          <Shield
-                            className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                              selectedUser.usuarioPeligroso
-                                ? "text-red-400"
-                                : "text-green-400"
-                            }`}
-                          />
-                        </div>
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Estado
-                        </span>
-                      </div>
-                      <p
-                        className={`text-lg sm:text-xl lg:text-2xl font-bold ${
-                          selectedUser.usuarioPeligroso
-                            ? "text-red-400"
-                            : "text-green-400"
-                        }`}
-                      >
-                        {selectedUser.usuarioPeligroso ? "PELIGROSO" : "SEGURO"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Historial de Antecedentes */}
-                <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-4 border-b border-white/10">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-bold text-white">
-                          Historial de Antecedentes
-                        </h3>
-                      </div>
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30 w-fit">
-                        {selectedUser.antecedentes.length} registros
-                      </span>
-                    </div>
-
-                    {selectedUser.antecedentes.length === 0 ? (
-                      <div className="text-center py-8">
-                        <Shield className="h-12 w-12 text-white/40 mx-auto mb-4" />
-                        <p className="text-white/60">
-                          No hay antecedentes registrados
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                          {selectedUser.totalArrestos}
                         </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3 max-h-80 sm:max-h-96 overflow-y-auto">
-                        {selectedUser.antecedentes.map((antecedente, index) => (
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-black/40 backdrop-blur-md border-yellow-500/20 shadow-lg shadow-yellow-500/10 hover:border-yellow-500/40 transition-all duration-200">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                          <div className="p-1.5 sm:p-2 bg-yellow-500/20 rounded-lg">
+                            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
+                          </div>
+                          <span className="text-white/60 text-xs sm:text-sm">
+                            Arrestos Activos
+                          </span>
+                        </div>
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                          {selectedUser.estadisticas.arrestosActivos}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 hover:border-blue-500/40 transition-all duration-200">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                          <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-lg">
+                            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+                          </div>
+                          <span className="text-white/60 text-xs sm:text-sm">
+                            Último Mes
+                          </span>
+                        </div>
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                          {selectedUser.estadisticas.arrestosUltimoMes}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card
+                      className={`backdrop-blur-md shadow-lg transition-all duration-200 ${
+                        selectedUser.usuarioPeligroso
+                          ? "bg-red-500/10 border-red-500/40 shadow-red-500/20 hover:border-red-500/60"
+                          : "bg-green-500/10 border-green-500/40 shadow-green-500/20 hover:border-green-500/60"
+                      }`}
+                    >
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
                           <div
-                            key={index}
-                            className={`p-3 sm:p-4 rounded-lg border ${
-                              antecedente.activo
-                                ? "bg-red-500/10 border-red-500/30"
-                                : "bg-white/5 border-white/10"
+                            className={`p-1.5 sm:p-2 rounded-lg ${
+                              selectedUser.usuarioPeligroso
+                                ? "bg-red-500/20"
+                                : "bg-green-500/20"
                             }`}
                           >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-semibold mb-1 text-sm sm:text-base">
-                                  {antecedente.motivo}
-                                </h4>
-                                <div className="flex items-center gap-2 text-xs sm:text-sm text-white/60">
-                                  <Calendar className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">
-                                    {formatDate(antecedente.fecha)}
-                                  </span>
+                            <Shield
+                              className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                                selectedUser.usuarioPeligroso
+                                  ? "text-red-400"
+                                  : "text-green-400"
+                              }`}
+                            />
+                          </div>
+                          <span className="text-white/60 text-xs sm:text-sm">
+                            Estado
+                          </span>
+                        </div>
+                        <p
+                          className={`text-lg sm:text-xl lg:text-2xl font-bold ${
+                            selectedUser.usuarioPeligroso
+                              ? "text-red-400"
+                              : "text-green-400"
+                          }`}
+                        >
+                          {selectedUser.usuarioPeligroso
+                            ? "PELIGROSO"
+                            : "SEGURO"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Historial de Antecedentes */}
+                  <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 mb-4 sm:mb-0">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-4 border-b border-white/10">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-500/20 rounded-lg">
+                            <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+                          </div>
+                          <h3 className="text-lg sm:text-xl font-bold text-white">
+                            Historial de Antecedentes
+                          </h3>
+                        </div>
+                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30 w-fit">
+                          {selectedUser.antecedentes.length} registros
+                        </span>
+                      </div>
+
+                      {selectedUser.antecedentes.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Shield className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                          <p className="text-white/60">
+                            No hay antecedentes registrados
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedUser.antecedentes.map(
+                            (antecedente, index) => (
+                              <div
+                                key={index}
+                                className={`p-3 sm:p-4 rounded-lg border ${
+                                  antecedente.activo
+                                    ? "bg-red-500/10 border-red-500/30"
+                                    : "bg-white/5 border-white/10"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between mb-2 gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-white font-semibold mb-1 text-sm sm:text-base break-words">
+                                      {antecedente.motivo}
+                                    </h4>
+                                    <div className="flex items-center gap-2 text-xs text-white/60 flex-wrap">
+                                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                                      <span className="break-all">
+                                        {formatDate(antecedente.fecha)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {antecedente.activo && (
+                                    <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 w-fit flex-shrink-0">
+                                      ACTIVO
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-2 border-t border-white/10">
+                                  <div className="min-w-0">
+                                    <span className="text-white/40 text-xs block mb-1">
+                                      Arrestado por:
+                                    </span>
+                                    <p className="text-white text-xs sm:text-sm font-medium break-words">
+                                      {antecedente.arrestadoPorTag}
+                                    </p>
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="text-white/40 text-xs block mb-1">
+                                      Duración:
+                                    </span>
+                                    <p className="text-white text-xs sm:text-sm font-medium">
+                                      {formatTime(antecedente.duracion)}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                              {antecedente.activo && (
-                                <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 w-fit">
-                                  ACTIVO
-                                </span>
-                              )}
-                            </div>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-3 border-t border-white/10">
-                              <div>
-                                <span className="text-white/40 text-xs">
-                                  Arrestado por:
-                                </span>
-                                <p className="text-white text-xs sm:text-sm font-medium truncate">
-                                  {antecedente.arrestadoPorTag}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-white/40 text-xs">
-                                  Duración:
-                                </span>
-                                <p className="text-white text-xs sm:text-sm font-medium">
-                                  {formatTime(antecedente.duracion)}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  {/* Botón de cerrar al final (móvil) */}
+                  <div className="mt-4 sm:hidden">
+                    <Button
+                      onClick={() => setSelectedUser(null)}
+                      className="w-full bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/40 transition-all duration-200 py-3"
+                    >
+                      Cerrar Detalles
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
