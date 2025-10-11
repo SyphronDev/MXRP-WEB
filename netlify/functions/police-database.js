@@ -248,10 +248,6 @@ async function getCargos(guildId, headers) {
           nombre: cargo.Nombre,
           descripcion: cargo.Descripcion,
           severidad: cargo.Severidad,
-          tiempoMinimo: cargo.TiempoMinimo,
-          tiempoMaximo: cargo.TiempoMaximo,
-          multaMinima: cargo.MultaMinima,
-          multaMaxima: cargo.MultaMaxima,
           creadoPor: cargo.CreadoPor,
           fechaCreacion: cargo.FechaCreacion,
         })),
@@ -273,23 +269,9 @@ async function getCargos(guildId, headers) {
 // Agregar nuevo cargo criminal
 async function addCargo(guildId, cargoData, creadoPor, headers) {
   try {
-    const {
-      nombre,
-      descripcion,
-      severidad,
-      tiempoMinimo,
-      tiempoMaximo,
-      multaMinima,
-      multaMaxima,
-    } = cargoData;
+    const { nombre, descripcion, severidad } = cargoData;
 
-    if (
-      !nombre ||
-      !descripcion ||
-      !severidad ||
-      !tiempoMinimo ||
-      !tiempoMaximo
-    ) {
+    if (!nombre || !descripcion || !severidad) {
       return {
         statusCode: 400,
         headers,
@@ -305,10 +287,10 @@ async function addCargo(guildId, cargoData, creadoPor, headers) {
       Nombre: nombre,
       Descripcion: descripcion,
       Severidad: severidad,
-      TiempoMinimo: parseInt(tiempoMinimo),
-      TiempoMaximo: parseInt(tiempoMaximo),
-      MultaMinima: parseInt(multaMinima) || 0,
-      MultaMaxima: parseInt(multaMaxima) || 0,
+      TiempoMinimo: 0,
+      TiempoMaximo: 0,
+      MultaMinima: 0,
+      MultaMaxima: 0,
       CreadoPor: creadoPor,
     });
 
@@ -325,10 +307,8 @@ async function addCargo(guildId, cargoData, creadoPor, headers) {
           nombre: nuevoCargo.Nombre,
           descripcion: nuevoCargo.Descripcion,
           severidad: nuevoCargo.Severidad,
-          tiempoMinimo: nuevoCargo.TiempoMinimo,
-          tiempoMaximo: nuevoCargo.TiempoMaximo,
-          multaMinima: nuevoCargo.MultaMinima,
-          multaMaxima: nuevoCargo.MultaMaxima,
+          creadoPor: nuevoCargo.CreadoPor,
+          fechaCreacion: nuevoCargo.FechaCreacion,
         },
       }),
     };
@@ -507,6 +487,40 @@ async function searchAntecedentes(guildId, searchData, headers) {
   }
 }
 
+// Función auxiliar para obtener información del usuario de Discord
+async function fetchDiscordUser(userId) {
+  try {
+    if (!process.env.DISCORD_BOT_TOKEN) {
+      return null;
+    }
+
+    const response = await fetch(
+      `https://discord.com/api/v10/users/${userId}`,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const userData = await response.json();
+      return {
+        username: userData.username,
+        discriminator: userData.discriminator,
+        tag:
+          userData.discriminator === "0"
+            ? userData.username
+            : `${userData.username}#${userData.discriminator}`,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching Discord user:", error);
+    return null;
+  }
+}
+
 // Obtener antecedentes específicos de un usuario
 async function getUserAntecedentes(guildId, userId, headers) {
   try {
@@ -538,10 +552,15 @@ async function getUserAntecedentes(guildId, userId, headers) {
       };
     }
 
+    // Obtener información del usuario de Discord
+    const userInfo = await fetchDiscordUser(userId);
+
     const responseData = {
       success: true,
       antecedentes: {
         userId: antecedentesData.UserId,
+        username: userInfo?.username || "Usuario Desconocido",
+        userTag: userInfo?.tag || userId,
         totalArrestos: antecedentesData.TotalArrestos,
         usuarioPeligroso: antecedentesData.UsuarioPeligroso,
         fechaUltimoArresto: antecedentesData.FechaUltimoArresto,
@@ -552,7 +571,6 @@ async function getUserAntecedentes(guildId, userId, headers) {
           motivo: antecedente.Motivo,
           arrestadoPor: antecedente.ArrestadoPor,
           arrestadoPorTag: antecedente.ArrestadoPorTag,
-          canal: antecedente.Canal,
           duracion: antecedente.Duracion,
           activo: antecedente.Activo,
         })),

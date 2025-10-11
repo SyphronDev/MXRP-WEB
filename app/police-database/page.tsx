@@ -16,10 +16,6 @@ interface CargoCriminal {
   nombre: string;
   descripcion: string;
   severidad: "Leve" | "Moderado" | "Grave" | "Muy Grave";
-  tiempoMinimo: number;
-  tiempoMaximo: number;
-  multaMinima: number;
-  multaMaxima: number;
   creadoPor: string;
   fechaCreacion: string;
 }
@@ -50,6 +46,8 @@ interface AntecedenteDetalle {
 
 interface AntecedentesCompletos {
   userId: string;
+  username?: string;
+  userTag?: string;
   totalArrestos: number;
   usuarioPeligroso: boolean;
   fechaUltimoArresto: string | null;
@@ -81,18 +79,10 @@ function PoliceDatabaseContent() {
     nombre: string;
     descripcion: string;
     severidad: "Leve" | "Moderado" | "Grave" | "Muy Grave";
-    tiempoMinimo: string;
-    tiempoMaximo: string;
-    multaMinima: string;
-    multaMaxima: string;
   }>({
     nombre: "",
     descripcion: "",
     severidad: "Leve",
-    tiempoMinimo: "",
-    tiempoMaximo: "",
-    multaMinima: "",
-    multaMaxima: "",
   });
 
   // Estados para búsqueda de antecedentes
@@ -211,10 +201,6 @@ function PoliceDatabaseContent() {
           nombre: "",
           descripcion: "",
           severidad: "Leve",
-          tiempoMinimo: "",
-          tiempoMaximo: "",
-          multaMinima: "",
-          multaMaxima: "",
         });
         setShowAddCargo(false);
       } else {
@@ -449,78 +435,6 @@ function PoliceDatabaseContent() {
                       placeholder="Descripción detallada del cargo..."
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Tiempo Mínimo (minutos)
-                      </label>
-                      <input
-                        type="number"
-                        value={newCargo.tiempoMinimo}
-                        onChange={(e) =>
-                          setNewCargo({
-                            ...newCargo,
-                            tiempoMinimo: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                        placeholder="30"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Tiempo Máximo (minutos)
-                      </label>
-                      <input
-                        type="number"
-                        value={newCargo.tiempoMaximo}
-                        onChange={(e) =>
-                          setNewCargo({
-                            ...newCargo,
-                            tiempoMaximo: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                        placeholder="120"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Multa Mínima ($)
-                      </label>
-                      <input
-                        type="number"
-                        value={newCargo.multaMinima}
-                        onChange={(e) =>
-                          setNewCargo({
-                            ...newCargo,
-                            multaMinima: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                        placeholder="1000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Multa Máxima ($)
-                      </label>
-                      <input
-                        type="number"
-                        value={newCargo.multaMaxima}
-                        onChange={(e) =>
-                          setNewCargo({
-                            ...newCargo,
-                            multaMaxima: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                        placeholder="5000"
-                      />
-                    </div>
-                  </div>
                   <div className="flex space-x-2">
                     <Button
                       onClick={handleAddCargo}
@@ -575,20 +489,6 @@ function PoliceDatabaseContent() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Tiempo:</span>
-                          <span className="text-white">
-                            {formatTime(cargo.tiempoMinimo)} -{" "}
-                            {formatTime(cargo.tiempoMaximo)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Multa:</span>
-                          <span className="text-white">
-                            ${cargo.multaMinima.toLocaleString()} - $
-                            {cargo.multaMaxima.toLocaleString()}
-                          </span>
-                        </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Creado por:</span>
                           <span className="text-white">{cargo.creadoPor}</span>
@@ -716,9 +616,14 @@ function PoliceDatabaseContent() {
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-white">
-                      Antecedentes Detallados - ID: {selectedUser.userId}
-                    </CardTitle>
+                    <div>
+                      <CardTitle className="text-white">
+                        {selectedUser.username || "Usuario Desconocido"}
+                      </CardTitle>
+                      <p className="text-gray-400 text-sm mt-1">
+                        ID: {selectedUser.userId}
+                      </p>
+                    </div>
                     <Button
                       onClick={() => setSelectedUser(null)}
                       variant="outline"
@@ -790,10 +695,6 @@ function PoliceDatabaseContent() {
                                   Arrestado por:
                                 </span>{" "}
                                 {antecedente.arrestadoPorTag}
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Canal:</span>{" "}
-                                {antecedente.canal}
                               </div>
                               <div>
                                 <span className="text-gray-400">Duración:</span>{" "}
