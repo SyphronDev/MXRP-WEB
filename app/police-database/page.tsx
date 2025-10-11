@@ -132,11 +132,61 @@ function PoliceDatabaseContent() {
     }
   }, [discordId, guildId]);
 
+  const handleSearchAntecedentes = useCallback(async () => {
+    try {
+      setSearchLoading(true);
+      const response = await fetch("/.netlify/functions/police-database", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "searchAntecedentes",
+          discordId,
+          guildId,
+          query: searchQuery.trim() || undefined, // Si no hay query, buscar todos
+          limit: 50,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSearchResults(data.resultados);
+      } else {
+        setError(data.message || "Error en la búsqueda");
+      }
+    } catch (error) {
+      console.error("Error searching antecedentes:", error);
+      setError("Error de conexión");
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [discordId, guildId, searchQuery]);
+
   useEffect(() => {
     if (discordId && guildId) {
       loadCargos();
     }
   }, [discordId, guildId, loadCargos]);
+
+  // Cargar todos los usuarios con antecedentes cuando se cambia a la pestaña de búsqueda
+  useEffect(() => {
+    if (
+      activeTab === "buscar" &&
+      discordId &&
+      guildId &&
+      searchResults.length === 0
+    ) {
+      handleSearchAntecedentes();
+    }
+  }, [
+    activeTab,
+    discordId,
+    guildId,
+    searchResults.length,
+    handleSearchAntecedentes,
+  ]);
 
   const handleAddCargo = async () => {
     try {
@@ -176,40 +226,6 @@ function PoliceDatabaseContent() {
     }
   };
 
-  const handleSearchAntecedentes = async () => {
-    if (!searchQuery.trim()) return;
-
-    try {
-      setSearchLoading(true);
-      const response = await fetch("/.netlify/functions/police-database", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "searchAntecedentes",
-          discordId,
-          guildId,
-          query: searchQuery,
-          limit: 20,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setSearchResults(data.resultados);
-      } else {
-        setError(data.message || "Error en la búsqueda");
-      }
-    } catch (error) {
-      console.error("Error searching antecedentes:", error);
-      setError("Error de conexión");
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
   const handleViewUserDetails = async (userId: string) => {
     try {
       const response = await fetch("/.netlify/functions/police-database", {
@@ -228,7 +244,22 @@ function PoliceDatabaseContent() {
       const data = await response.json();
 
       if (data.success) {
-        setSelectedUser(data.antecedentes);
+        // Asegurar que las estadísticas estén presentes
+        const antecedentes = data.antecedentes;
+        if (antecedentes && !antecedentes.estadisticas) {
+          // Si no hay estadísticas, crear unas por defecto
+          antecedentes.estadisticas = {
+            totalArrestos: antecedentes.totalArrestos || 0,
+            arrestosActivos:
+              antecedentes.antecedentes?.filter(
+                (a: AntecedenteDetalle) => a.activo
+              ).length || 0,
+            arrestosUltimoMes: 0,
+            esUsuarioPeligroso: antecedentes.usuarioPeligroso || false,
+            fechaUltimoArresto: antecedentes.fechaUltimoArresto,
+          };
+        }
+        setSelectedUser(antecedentes);
       } else {
         setError(data.message || "Error al obtener detalles");
       }
@@ -593,14 +624,18 @@ function PoliceDatabaseContent() {
                       e.key === "Enter" && handleSearchAntecedentes()
                     }
                     className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                    placeholder="Buscar por ID de usuario..."
+                    placeholder="Buscar por ID de usuario (dejar vacío para ver todos)..."
                   />
                   <Button
                     onClick={handleSearchAntecedentes}
-                    disabled={searchLoading || !searchQuery.trim()}
+                    disabled={searchLoading}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
-                    {searchLoading ? "Buscando..." : "Buscar"}
+                    {searchLoading
+                      ? "Buscando..."
+                      : searchQuery.trim()
+                      ? "Buscar"
+                      : "Ver Todos"}
                   </Button>
                 </div>
               </CardContent>
