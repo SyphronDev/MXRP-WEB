@@ -22,6 +22,7 @@ function VerifyPageContent() {
   const [message, setMessage] = useState("");
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [processedCode, setProcessedCode] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(5);
   const searchParams = useSearchParams();
 
   const handleDiscordLogin = useCallback(async () => {
@@ -64,6 +65,8 @@ function VerifyPageContent() {
         if (data.success) {
           setStatus("success");
           setMessage(data.message);
+          // Iniciar countdown para redirección automática
+          startCountdown();
         } else {
           setStatus("error");
           setMessage(data.message);
@@ -78,25 +81,21 @@ function VerifyPageContent() {
     [discordUser]
   );
 
-  useEffect(() => {
-    // Verificar si hay usuario de Discord guardado
-    const savedUser = localStorage.getItem("discord_user");
-    if (savedUser) {
-      setDiscordUser(JSON.parse(savedUser));
-      setStatus("roblox-auth");
-    } else {
-      setStatus("discord-auth");
-    }
-  }, []);
+  const startCountdown = useCallback(() => {
+    setCountdown(5);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.location.href = "/";
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-  useEffect(() => {
-    // Verificar si viene de Roblox con código
-    const code = searchParams.get("code");
-    if (code && discordUser && code !== processedCode) {
-      setProcessedCode(code);
-      handleRobloxVerification(code);
-    }
-  }, [searchParams, discordUser, handleRobloxVerification, processedCode]);
+    return () => clearInterval(timer);
+  }, []);
 
   const startRobloxVerification = useCallback(async () => {
     if (!discordUser) {
@@ -123,12 +122,43 @@ function VerifyPageContent() {
     }
   }, [discordUser]);
 
+  useEffect(() => {
+    // Verificar si hay usuario de Discord guardado
+    const savedUser = localStorage.getItem("discord_user");
+    if (savedUser) {
+      setDiscordUser(JSON.parse(savedUser));
+      setStatus("roblox-auth");
+    } else {
+      setStatus("discord-auth");
+    }
+  }, []);
+
+  useEffect(() => {
+    // Verificar si viene de Roblox con código
+    const code = searchParams.get("code");
+    if (code && discordUser && code !== processedCode) {
+      setProcessedCode(code);
+      handleRobloxVerification(code);
+    }
+  }, [
+    searchParams,
+    discordUser,
+    handleRobloxVerification,
+    processedCode,
+    startCountdown,
+  ]);
+
+  const handleGoHome = () => {
+    window.location.href = "/";
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("discord_user");
     setDiscordUser(null);
     setStatus("discord-auth");
     setMessage("");
     setProcessedCode(null);
+    setCountdown(5);
   };
 
   return (
@@ -200,13 +230,17 @@ function VerifyPageContent() {
               <p className="text-gray-300 text-sm">
                 Ya puedes regresar a Discord y disfrutar del servidor
               </p>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
-              >
-                Verificar otra cuenta
-              </Button>
+              <div className="space-y-2">
+                <p className="text-gray-400 text-xs">
+                  Redirigiendo automáticamente en {countdown} segundos...
+                </p>
+                <Button
+                  onClick={handleGoHome}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  Regresar a la Web Principal
+                </Button>
+              </div>
             </div>
           )}
 
