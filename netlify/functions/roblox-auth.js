@@ -25,8 +25,8 @@ exports.handler = async (event, context) => {
 
   try {
     if (event.httpMethod === "GET") {
-      // Generar URL de autorización de Roblox
-      const robloxAuthUrl = `https://authorize.roblox.com/v1/authorize?client_id=${RBX_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
+      // Generar URL de autorización de Roblox (URL correcta)
+      const robloxAuthUrl = `https://www.roblox.com/oauth/authorize?client_id=${RBX_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
         REDIRECT_URI
       )}&scope=openid%20profile`;
 
@@ -49,20 +49,17 @@ exports.handler = async (event, context) => {
       }
 
       // Intercambiar código por token de acceso
-      const tokenResponse = await fetch(
-        "https://apis.roblox.com/oauth/v1/token",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: RBX_CLIENT_ID,
-            client_secret: RBX_CLIENT_SECRET,
-            grant_type: "authorization_code",
-            code: code,
-            redirect_uri: REDIRECT_URI,
-          }),
-        }
-      );
+      const tokenResponse = await fetch("https://www.roblox.com/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: RBX_CLIENT_ID,
+          client_secret: RBX_CLIENT_SECRET,
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: REDIRECT_URI,
+        }),
+      });
 
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.text();
@@ -74,7 +71,7 @@ exports.handler = async (event, context) => {
 
       // Obtener información del usuario de Roblox
       const userResponse = await fetch(
-        "https://apis.roblox.com/oauth/v1/userinfo",
+        "https://www.roblox.com/oauth/userinfo",
         {
           headers: { Authorization: `Bearer ${tokenData.access_token}` },
         }
