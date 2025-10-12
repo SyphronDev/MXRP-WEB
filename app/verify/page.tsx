@@ -21,6 +21,7 @@ function VerifyPageContent() {
   >("idle");
   const [message, setMessage] = useState("");
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  const [processedCode, setProcessedCode] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   const handleDiscordLogin = useCallback(async () => {
@@ -86,13 +87,16 @@ function VerifyPageContent() {
     } else {
       setStatus("discord-auth");
     }
+  }, []);
 
+  useEffect(() => {
     // Verificar si viene de Roblox con código
     const code = searchParams.get("code");
-    if (code && discordUser) {
+    if (code && discordUser && code !== processedCode) {
+      setProcessedCode(code);
       handleRobloxVerification(code);
     }
-  }, [searchParams, discordUser, handleRobloxVerification]);
+  }, [searchParams, discordUser, handleRobloxVerification, processedCode]);
 
   const startRobloxVerification = useCallback(async () => {
     if (!discordUser) {
@@ -124,6 +128,7 @@ function VerifyPageContent() {
     setDiscordUser(null);
     setStatus("discord-auth");
     setMessage("");
+    setProcessedCode(null);
   };
 
   return (
