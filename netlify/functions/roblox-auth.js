@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
   try {
     if (event.httpMethod === "GET") {
       // Generar URL de autorización de Roblox (URL correcta)
-      const robloxAuthUrl = `https://www.roblox.com/oauth/authorize?client_id=${RBX_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
+      const robloxAuthUrl = `https://apis.roblox.com/oauth/authorize?client_id=${RBX_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
         REDIRECT_URI
       )}&scope=openid%20profile`;
 
@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
       }
 
       // Intercambiar código por token de acceso
-      const tokenResponse = await fetch("https://www.roblox.com/oauth/token", {
+      const tokenResponse = await fetch("https://apis.roblox.com/oauth/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
@@ -71,7 +71,7 @@ exports.handler = async (event, context) => {
 
       // Obtener información del usuario de Roblox
       const userResponse = await fetch(
-        "https://www.roblox.com/oauth/userinfo",
+        "https://apis.roblox.com/oauth/userinfo",
         {
           headers: { Authorization: `Bearer ${tokenData.access_token}` },
         }
