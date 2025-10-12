@@ -49,17 +49,20 @@ exports.handler = async (event, context) => {
       }
 
       // Intercambiar código por token de acceso
-      const tokenResponse = await fetch("https://apis.roblox.com/oauth/v2/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: RBX_CLIENT_ID,
-          client_secret: RBX_CLIENT_SECRET,
-          grant_type: "authorization_code",
-          code: code,
-          redirect_uri: REDIRECT_URI,
-        }),
-      });
+      const tokenResponse = await fetch(
+        "https://apis.roblox.com/oauth/v2/token",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: RBX_CLIENT_ID,
+            client_secret: RBX_CLIENT_SECRET,
+            grant_type: "authorization_code",
+            code: code,
+            redirect_uri: REDIRECT_URI,
+          }),
+        }
+      );
 
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.text();
