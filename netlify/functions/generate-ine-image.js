@@ -195,7 +195,7 @@ async function generateIneImage(ineData) {
       console.error("Error reading template file:", fileError);
       // Fallback: usar una URL pública si el archivo no está disponible
       const publicUrl = `${
-        process.env.SITE_URL || "https://mxrp.netlify.app"
+        process.env.SITE_URL || "https://mxrp.site"
       }/images/Ine.png`;
       template = await loadImage(publicUrl);
     }

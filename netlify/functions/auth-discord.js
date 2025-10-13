@@ -1,6 +1,6 @@
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || "https://mxrp.netlify.app";
+const REDIRECT_URI = process.env.REDIRECT_URI || "https://mxrp.site";
 
 exports.handler = async (event, context) => {
   const headers = {
