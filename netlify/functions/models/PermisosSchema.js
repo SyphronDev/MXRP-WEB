@@ -27,14 +27,7 @@ const PermisosSchema = new mongoose.Schema({
   EquipoAdministrativo: String,
   Auditor: String,
   INE: String,
+  Periodista: String,
 });
 
 module.exports = mongoose.model("Permisos", PermisosSchema);
-
-
-
-
-
-
-
-
