@@ -672,14 +672,19 @@ export default function Dashboard() {
       const data = await response.json();
 
       // Debug temporal
-      console.log("News access check response:", data);
+      console.log("🔍 News access check response:", data);
+      console.log("👤 Discord ID:", discordId);
+      console.log("🏠 Guild ID:", process.env.NEXT_PUBLIC_GUILD_ID);
 
       if (data.success && data.hasPeriodistaAccess) {
         setHasNewsAccess(true);
-        console.log("✅ Usuario tiene acceso de periodista");
+        console.log(
+          "✅ Usuario tiene acceso de periodista - Botón debería aparecer"
+        );
       } else {
         setHasNewsAccess(false);
         console.log("❌ Usuario NO tiene acceso de periodista:", data.message);
+        console.log("🔧 Rol ID configurado:", data.periodistaRoleId);
       }
     } catch (error) {
       console.error("Error checking news access:", error);
@@ -992,6 +997,17 @@ export default function Dashboard() {
                 <span className="text-sm font-medium">
                   Base de Datos Policial
                 </span>
+              </button>
+            )}
+
+            {/* News Panel Button */}
+            {hasNewsAccess && (
+              <button
+                onClick={() => setActiveTab("news")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400 rounded-lg hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 self-start sm:self-auto"
+              >
+                <Newspaper className="h-4 w-4" />
+                <span className="text-sm font-medium">Panel Noticias</span>
               </button>
             )}
 
