@@ -137,34 +137,61 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Obtener información del usuario (simulado)
-    const username = "Usuario"; // En una implementación real, obtendrías esto de Discord
-    const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/avatar.png`;
+    // Obtener información real del usuario desde Discord
+    let username = "Usuario";
+    let avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/avatar.png`;
+
+    try {
+      const userResponse = await fetch(
+        `https://discord.com/api/v10/users/${discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        username = userData.global_name || userData.username || "Usuario";
+
+        if (userData.avatar) {
+          const avatarHash = userData.avatar;
+          const isAnimated = avatarHash.startsWith("a_");
+          avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.${
+            isAnimated ? "gif" : "png"
+          }`;
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+
+    // Función para procesar Markdown y saltos de línea
+    const processMarkdown = (text) => {
+      return text
+        .replace(/\n/g, "\n") // Mantener saltos de línea
+        .replace(/\*\*(.*?)\*\*/g, "**$1**") // Mantener **bold**
+        .replace(/\*(.*?)\*/g, "*$1*") // Mantener *italic*
+        .replace(/__(.*?)__/g, "**$1**") // Convertir __bold__ a **bold**
+        .replace(/_(.*?)_/g, "*$1*") // Convertir _italic_ a *italic*
+        .replace(/~~(.*?)~~/g, "~~$1~~") // Mantener ~~strikethrough~~
+        .replace(/`(.*?)`/g, "`$1`"); // Mantener `code`
+    };
 
     // Procesar Markdown en campos
     const processedFields = fields
       ? fields.map((field) => ({
           ...field,
-          value: field.value
-            .replace(/\*\*(.*?)\*\*/g, "**$1**") // Mantener **bold**
-            .replace(/\*(.*?)\*/g, "*$1*") // Mantener *italic*
-            .replace(/__(.*?)__/g, "**$1**") // Convertir __bold__ a **bold**
-            .replace(/_(.*?)_/g, "*$1*") // Convertir _italic_ a *italic*
-            .replace(/~~(.*?)~~/g, "~~$1~~") // Mantener ~~strikethrough~~
-            .replace(/`(.*?)`/g, "`$1`"), // Mantener `code`
+          value: processMarkdown(field.value),
         }))
       : [];
 
     // Crear el embed para Discord
     const embed = {
       title: titulo,
-      description: descripcion
-        .replace(/\*\*(.*?)\*\*/g, "**$1**") // Mantener **bold**
-        .replace(/\*(.*?)\*/g, "*$1*") // Mantener *italic*
-        .replace(/__(.*?)__/g, "**$1**") // Convertir __bold__ a **bold**
-        .replace(/_(.*?)_/g, "*$1*") // Convertir _italic_ a *italic*
-        .replace(/~~(.*?)~~/g, "~~$1~~") // Mantener ~~strikethrough~~
-        .replace(/`(.*?)`/g, "`$1`"), // Mantener `code`
+      description: processMarkdown(descripcion),
       color: color ? parseInt(color.replace("#", ""), 16) : 0x5865f2, // Discord blue por defecto
       thumbnail: {
         url: avatarUrl,
@@ -172,7 +199,7 @@ exports.handler = async (event, context) => {
       image: imagenUrl ? { url: imagenUrl } : undefined,
       fields: processedFields,
       footer: {
-        text: `Publicado por ${username} • MXRP Noticias`,
+        text: `Publicado por ${username}`,
         icon_url: avatarUrl,
       },
       timestamp: new Date().toISOString(),
