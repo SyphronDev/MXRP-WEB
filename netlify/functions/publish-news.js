@@ -1,6 +1,5 @@
 const { connectDB } = require("./utils/database");
 const NoticiasSchema = require("./models/NoticiasSchema");
-const PermisosSchema = require("./models/PermisosSchema");
 
 exports.handler = async (event, context) => {
   // Configurar CORS
@@ -50,15 +49,16 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Verificar permisos de periodista
-    const permisos = await PermisosSchema.findOne({ GuildId: guildId });
-    if (!permisos || !permisos.Periodista) {
+    // Verificar permisos de periodista usando variables de entorno
+    const periodistaRoleId = process.env.PERIODISTAS;
+
+    if (!periodistaRoleId) {
       return {
         statusCode: 403,
         headers,
         body: JSON.stringify({
           success: false,
-          message: "No tienes permisos de periodista",
+          message: "Variable PERIODISTAS no configurada en Netlify",
         }),
       };
     }
@@ -125,7 +125,7 @@ exports.handler = async (event, context) => {
     }
 
     // Verificar si el usuario tiene el rol de periodista
-    const hasPeriodistaAccess = userRoles.includes(permisos.Periodista);
+    const hasPeriodistaAccess = userRoles.includes(periodistaRoleId);
     if (!hasPeriodistaAccess) {
       return {
         statusCode: 403,

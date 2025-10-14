@@ -1,6 +1,3 @@
-const { connectDB } = require("./utils/database");
-const PermisosSchema = require("./models/PermisosSchema");
-
 exports.handler = async (event, context) => {
   // Configurar CORS
   const headers = {
@@ -26,8 +23,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    await connectDB();
-
     const { discordId, guildId } = JSON.parse(event.body);
 
     if (!discordId || !guildId) {
@@ -41,23 +36,8 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Obtener permisos del servidor
-    const permisos = await PermisosSchema.findOne({ GuildId: guildId });
-
-    if (!permisos) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          hasPeriodistaAccess: false,
-          message: "No se encontraron permisos para este servidor",
-        }),
-      };
-    }
-
-    // Verificar si el usuario tiene el rol de periodista
-    const periodistaRoleId = permisos.Periodista;
+    // Obtener el rol de periodista desde variables de entorno
+    const periodistaRoleId = process.env.PERIODISTAS;
 
     if (!periodistaRoleId) {
       return {
@@ -66,7 +46,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           success: true,
           hasPeriodistaAccess: false,
-          message: "Rol de periodista no configurado",
+          message: "Variable PERIODISTAS no configurada en Netlify",
         }),
       };
     }
