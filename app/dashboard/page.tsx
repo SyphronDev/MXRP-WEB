@@ -671,10 +671,15 @@ export default function Dashboard() {
 
       const data = await response.json();
 
+      // Debug temporal
+      console.log("News access check response:", data);
+
       if (data.success && data.hasPeriodistaAccess) {
         setHasNewsAccess(true);
+        console.log("✅ Usuario tiene acceso de periodista");
       } else {
         setHasNewsAccess(false);
+        console.log("❌ Usuario NO tiene acceso de periodista:", data.message);
       }
     } catch (error) {
       console.error("Error checking news access:", error);

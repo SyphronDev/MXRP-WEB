@@ -63,6 +63,80 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Verificar si el usuario está en el servidor y tiene el rol de periodista
+    let userRoles = [];
+    let isInGuild = false;
+
+    try {
+      // Verificar si el usuario está en el servidor
+      const guildMemberResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (guildMemberResponse.ok) {
+        const memberData = await guildMemberResponse.json();
+        isInGuild = true;
+        userRoles = memberData.roles || [];
+      } else if (guildMemberResponse.status === 404) {
+        // Usuario no está en el servidor
+        isInGuild = false;
+      } else {
+        console.error(
+          "Error fetching guild member:",
+          guildMemberResponse.status
+        );
+        return {
+          statusCode: 403,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: "Error al verificar membresía del servidor",
+          }),
+        };
+      }
+    } catch (error) {
+      console.error("Error in Discord API call:", error);
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Error de conexión con Discord",
+        }),
+      };
+    }
+
+    // Verificar que el usuario esté en el servidor
+    if (!isInGuild) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Usuario no está en el servidor",
+        }),
+      };
+    }
+
+    // Verificar si el usuario tiene el rol de periodista
+    const hasPeriodistaAccess = userRoles.includes(permisos.Periodista);
+    if (!hasPeriodistaAccess) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "No tienes el rol de periodista",
+        }),
+      };
+    }
+
     // Obtener información del usuario (simulado)
     const username = "Usuario"; // En una implementación real, obtendrías esto de Discord
     const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/avatar.png`;

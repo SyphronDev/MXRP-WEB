@@ -71,18 +71,83 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Aquí necesitarías verificar si el usuario tiene el rol en Discord
-    // Por ahora, asumimos que el usuario tiene acceso si el rol está configurado
-    // En una implementación real, harías una llamada a la API de Discord
+    // Verificar si el usuario está en el servidor y tiene el rol de periodista
+    let userRoles = [];
+    let isInGuild = false;
+
+    try {
+      // Verificar si el usuario está en el servidor
+      const guildMemberResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (guildMemberResponse.ok) {
+        const memberData = await guildMemberResponse.json();
+        isInGuild = true;
+        userRoles = memberData.roles || [];
+      } else if (guildMemberResponse.status === 404) {
+        // Usuario no está en el servidor
+        isInGuild = false;
+      } else {
+        console.error(
+          "Error fetching guild member:",
+          guildMemberResponse.status
+        );
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: "Error al verificar membresía del servidor",
+            hasPeriodistaAccess: false,
+          }),
+        };
+      }
+    } catch (error) {
+      console.error("Error in Discord API call:", error);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Error de conexión con Discord",
+          hasPeriodistaAccess: false,
+        }),
+      };
+    }
+
+    // Verificar que el usuario esté en el servidor
+    if (!isInGuild) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Usuario no está en el servidor",
+          hasPeriodistaAccess: false,
+        }),
+      };
+    }
+
+    // Verificar si el usuario tiene el rol de periodista
+    const hasPeriodistaAccess = userRoles.includes(periodistaRoleId);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        hasPeriodistaAccess: true,
+        hasPeriodistaAccess,
         periodistaRoleId: periodistaRoleId,
-        message: "Usuario tiene acceso de periodista",
+        message: hasPeriodistaAccess
+          ? "Usuario tiene acceso de periodista"
+          : "Usuario no tiene el rol de periodista",
       }),
     };
   } catch (error) {
