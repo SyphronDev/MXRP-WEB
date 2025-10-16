@@ -30,10 +30,14 @@ export const metadata: Metadata = {
   creator: "MXRP",
   publisher: "MXRP",
   icons: {
-    icon: "/images/Icon.png",
-    shortcut: "/images/Icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/images/Icon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/images/Icon.png",
   },
+  manifest: "/manifest.json",
   openGraph: {
     title: "MXRP ER:LC - La mejor experiencia de roleplay en Roblox",
     description:
