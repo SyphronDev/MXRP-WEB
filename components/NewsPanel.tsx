@@ -62,23 +62,30 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
 
   // Función para convertir Markdown de Discord a HTML
   const renderMarkdown = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // **bold**
-      .replace(/\*(.*?)\*/g, "<em>$1</em>") // *italic*
-      .replace(/__(.*?)__/g, "<strong>$1</strong>") // __bold__
-      .replace(/_(.*?)_/g, "<em>$1</em>") // _italic_
-      .replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>") // ***bold italic***
-      .replace(/__\*(.*?)\*__/g, "<strong><em>$1</em></strong>") // __*bold italic*__
-      .replace(/__\*\*(.*?)\*\*__/g, "<strong><em>$1</em></strong>") // __**bold italic**__
-      .replace(/__\*\*\*(.*?)\*\*\*__/g, "<strong><em>$1</em></strong>") // __***bold italic***__
-      .replace(/~~(.*?)~~/g, "<del>$1</del>") // ~~strikethrough~~
-      .replace(/__~~(.*?)~~__/g, "<strong><del>$1</del></strong>") // __~~bold strikethrough~~__
-      .replace(
-        /__~~\*\*\*(.*?)\*\*\*~~__/g,
-        "<strong><del><em>$1</em></del></strong>"
-      ) // __~~***bold italic strikethrough***~~__
-      .replace(/`(.*?)`/g, "<code>$1</code>") // `code`
-      .replace(/\n/g, "<br>"); // line breaks
+    return (
+      text
+        // Primero manejar saltos de línea dobles (párrafos)
+        .replace(/\n\n/g, "</p><p>") // Convertir \n\n en separación de párrafos
+        .replace(/\n/g, "<br>") // Convertir \n restantes en <br>
+        // Luego aplicar formato de markdown
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // **bold**
+        .replace(/\*(.*?)\*/g, "<em>$1</em>") // *italic*
+        .replace(/__(.*?)__/g, "<strong>$1</strong>") // __bold__
+        .replace(/_(.*?)_/g, "<em>$1</em>") // _italic_
+        .replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>") // ***bold italic***
+        .replace(/__\*(.*?)\*__/g, "<strong><em>$1</em></strong>") // __*bold italic*__
+        .replace(/__\*\*(.*?)\*\*__/g, "<strong><em>$1</em></strong>") // __**bold italic**__
+        .replace(/__\*\*\*(.*?)\*\*\*__/g, "<strong><em>$1</em></strong>") // __***bold italic***__
+        .replace(/~~(.*?)~~/g, "<del>$1</del>") // ~~strikethrough~~
+        .replace(/__~~(.*?)~~__/g, "<strong><del>$1</del></strong>") // __~~bold strikethrough~~__
+        .replace(
+          /__~~\*\*\*(.*?)\*\*\*~~__/g,
+          "<strong><del><em>$1</em></del></strong>"
+        ) // __~~***bold italic strikethrough***~~__
+        .replace(/`(.*?)`/g, "<code>$1</code>") // `code`
+        // Envolver todo en párrafos
+        .replace(/^(.*)$/, "<p>$1</p>")
+    ); // Envolver en <p> si no está ya envuelto
   };
 
   // Función para crear el preview del embed
@@ -132,7 +139,7 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
           discordId: user.id,
           guildId: guildId,
           titulo: titulo.trim(),
-          descripcion: descripcion.trim(),
+          descripcion: descripcion.trim().replace(/\\n/g, "\n"),
           imagenUrl: imagenUrl.trim() || null,
           fields: fields.length > 0 ? fields : null,
           color: color,

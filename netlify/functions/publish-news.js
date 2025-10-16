@@ -229,11 +229,29 @@ exports.handler = async (event, context) => {
     });
 
     if (!webhookResponse.ok) {
-      throw new Error(`Webhook failed: ${webhookResponse.status}`);
+      const errorText = await webhookResponse.text();
+      console.error(`Webhook failed: ${webhookResponse.status}`, errorText);
+      throw new Error(
+        `Webhook failed: ${webhookResponse.status} - ${errorText}`
+      );
     }
 
-    const webhookData = await webhookResponse.json();
-    const messageId = webhookData.id;
+    // Intentar obtener el JSON de respuesta, pero manejar respuestas vacías
+    let messageId = null;
+    try {
+      const responseText = await webhookResponse.text();
+      if (responseText.trim()) {
+        const webhookData = JSON.parse(responseText);
+        messageId = webhookData.id;
+      }
+    } catch (parseError) {
+      console.warn(
+        "Webhook response is not valid JSON or is empty:",
+        parseError.message
+      );
+      // Si no podemos parsear el JSON, generamos un ID temporal
+      messageId = `temp_${Date.now()}`;
+    }
 
     // Guardar la noticia en la base de datos
     const noticia = new NoticiasSchema({
