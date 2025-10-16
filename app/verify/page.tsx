@@ -28,7 +28,9 @@ function VerifyPageContent() {
   const handleDiscordLogin = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/.netlify/functions/auth-discord");
+      const response = await fetch(
+        "/.netlify/functions/auth-discord?redirectPath=verify"
+      );
       const data = await response.json();
 
       if (data.authUrl) {
@@ -123,20 +125,67 @@ function VerifyPageContent() {
   }, [discordUser]);
 
   useEffect(() => {
-    // Verificar si hay usuario de Discord guardado
-    const savedUser = localStorage.getItem("discord_user");
-    if (savedUser) {
-      setDiscordUser(JSON.parse(savedUser));
-      setStatus("roblox-auth");
+    // Verificar si viene de Discord con código
+    const code = searchParams.get("code");
+
+    if (code && !processedCode) {
+      // Usuario viene de Discord con código de autorización
+      setIsLoading(true);
+      handleDiscordAuth(code);
     } else {
-      setStatus("discord-auth");
+      // Verificar si hay usuario de Discord guardado
+      const savedUser = localStorage.getItem("discord_user");
+      if (savedUser) {
+        setDiscordUser(JSON.parse(savedUser));
+        setStatus("roblox-auth");
+      } else {
+        setStatus("discord-auth");
+      }
     }
   }, []);
 
+  const handleDiscordAuth = async (code: string) => {
+    try {
+      const response = await fetch("/.netlify/functions/auth-discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, redirectPath: "verify" }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        // Guardar usuario en localStorage
+        localStorage.setItem("discord_user", JSON.stringify(data.user));
+        setDiscordUser(data.user);
+        setStatus("roblox-auth");
+        setProcessedCode(code);
+
+        // Limpiar el código de la URL
+        window.history.replaceState({}, document.title, "/verify");
+      } else {
+        setStatus("error");
+        setMessage(data.message || "Error al autenticar con Discord");
+      }
+    } catch (error) {
+      console.error("Error during Discord authentication:", error);
+      setStatus("error");
+      setMessage("Error de conexión. Intenta nuevamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Verificar si viene de Roblox con código
+    // Este efecto maneja la redirección desde Roblox
+    // Solo si ya tenemos un usuario de Discord y el código no ha sido procesado
     const code = searchParams.get("code");
-    if (code && discordUser && code !== processedCode) {
+    if (
+      code &&
+      discordUser &&
+      code !== processedCode &&
+      status === "roblox-auth"
+    ) {
       setProcessedCode(code);
       handleRobloxVerification(code);
     }
@@ -146,6 +195,7 @@ function VerifyPageContent() {
     handleRobloxVerification,
     processedCode,
     startCountdown,
+    status,
   ]);
 
   const handleGoHome = () => {

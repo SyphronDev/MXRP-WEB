@@ -1,6 +1,7 @@
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI || "https://mxrp.site";
+const REDIRECT_URI_VERIFY = process.env.REDIRECT_URI_VERIFY || "https://mxrp.site/verify";
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -39,9 +40,15 @@ exports.handler = async (event, context) => {
 
   try {
     if (event.httpMethod === "GET") {
+      // Obtener el parámetro redirectPath de la query string
+      const redirectPath = event.queryStringParameters?.redirectPath || "dashboard";
+      
+      // Determinar qué redirect URI usar
+      const redirectUri = redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
+      
       // Generar URL de autorización de Discord
       const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
-        REDIRECT_URI
+        redirectUri
       )}&scope=guilds%20identify%20email%20connections`;
 
       return {
@@ -57,10 +64,11 @@ exports.handler = async (event, context) => {
     }
 
     if (event.httpMethod === "POST") {
-      let code;
+      let code, redirectPath;
       try {
         const body = JSON.parse(event.body);
         code = body.code;
+        redirectPath = body.redirectPath || "dashboard";
       } catch (parseError) {
         console.error("Failed to parse request body:", parseError);
         return {
@@ -90,6 +98,9 @@ exports.handler = async (event, context) => {
         };
       }
 
+      // Determinar qué redirect URI usar basándose en el redirectPath
+      const redirectUri = redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
+
       // Intercambiar código por token de acceso
       const tokenResponse = await fetch(
         "https://discord.com/api/oauth2/token",
@@ -103,7 +114,7 @@ exports.handler = async (event, context) => {
             client_secret: CLIENT_SECRET,
             grant_type: "authorization_code",
             code: code,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: redirectUri,
           }),
         }
       );

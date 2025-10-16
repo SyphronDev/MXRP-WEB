@@ -209,40 +209,40 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
             <h3 className="text-white font-medium">Editor</h3>
           </div>
 
-      <div className="space-y-6">
-        {/* Título */}
-        <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            Título *
-          </label>
-          <input
-            type="text"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Ingresa el título de la noticia"
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors"
-            maxLength={256}
-          />
-          <p className="text-white/60 text-xs mt-1">
-            {titulo.length}/256 caracteres
-          </p>
-        </div>
-
-        {/* Descripción */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-white/80 text-sm font-medium">
-              Descripción *
-            </label>
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Code className="h-3 w-3" />
-              <span>Soporta Markdown</span>
+          <div className="space-y-6">
+            {/* Título */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-2">
+                Título *
+              </label>
+              <input
+                type="text"
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                placeholder="Ingresa el título de la noticia"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors"
+                maxLength={256}
+              />
+              <p className="text-white/60 text-xs mt-1">
+                {titulo.length}/256 caracteres
+              </p>
             </div>
-          </div>
-          <textarea
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Describe el contenido de la noticia
+
+            {/* Descripción */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-white/80 text-sm font-medium">
+                  Descripción *
+                </label>
+                <div className="flex items-center gap-2 text-xs text-white/60">
+                  <Code className="h-3 w-3" />
+                  <span>Soporta Markdown</span>
+                </div>
+              </div>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Describe el contenido de la noticia
 
 Ejemplos de Markdown:
 **Texto en negrita**
@@ -251,272 +251,286 @@ Ejemplos de Markdown:
 `código`
 __Texto en negrita__
 _Texto en cursiva_"
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors resize-none"
-            rows={6}
-            maxLength={4096}
-          />
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-white/60 text-xs">
-              {descripcion.length}/4096 caracteres
-            </p>
-            <div className="text-xs text-white/50">
-              **negrita** *cursiva* ~~tachado~~ `código`
-            </div>
-          </div>
-        </div>
-
-        {/* Imagen */}
-        <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            <ImageIcon className="h-4 w-4 inline mr-2" />
-            URL de Imagen
-          </label>
-          <input
-            type="url"
-            value={imagenUrl}
-            onChange={(e) => setImagenUrl(e.target.value)}
-            placeholder="https://ejemplo.com/imagen.jpg"
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors"
-          />
-        </div>
-
-        {/* Color */}
-        <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            <Palette className="h-4 w-4 inline mr-2" />
-            Color del Embed
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {COLORS.map((colorOption) => (
-              <button
-                key={colorOption.value}
-                onClick={() => setColor(colorOption.value)}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  color === colorOption.value
-                    ? "border-white scale-105"
-                    : "border-white/20 hover:border-white/40"
-                }`}
-                style={{ backgroundColor: colorOption.value }}
-                title={colorOption.name}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                rows={6}
+                maxLength={4096}
               />
-            ))}
-          </div>
-        </div>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-white/60 text-xs">
+                  {descripcion.length}/4096 caracteres
+                </p>
+                <div className="text-xs text-white/50">
+                  **negrita** *cursiva* ~~tachado~~ `código`
+                </div>
+              </div>
+            </div>
 
-        {/* Fields */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <label className="block text-white/80 text-sm font-medium">
-              Campos Adicionales
-            </label>
-            <button
-              onClick={() => setShowAddField(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Agregar Campo
-            </button>
-          </div>
+            {/* Imagen */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-2">
+                <ImageIcon className="h-4 w-4 inline mr-2" />
+                URL de Imagen
+              </label>
+              <input
+                type="url"
+                value={imagenUrl}
+                onChange={(e) => setImagenUrl(e.target.value)}
+                placeholder="https://ejemplo.com/imagen.jpg"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
 
-          {/* Lista de campos existentes */}
-          {fields.length > 0 && (
-            <div className="space-y-2 mb-4">
-              {fields.map((field, index) => (
-                <div
-                  key={index}
-                  className="p-3 bg-white/5 border border-white/10 rounded-lg"
+            {/* Color */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-2">
+                <Palette className="h-4 w-4 inline mr-2" />
+                Color del Embed
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {COLORS.map((colorOption) => (
+                  <button
+                    key={colorOption.value}
+                    onClick={() => setColor(colorOption.value)}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      color === colorOption.value
+                        ? "border-white scale-105"
+                        : "border-white/20 hover:border-white/40"
+                    }`}
+                    style={{ backgroundColor: colorOption.value }}
+                    title={colorOption.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-white/80 text-sm font-medium">
+                  Campos Adicionales
+                </label>
+                <button
+                  onClick={() => setShowAddField(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-sm">
-                        {field.name}
-                      </p>
-                      <p className="text-white/60 text-xs">{field.value}</p>
-                      {field.inline && (
-                        <span className="text-blue-400 text-xs">Inline</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeField(index)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
+                  <Plus className="h-4 w-4" />
+                  Agregar Campo
+                </button>
+              </div>
+
+              {/* Lista de campos existentes */}
+              {fields.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {fields.map((field, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-white/5 border border-white/10 rounded-lg"
                     >
-                      <X className="h-4 w-4" />
-                    </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-white font-medium text-sm">
+                            {field.name}
+                          </p>
+                          <p className="text-white/60 text-xs">{field.value}</p>
+                          {field.inline && (
+                            <span className="text-blue-400 text-xs">
+                              Inline
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeField(index)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Formulario para agregar campo */}
+              {showAddField && (
+                <div className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-3">
+                  <div>
+                    <label className="block text-white/80 text-xs mb-1">
+                      Nombre del Campo
+                    </label>
+                    <input
+                      type="text"
+                      value={newField.name}
+                      onChange={(e) =>
+                        setNewField({ ...newField, name: e.target.value })
+                      }
+                      placeholder="Ej: Ubicación"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500"
+                      maxLength={256}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/80 text-xs mb-1">
+                      Valor del Campo
+                      <span className="text-white/50 ml-1">
+                        (Soporta Markdown)
+                      </span>
+                    </label>
+                    <textarea
+                      value={newField.value}
+                      onChange={(e) =>
+                        setNewField({ ...newField, value: e.target.value })
+                      }
+                      placeholder="Ej: Ciudad de México
+O con Markdown: **Ciudad de México** - *Capital*"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500 resize-none"
+                      rows={2}
+                      maxLength={1024}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-white/80 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={newField.inline}
+                        onChange={(e) =>
+                          setNewField({ ...newField, inline: e.target.checked })
+                        }
+                        className="rounded"
+                      />
+                      Campo inline
+                    </label>
+                    <div className="flex gap-2 ml-auto">
+                      <button
+                        onClick={() => setShowAddField(false)}
+                        className="px-3 py-1 text-white/60 hover:text-white transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={addField}
+                        className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors"
+                      >
+                        Agregar
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Formulario para agregar campo */}
-          {showAddField && (
-            <div className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-3">
-              <div>
-                <label className="block text-white/80 text-xs mb-1">
-                  Nombre del Campo
-                </label>
-                <input
-                  type="text"
-                  value={newField.name}
-                  onChange={(e) =>
-                    setNewField({ ...newField, name: e.target.value })
-                  }
-                  placeholder="Ej: Ubicación"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500"
-                  maxLength={256}
-                />
-              </div>
-              <div>
-                <label className="block text-white/80 text-xs mb-1">
-                  Valor del Campo
-                  <span className="text-white/50 ml-1">(Soporta Markdown)</span>
-                </label>
-                <textarea
-                  value={newField.value}
-                  onChange={(e) =>
-                    setNewField({ ...newField, value: e.target.value })
-                  }
-                  placeholder="Ej: Ciudad de México
-O con Markdown: **Ciudad de México** - *Capital*"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500 resize-none"
-                  rows={2}
-                  maxLength={1024}
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-white/80 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={newField.inline}
-                    onChange={(e) =>
-                      setNewField({ ...newField, inline: e.target.checked })
-                    }
-                    className="rounded"
-                  />
-                  Campo inline
-                </label>
-                <div className="flex gap-2 ml-auto">
-                  <button
-                    onClick={() => setShowAddField(false)}
-                    className="px-3 py-1 text-white/60 hover:text-white transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={addField}
-                    className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors"
-                  >
-                    Agregar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Botón de publicar */}
-        <div className="pt-4 border-t border-white/10">
-          <button
-            onClick={publishNews}
-            disabled={isSubmitting || !titulo.trim() || !descripcion.trim()}
-            className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              isSubmitting || !titulo.trim() || !descripcion.trim()
-                ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
-                : "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:scale-[1.02]"
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Publicando...
-              </>
-            ) : (
-              <>
-                <Send className="h-5 w-5" />
-                Publicar Noticia
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Panel de Preview */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Eye className="h-4 w-4 text-green-400" />
-            <h3 className="text-white font-medium">Vista Previa en Tiempo Real</h3>
-          </div>
-          
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 sticky top-4">
-            <div
-              className="rounded-lg border-l-4 p-4 bg-gray-800/50"
-              style={{ borderLeftColor: color }}
-            >
-              {/* Título */}
-              {titulo ? (
-                <h2 className="text-white font-semibold text-lg mb-2">
-                  {titulo}
-                </h2>
-              ) : (
-                <h2 className="text-gray-500 font-semibold text-lg mb-2 italic">
-                  Título de la noticia
-                </h2>
               )}
+            </div>
 
-              {/* Descripción */}
-              {descripcion ? (
+            {/* Botón de publicar */}
+            <div className="pt-4 border-t border-white/10">
+              <button
+                onClick={publishNews}
+                disabled={isSubmitting || !titulo.trim() || !descripcion.trim()}
+                className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
+                  isSubmitting || !titulo.trim() || !descripcion.trim()
+                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:scale-[1.02]"
+                }`}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    Publicar Noticia
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Panel de Preview */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="h-4 w-4 text-green-400" />
+                <h3 className="text-white font-medium">
+                  Vista Previa en Tiempo Real
+                </h3>
+              </div>
+
+              <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 sticky top-4">
                 <div
-                  className="text-gray-300 text-sm mb-3"
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(descripcion) }}
-                />
-              ) : (
-                <div className="text-gray-500 text-sm mb-3 italic">
-                  Descripción de la noticia
-                </div>
-              )}
+                  className="rounded-lg border-l-4 p-4 bg-gray-800/50"
+                  style={{ borderLeftColor: color }}
+                >
+                  {/* Título */}
+                  {titulo ? (
+                    <h2 className="text-white font-semibold text-lg mb-2">
+                      {titulo}
+                    </h2>
+                  ) : (
+                    <h2 className="text-gray-500 font-semibold text-lg mb-2 italic">
+                      Título de la noticia
+                    </h2>
+                  )}
 
-              {/* Thumbnail */}
-              <div className="flex items-start gap-3 mb-3">
-                <img
-                  src={user.avatarUrl}
-                  alt="Avatar"
-                  className="w-12 h-12 rounded-full"
-                />
-                <div className="flex-1">
-                  {/* Fields */}
-                  {fields.length > 0 && (
-                    <div className="space-y-2 mb-3">
-                      {fields.map((field, index) => (
-                        <div key={index} className="text-sm">
-                          <span className="text-white font-medium">{field.name}</span>
-                          <div
-                            className="text-gray-300"
-                            dangerouslySetInnerHTML={{ __html: renderMarkdown(field.value) }}
-                          />
-                        </div>
-                      ))}
+                  {/* Descripción */}
+                  {descripcion ? (
+                    <div
+                      className="text-gray-300 text-sm mb-3"
+                      dangerouslySetInnerHTML={{
+                        __html: renderMarkdown(descripcion),
+                      }}
+                    />
+                  ) : (
+                    <div className="text-gray-500 text-sm mb-3 italic">
+                      Descripción de la noticia
                     </div>
                   )}
 
-                  {/* Footer */}
-                  <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3">
-                    Publicado por {user.username}
+                  {/* Thumbnail */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <img
+                      src={user.avatarUrl}
+                      alt="Avatar"
+                      className="w-12 h-12 rounded-full"
+                    />
+                    <div className="flex-1">
+                      {/* Fields */}
+                      {fields.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {fields.map((field, index) => (
+                            <div key={index} className="text-sm">
+                              <span className="text-white font-medium">
+                                {field.name}
+                              </span>
+                              <div
+                                className="text-gray-300"
+                                dangerouslySetInnerHTML={{
+                                  __html: renderMarkdown(field.value),
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3">
+                        Publicado por {user.username}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Imagen */}
+                  {imagenUrl && (
+                    <div className="mt-3">
+                      <img
+                        src={imagenUrl}
+                        alt="Embed image"
+                        className="max-w-full h-auto rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Imagen */}
-              {imagenUrl && (
-                <div className="mt-3">
-                  <img
-                    src={imagenUrl}
-                    alt="Embed image"
-                    className="max-w-full h-auto rounded-lg"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>
