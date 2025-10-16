@@ -451,95 +451,95 @@ O con Markdown: **Mexico City** - *Capital*"
                 )}
               </button>
             </div>
+          </div>
+        </div>
 
-            {/* Panel de Preview */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Eye className="h-4 w-4 text-green-400" />
-                <h3 className="text-white font-medium">
-                  Vista Previa en Tiempo Real
-                </h3>
-              </div>
+        {/* Panel de Preview */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Eye className="h-4 w-4 text-green-400" />
+            <h3 className="text-white font-medium">
+              Vista Previa en Tiempo Real
+            </h3>
+          </div>
 
-              <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 sticky top-4">
+          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 sticky top-4">
+            <div
+              className="rounded-lg border-l-4 p-4 bg-gray-800/50"
+              style={{ borderLeftColor: color }}
+            >
+              {/* Título */}
+              {titulo ? (
+                <h2 className="text-white font-semibold text-lg mb-2">
+                  {titulo}
+                </h2>
+              ) : (
+                <h2 className="text-gray-500 font-semibold text-lg mb-2 italic">
+                  Título de la noticia
+                </h2>
+              )}
+
+              {/* Descripción */}
+              {descripcion ? (
                 <div
-                  className="rounded-lg border-l-4 p-4 bg-gray-800/50"
-                  style={{ borderLeftColor: color }}
-                >
-                  {/* Título */}
-                  {titulo ? (
-                    <h2 className="text-white font-semibold text-lg mb-2">
-                      {titulo}
-                    </h2>
-                  ) : (
-                    <h2 className="text-gray-500 font-semibold text-lg mb-2 italic">
-                      Título de la noticia
-                    </h2>
-                  )}
+                  className="text-gray-300 text-sm mb-3"
+                  dangerouslySetInnerHTML={{
+                    __html: renderMarkdown(descripcion),
+                  }}
+                />
+              ) : (
+                <div className="text-gray-500 text-sm mb-3 italic">
+                  Descripción de la noticia
+                </div>
+              )}
 
-                  {/* Descripción */}
-                  {descripcion ? (
-                    <div
-                      className="text-gray-300 text-sm mb-3"
-                      dangerouslySetInnerHTML={{
-                        __html: renderMarkdown(descripcion),
-                      }}
-                    />
-                  ) : (
-                    <div className="text-gray-500 text-sm mb-3 italic">
-                      Descripción de la noticia
-                    </div>
-                  )}
-
-                  {/* Thumbnail */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <img
-                      src={user.avatarUrl}
-                      alt="Avatar"
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div className="flex-1">
-                      {/* Fields */}
-                      {fields.length > 0 && (
-                        <div className="space-y-2 mb-3">
-                          {fields.map((field, index) => (
-                            <div key={index} className="text-sm">
-                              <span className="text-white font-medium">
-                                {field.name}
-                              </span>
-                              <div
-                                className="text-gray-300"
-                                dangerouslySetInnerHTML={{
-                                  __html: renderMarkdown(field.value),
-                                }}
-                              />
-                            </div>
-                          ))}
+              {/* Thumbnail */}
+              <div className="flex items-start gap-3 mb-3">
+                <img
+                  src={user.avatarUrl}
+                  alt="Avatar"
+                  className="w-12 h-12 rounded-full"
+                />
+                <div className="flex-1">
+                  {/* Fields */}
+                  {fields.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {fields.map((field, index) => (
+                        <div key={index} className="text-sm">
+                          <span className="text-white font-medium">
+                            {field.name}
+                          </span>
+                          <div
+                            className="text-gray-300"
+                            dangerouslySetInnerHTML={{
+                              __html: renderMarkdown(field.value),
+                            }}
+                          />
                         </div>
-                      )}
-
-                      {/* Footer */}
-                      <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3">
-                        Publicado por {user.username}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Imagen */}
-                  {imagenUrl && (
-                    <div className="mt-3">
-                      <img
-                        src={imagenUrl}
-                        alt="Embed image"
-                        className="max-w-full h-auto rounded-lg"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
+                      ))}
                     </div>
                   )}
+
+                  {/* Footer */}
+                  <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3">
+                    Publicado por {user.username}
+                  </div>
                 </div>
               </div>
+
+              {/* Imagen */}
+              {imagenUrl && (
+                <div className="mt-3">
+                  <img
+                    src={imagenUrl}
+                    alt="Embed image"
+                    className="max-w-full h-auto rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
