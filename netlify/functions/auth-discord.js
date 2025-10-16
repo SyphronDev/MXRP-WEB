@@ -1,7 +1,8 @@
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI || "https://mxrp.site";
-const REDIRECT_URI_VERIFY = process.env.REDIRECT_URI_VERIFY || "https://mxrp.site/verify";
+const REDIRECT_URI_VERIFY =
+  process.env.REDIRECT_URI_VERIFY || "https://mxrp.site/verify";
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -41,11 +42,13 @@ exports.handler = async (event, context) => {
   try {
     if (event.httpMethod === "GET") {
       // Obtener el parámetro redirectPath de la query string
-      const redirectPath = event.queryStringParameters?.redirectPath || "dashboard";
-      
+      const redirectPath =
+        event.queryStringParameters?.redirectPath || "dashboard";
+
       // Determinar qué redirect URI usar
-      const redirectUri = redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
-      
+      const redirectUri =
+        redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
+
       // Generar URL de autorización de Discord
       const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
         redirectUri
@@ -99,7 +102,8 @@ exports.handler = async (event, context) => {
       }
 
       // Determinar qué redirect URI usar basándose en el redirectPath
-      const redirectUri = redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
+      const redirectUri =
+        redirectPath === "verify" ? REDIRECT_URI_VERIFY : REDIRECT_URI;
 
       // Intercambiar código por token de acceso
       const tokenResponse = await fetch(
@@ -126,6 +130,30 @@ exports.handler = async (event, context) => {
           statusText: tokenResponse.statusText,
           error: errorText,
         });
+
+        // Manejar específicamente códigos expirados o inválidos
+        if (tokenResponse.status === 400) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error === "invalid_grant") {
+              return {
+                statusCode: 400,
+                headers: {
+                  ...headers,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  error: "Invalid or expired authorization code",
+                  message:
+                    "El código de autorización ha expirado o es inválido. Por favor, intenta iniciar sesión nuevamente.",
+                }),
+              };
+            }
+          } catch (parseError) {
+            // Si no podemos parsear el error, continuar con el error original
+          }
+        }
+
         throw new Error(
           `Failed to exchange code for token: ${tokenResponse.status} ${tokenResponse.statusText}`
         );

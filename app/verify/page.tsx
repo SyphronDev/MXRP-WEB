@@ -125,22 +125,29 @@ function VerifyPageContent() {
   }, [discordUser]);
 
   useEffect(() => {
-    // Verificar si viene de Discord con código
-    const code = searchParams.get("code");
+    // Verificar si hay usuario de Discord guardado primero
+    const savedUser = localStorage.getItem("discord_user");
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setDiscordUser(userData);
+        setStatus("roblox-auth");
+        return;
+      } catch (error) {
+        // Si hay error al parsear, limpiar localStorage
+        localStorage.removeItem("discord_user");
+      }
+    }
 
+    // Si no hay usuario guardado, verificar si viene de Discord con código
+    const code = searchParams.get("code");
     if (code && !processedCode) {
       // Usuario viene de Discord con código de autorización
       setIsLoading(true);
       handleDiscordAuth(code);
     } else {
-      // Verificar si hay usuario de Discord guardado
-      const savedUser = localStorage.getItem("discord_user");
-      if (savedUser) {
-        setDiscordUser(JSON.parse(savedUser));
-        setStatus("roblox-auth");
-      } else {
-        setStatus("discord-auth");
-      }
+      // No hay código ni usuario guardado, mostrar login
+      setStatus("discord-auth");
     }
   }, []);
 
@@ -164,13 +171,20 @@ function VerifyPageContent() {
         // Limpiar el código de la URL
         window.history.replaceState({}, document.title, "/verify");
       } else {
+        // Si el código es inválido, limpiar la URL y mostrar error
+        window.history.replaceState({}, document.title, "/verify");
         setStatus("error");
-        setMessage(data.message || "Error al autenticar con Discord");
+        setMessage(
+          data.message ||
+            "Error al autenticar con Discord. El código puede haber expirado."
+        );
       }
     } catch (error) {
       console.error("Error during Discord authentication:", error);
+      // Limpiar la URL en caso de error
+      window.history.replaceState({}, document.title, "/verify");
       setStatus("error");
-      setMessage("Error de conexión. Intenta nuevamente.");
+      setMessage("Error de conexión. Intenta iniciar sesión nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -313,6 +327,17 @@ function VerifyPageContent() {
                 >
                   Intentar Nuevamente
                 </Button>
+                {!discordUser && (
+                  <Button
+                    onClick={() => {
+                      setMessage("");
+                      setStatus("discord-auth");
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Iniciar Sesión con Discord
+                  </Button>
+                )}
                 {discordUser && (
                   <Button
                     onClick={handleLogout}
