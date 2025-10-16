@@ -60,14 +60,23 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
   } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Función para convertir Markdown básico a HTML
+  // Función para convertir Markdown de Discord a HTML
   const renderMarkdown = (text: string) => {
     return text
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // **bold**
       .replace(/\*(.*?)\*/g, "<em>$1</em>") // *italic*
       .replace(/__(.*?)__/g, "<strong>$1</strong>") // __bold__
       .replace(/_(.*?)_/g, "<em>$1</em>") // _italic_
+      .replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>") // ***bold italic***
+      .replace(/__\*(.*?)\*__/g, "<strong><em>$1</em></strong>") // __*bold italic*__
+      .replace(/__\*\*(.*?)\*\*__/g, "<strong><em>$1</em></strong>") // __**bold italic**__
+      .replace(/__\*\*\*(.*?)\*\*\*__/g, "<strong><em>$1</em></strong>") // __***bold italic***__
       .replace(/~~(.*?)~~/g, "<del>$1</del>") // ~~strikethrough~~
+      .replace(/__~~(.*?)~~__/g, "<strong><del>$1</del></strong>") // __~~bold strikethrough~~__
+      .replace(
+        /__~~\*\*\*(.*?)\*\*\*~~__/g,
+        "<strong><del><em>$1</em></del></strong>"
+      ) // __~~***bold italic strikethrough***~~__
       .replace(/`(.*?)`/g, "<code>$1</code>") // `code`
       .replace(/\n/g, "<br>"); // line breaks
   };
@@ -244,13 +253,13 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
                 onChange={(e) => setDescripcion(e.target.value)}
                 placeholder="Describe el contenido de la noticia
 
-Ejemplos de Markdown:
-**Texto en negrita**
-*Texto en cursiva*
+Ejemplos de Markdown de Discord:
+**Texto en negrita** o __Texto en negrita__
+*Texto en cursiva* o _Texto en cursiva_
+***Texto en negrita y cursiva***
 ~~Texto tachado~~
-`código`
-__Texto en negrita__
-_Texto en cursiva_"
+`código en línea`
+__~~***Texto combinado***~~__"
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors resize-none"
                 rows={6}
                 maxLength={4096}
@@ -260,7 +269,7 @@ _Texto en cursiva_"
                   {descripcion.length}/4096 caracteres
                 </p>
                 <div className="text-xs text-white/50">
-                  **negrita** *cursiva* ~~tachado~~ `código`
+                  **negrita** *cursiva* ***combinado*** ~~tachado~~ `código`
                 </div>
               </div>
             </div>
@@ -314,7 +323,7 @@ _Texto en cursiva_"
                   className="flex items-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
-                  Agregar Campo
+                  Add Fields
                 </button>
               </div>
 
@@ -355,7 +364,7 @@ _Texto en cursiva_"
                 <div className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-3">
                   <div>
                     <label className="block text-white/80 text-xs mb-1">
-                      Nombre del Campo
+                      Name
                     </label>
                     <input
                       type="text"
@@ -363,14 +372,14 @@ _Texto en cursiva_"
                       onChange={(e) =>
                         setNewField({ ...newField, name: e.target.value })
                       }
-                      placeholder="Ej: Ubicación"
+                      placeholder="Ej: Location"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500"
                       maxLength={256}
                     />
                   </div>
                   <div>
                     <label className="block text-white/80 text-xs mb-1">
-                      Valor del Campo
+                      Value
                       <span className="text-white/50 ml-1">
                         (Soporta Markdown)
                       </span>
@@ -380,8 +389,8 @@ _Texto en cursiva_"
                       onChange={(e) =>
                         setNewField({ ...newField, value: e.target.value })
                       }
-                      placeholder="Ej: Ciudad de México
-O con Markdown: **Ciudad de México** - *Capital*"
+                      placeholder="Ej: Mexico City
+O con Markdown: **Mexico City** - *Capital*"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500 resize-none"
                       rows={2}
                       maxLength={1024}

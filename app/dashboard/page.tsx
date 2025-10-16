@@ -32,7 +32,6 @@ import {
   Newspaper,
 } from "lucide-react";
 import Image from "next/image";
-import NewsPanel from "../../components/NewsPanel";
 
 interface DiscordUser {
   id: string;
@@ -232,7 +231,7 @@ export default function Dashboard() {
   const [hasPoliceAccess, setHasPoliceAccess] = useState(false);
   const [hasNewsAccess, setHasNewsAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "economy" | "inventory" | "documents" | "antecedentes" | "tienda" | "news"
+    "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
   const router = useRouter();
 
@@ -1003,7 +1002,7 @@ export default function Dashboard() {
             {/* News Panel Button */}
             {hasNewsAccess && (
               <button
-                onClick={() => setActiveTab("news")}
+                onClick={() => (window.location.href = "/news-panel")}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400 rounded-lg hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 self-start sm:self-auto"
               >
                 <Newspaper className="h-4 w-4" />
@@ -1091,19 +1090,6 @@ export default function Dashboard() {
                 <Store className="h-4 w-4" />
                 <span className="text-sm sm:text-base">Tienda</span>
               </button>
-              {hasNewsAccess && (
-                <button
-                  onClick={() => setActiveTab("news")}
-                  className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                    activeTab === "news"
-                      ? "bg-discord text-white shadow-lg"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <Newspaper className="h-4 w-4" />
-                  <span className="text-sm sm:text-base">Noticias</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -1912,14 +1898,6 @@ export default function Dashboard() {
               )}
             </div>
           </>
-        )}
-
-        {/* News Tab */}
-        {activeTab === "news" && hasNewsAccess && (
-          <NewsPanel
-            user={user!}
-            guildId={process.env.NEXT_PUBLIC_GUILD_ID || ""}
-          />
         )}
 
         {/* Tienda Tab */}
