@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Newspaper,
   Plus,
@@ -39,6 +39,10 @@ const COLORS = [
   { name: "Naranja", value: "#F47B67" },
   { name: "Cian", value: "#5CE1E6" },
   { name: "Rosa", value: "#F47FFF" },
+  { name: "Negro", value: "#000000" },
+  { name: "Blanco", value: "#FFFFFF" },
+  { name: "MXRP Morado", value: "#8A2BE2" },
+  { name: "MXRP Cian", value: "#00CED1" },
 ];
 
 export default function NewsPanel({ user, guildId }: NewsPanelProps) {
@@ -46,6 +50,11 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
   const [descripcion, setDescripcion] = useState("");
   const [imagenUrl, setImagenUrl] = useState("");
   const [color, setColor] = useState("#5865F2");
+  const [customColor, setCustomColor] = useState("#5865F2");
+  const [footerText, setFooterText] = useState("Noticias MXRP");
+  const [webhookIconUrl, setWebhookIconUrl] = useState("");
+  const [webhookUsername, setWebhookUsername] = useState("MXRP Noticias");
+  const [botAvatarUrl, setBotAvatarUrl] = useState("");
   const [fields, setFields] = useState<NewsField[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddField, setShowAddField] = useState(false);
@@ -59,6 +68,16 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
     text: string;
   } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Obtener avatar del bot usando CLIENT_ID
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
+    if (clientId) {
+      // Construir URL del avatar del bot
+      const botAvatar = `https://cdn.discordapp.com/app-icons/${clientId}/icon.png`;
+      setBotAvatarUrl(botAvatar);
+    }
+  }, []);
 
   // Función para convertir Markdown de Discord a HTML
   const renderMarkdown = (text: string) => {
@@ -142,7 +161,11 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
           descripcion: descripcion.trim().replace(/\\n/g, "\n"),
           imagenUrl: imagenUrl.trim() || null,
           fields: fields.length > 0 ? fields : null,
-          color: color,
+          color: customColor || color,
+          footerText: footerText.trim() || "Noticias MXRP",
+          webhookIconUrl: webhookIconUrl.trim() || botAvatarUrl,
+          webhookUsername: webhookUsername.trim() || "MXRP Noticias",
+          thumbnailUrl: botAvatarUrl,
         }),
       });
 
@@ -302,20 +325,110 @@ __~~***Texto combinado***~~__"
                 <Palette className="h-4 w-4 inline mr-2" />
                 Color del Embed
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 mb-3">
                 {COLORS.map((colorOption) => (
                   <button
                     key={colorOption.value}
-                    onClick={() => setColor(colorOption.value)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    onClick={() => {
+                      setColor(colorOption.value);
+                      setCustomColor(colorOption.value);
+                    }}
+                    className={`relative p-3 rounded-lg border-2 transition-all group ${
                       color === colorOption.value
-                        ? "border-white scale-105"
-                        : "border-white/20 hover:border-white/40"
+                        ? "border-white scale-105 shadow-lg"
+                        : "border-white/20 hover:border-white/40 hover:scale-105"
                     }`}
                     style={{ backgroundColor: colorOption.value }}
                     title={colorOption.name}
-                  />
+                  >
+                    {color === colorOption.value && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-white drop-shadow-lg" />
+                      </div>
+                    )}
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/60 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      {colorOption.name}
+                    </span>
+                  </button>
                 ))}
+              </div>
+
+              {/* Selector de color personalizado */}
+              <div className="flex items-center gap-3 mt-6">
+                <label className="text-white/70 text-sm">
+                  Color Personalizado:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customColor}
+                    onChange={(e) => {
+                      setCustomColor(e.target.value);
+                      setColor(e.target.value);
+                    }}
+                    className="w-12 h-12 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                  />
+                  <span className="text-white/60 text-sm font-mono">
+                    {customColor.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Text */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-2">
+                Texto del Footer
+              </label>
+              <input
+                type="text"
+                value={footerText}
+                onChange={(e) => setFooterText(e.target.value)}
+                placeholder="Ej: Noticias TV Azteca, Noticias MXRP"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-blue-500 transition-colors"
+                maxLength={100}
+              />
+              <p className="text-white/60 text-xs mt-1">
+                {footerText.length}/100 caracteres
+              </p>
+            </div>
+
+            {/* Webhook Settings */}
+            <div className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-lg">
+              <h4 className="text-white/90 text-sm font-medium mb-3">
+                Configuración del Webhook
+              </h4>
+
+              <div>
+                <label className="block text-white/70 text-xs mb-2">
+                  Nombre del Webhook
+                </label>
+                <input
+                  type="text"
+                  value={webhookUsername}
+                  onChange={(e) => setWebhookUsername(e.target.value)}
+                  placeholder="Ej: MXRP Noticias, TV Azteca"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500 text-sm"
+                  maxLength={80}
+                />
+              </div>
+
+              <div>
+                <label className="block text-white/70 text-xs mb-2">
+                  URL del Icono del Webhook (opcional)
+                </label>
+                <input
+                  type="url"
+                  value={webhookIconUrl}
+                  onChange={(e) => setWebhookIconUrl(e.target.value)}
+                  placeholder={`Por defecto: Icono del bot${
+                    botAvatarUrl ? " (" + botAvatarUrl + ")" : ""
+                  }`}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-blue-500 text-sm"
+                />
+                <p className="text-white/50 text-xs mt-1">
+                  Si se deja vacío, se usará el icono del bot MXRP
+                </p>
               </div>
             </div>
 
@@ -473,7 +586,7 @@ O con Markdown: **Mexico City** - *Capital*"
           <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 sticky top-4">
             <div
               className="rounded-lg border-l-4 p-4 bg-gray-800/50"
-              style={{ borderLeftColor: color }}
+              style={{ borderLeftColor: customColor || color }}
             >
               {/* Título */}
               {titulo ? (
@@ -500,13 +613,18 @@ O con Markdown: **Mexico City** - *Capital*"
                 </div>
               )}
 
-              {/* Thumbnail */}
+              {/* Thumbnail (Bot Icon) */}
               <div className="flex items-start gap-3 mb-3">
-                <img
-                  src={user.avatarUrl}
-                  alt="Avatar"
-                  className="w-12 h-12 rounded-full"
-                />
+                {botAvatarUrl && (
+                  <img
+                    src={botAvatarUrl}
+                    alt="Bot Avatar"
+                    className="w-12 h-12 rounded-full"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
                 <div className="flex-1">
                   {/* Fields */}
                   {fields.length > 0 && (
@@ -528,8 +646,18 @@ O con Markdown: **Mexico City** - *Capital*"
                   )}
 
                   {/* Footer */}
-                  <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3">
-                    Publicado por {user.username}
+                  <div className="text-xs text-gray-400 border-t border-gray-700 pt-2 mt-3 flex items-center gap-2">
+                    {webhookIconUrl && (
+                      <img
+                        src={webhookIconUrl}
+                        alt="Webhook Icon"
+                        className="w-4 h-4 rounded-full"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span>{footerText || "Noticias MXRP"}</span>
                   </div>
                 </div>
               </div>

@@ -36,6 +36,10 @@ exports.handler = async (event, context) => {
       imagenUrl,
       fields,
       color,
+      footerText,
+      webhookIconUrl,
+      webhookUsername,
+      thumbnailUrl,
     } = JSON.parse(event.body);
 
     if (!discordId || !guildId || !titulo || !descripcion) {
@@ -188,19 +192,27 @@ exports.handler = async (event, context) => {
         }))
       : [];
 
+    // Obtener el avatar del bot si se proporcionó CLIENT_ID
+    let botIconUrl = thumbnailUrl;
+    if (!botIconUrl && process.env.CLIENT_ID) {
+      botIconUrl = `https://cdn.discordapp.com/app-icons/${process.env.CLIENT_ID}/icon.png`;
+    }
+
     // Crear el embed para Discord
     const embed = {
       title: titulo,
       description: processMarkdown(descripcion),
       color: color ? parseInt(color.replace("#", ""), 16) : 0x5865f2, // Discord blue por defecto
-      thumbnail: {
-        url: avatarUrl,
-      },
+      thumbnail: botIconUrl
+        ? {
+            url: botIconUrl,
+          }
+        : undefined,
       image: imagenUrl ? { url: imagenUrl } : undefined,
       fields: processedFields,
       footer: {
-        text: `Publicado por ${username}`,
-        icon_url: avatarUrl,
+        text: footerText || "Noticias MXRP",
+        icon_url: webhookIconUrl || botIconUrl || avatarUrl,
       },
       timestamp: new Date().toISOString(),
     };
@@ -218,14 +230,24 @@ exports.handler = async (event, context) => {
       };
     }
 
+    const webhookPayload = {
+      embeds: [embed],
+    };
+
+    // Agregar username e icono del webhook si se proporcionaron
+    if (webhookUsername) {
+      webhookPayload.username = webhookUsername;
+    }
+    if (webhookIconUrl || botIconUrl) {
+      webhookPayload.avatar_url = webhookIconUrl || botIconUrl;
+    }
+
     const webhookResponse = await fetch(webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        embeds: [embed],
-      }),
+      body: JSON.stringify(webhookPayload),
     });
 
     if (!webhookResponse.ok) {

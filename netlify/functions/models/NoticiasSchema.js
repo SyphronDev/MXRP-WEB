@@ -28,3 +28,6 @@ const NoticiasSchema = new mongoose.Schema({
 
 module.exports = mongoose.model("Noticias", NoticiasSchema);
 
+
+
+
