@@ -38,8 +38,14 @@ export default function Header() {
   // Verificar si hay usuario logueado al cargar
   useEffect(() => {
     const savedUser = localStorage.getItem("discord_user");
-    if (savedUser) {
+    const authToken = localStorage.getItem("auth_token");
+
+    // Solo cargar usuario si hay token válido
+    if (savedUser && authToken) {
       setUser(JSON.parse(savedUser));
+    } else if (savedUser && !authToken) {
+      // Si hay usuario pero no token, limpiar todo (sesión inválida)
+      localStorage.removeItem("discord_user");
     }
 
     // Verificar código de autorización en la URL
@@ -68,7 +74,17 @@ export default function Header() {
 
       if (response.ok && data.success) {
         setUser(data.user);
-        localStorage.setItem("discord_user", JSON.stringify(data.user));
+
+        // SOLO guardar datos no sensibles para UI (username, avatar)
+        // NO guardar el ID ni email - estos se obtienen del JWT
+        const safeUserData = {
+          username: data.user.username,
+          discriminator: data.user.discriminator,
+          avatar: data.user.avatar,
+          avatarUrl: data.user.avatarUrl,
+        };
+        localStorage.setItem("discord_user", JSON.stringify(safeUserData));
+
         // Guardar el token JWT para autenticación segura
         if (data.token) {
           localStorage.setItem("auth_token", data.token);

@@ -1,5 +1,6 @@
 const { connectDB } = require("./utils/database");
 const PermisosSchema = require("./models/PermisosSchema");
+const { authenticateRequest } = require("./utils/jwt");
 
 // Redis connection
 const redis = require("redis");
@@ -252,7 +253,7 @@ exports.handler = async (event, context) => {
   // Configurar CORS
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 
@@ -273,15 +274,32 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { discordId, guildId } = JSON.parse(event.body);
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: authResult.message,
+          hasAdminAccess: false,
+        }),
+      };
+    }
 
-    if (!discordId || !guildId) {
+    // Extraer el userId del usuario autenticado
+    const discordId = authResult.user.userId;
+
+    const { guildId } = JSON.parse(event.body || "{}");
+
+    if (!guildId) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
-          message: "discordId y guildId son requeridos",
+          message: "guildId es requerido",
         }),
       };
     }

@@ -261,20 +261,24 @@ export default function Dashboard() {
       return;
     }
 
+    // Los datos del usuario en localStorage ya no tienen ID ni email (solo UI)
+    // El ID real se obtiene del JWT en el backend
     const userData = JSON.parse(savedUser);
     setUser(userData);
-    fetchEconomyData(userData.id);
-    fetchInventoryData(userData.id);
+
+    // Ya no necesitamos pasar el ID, el backend lo extrae del JWT
+    fetchEconomyData("");
+    fetchInventoryData("");
     fetchAlertsData();
     fetchProtocoloData();
-    fetchAntecedentesData(userData.id);
+    fetchAntecedentesData("");
     fetchUsuariosPeligrosos();
     fetchTiendaData();
-    fetchIneData(userData.id);
-    fetchPasaporteData(userData.id);
-    checkAdminAccess(userData.id);
-    checkPoliceAccess(userData.id);
-    checkNewsAccess(userData.id);
+    fetchIneData("");
+    fetchPasaporteData("");
+    checkAdminAccess("");
+    checkPoliceAccess("");
+    checkNewsAccess("");
   }, [router]);
 
   // Efecto para rotar las alertas cada 3 minutos
@@ -615,11 +619,8 @@ export default function Dashboard() {
       setCheckingAdminAccess(true);
       const response = await fetch("/.netlify/functions/admin-permissions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
-          discordId,
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
         }),
       });
@@ -643,12 +644,9 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/police-database", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           action: "checkAccess",
-          discordId,
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
         }),
       });
@@ -672,11 +670,8 @@ export default function Dashboard() {
         "/.netlify/functions/periodista-permissions",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
-            discordId,
             guildId: process.env.NEXT_PUBLIC_GUILD_ID,
           }),
         }

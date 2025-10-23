@@ -1,5 +1,6 @@
 const { connectDB } = require("./utils/database");
 const AntecedentesSchema = require("./models/AntecedentesSchema");
+const { authenticateRequest } = require("./utils/jwt");
 
 // Schema para cargos criminales
 const mongoose = require("mongoose");
@@ -80,6 +81,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers,
+        body: JSON.stringify({
+          error: "Unauthorized",
+          message: authResult.message,
+        }),
+      };
+    }
+
+    // Extraer el userId del usuario autenticado
+    const discordId = authResult.user.userId;
+
     if (!process.env.MONGO_URI || !process.env.GUILD_ID) {
       return {
         statusCode: 500,
@@ -108,7 +125,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { action, discordId, ...data } = requestBody;
+    const { action, ...data } = requestBody;
 
     // Verificar permisos policiales solo para acciones que lo requieren
     const actionsRequiringPermission = [

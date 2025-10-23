@@ -93,63 +93,88 @@ export default function AdminPanel() {
   );
   const router = useRouter();
 
-  const checkPermissions = useCallback(async (discordId: string) => {
-    try {
-      setLoading(true);
+  // Función helper para obtener el token JWT
+  const getAuthToken = () => {
+    return localStorage.getItem("auth_token");
+  };
 
-      // Verificar permisos administrativos
-      const permissionsResponse = await fetch(
-        "/.netlify/functions/admin-permissions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            discordId,
-            guildId: process.env.NEXT_PUBLIC_GUILD_ID,
-          }),
+  // Función helper para crear headers con autenticación
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  const checkPermissions = useCallback(
+    async (discordId: string) => {
+      try {
+        setLoading(true);
+
+        // Verificar permisos administrativos
+        const permissionsResponse = await fetch(
+          "/.netlify/functions/admin-permissions",
+          {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              guildId: process.env.NEXT_PUBLIC_GUILD_ID,
+            }),
+          }
+        );
+
+        const permissionsData = await permissionsResponse.json();
+
+        if (permissionsResponse.status === 401) {
+          // Token inválido o expirado
+          localStorage.removeItem("discord_user");
+          localStorage.removeItem("auth_token");
+          router.push("/");
+          return;
         }
-      );
 
-      const permissionsData = await permissionsResponse.json();
-
-      if (permissionsData.success && permissionsData.hasAdminAccess) {
-        setHasAccess(true);
-        setPermissions(permissionsData.permissions);
-        fetchProfile(discordId);
-      } else {
-        setError("No tienes permisos para acceder al panel administrativo.");
+        if (permissionsData.success && permissionsData.hasAdminAccess) {
+          setHasAccess(true);
+          setPermissions(permissionsData.permissions);
+          fetchProfile(discordId);
+        } else {
+          setError("No tienes permisos para acceder al panel administrativo.");
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error checking permissions:", error);
+        setError("Error al verificar permisos.");
         setLoading(false);
       }
-    } catch (error) {
-      console.error("Error checking permissions:", error);
-      setError("Error al verificar permisos.");
-      setLoading(false);
-    }
-  }, []);
+    },
+    [router]
+  );
 
   useEffect(() => {
     const savedUser = localStorage.getItem("discord_user");
-    if (!savedUser) {
+    const authToken = getAuthToken();
+
+    if (!savedUser || !authToken) {
       router.push("/");
       return;
     }
 
     const userData = JSON.parse(savedUser);
     setUser(userData);
-    checkPermissions(userData.id);
+    // Ya no pasamos el ID, el backend lo extrae del JWT
+    checkPermissions("");
   }, [router, checkPermissions]);
 
   const fetchProfile = async (discordId: string) => {
     try {
       const response = await fetch("/.netlify/functions/admin-profiles", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
-          discordId,
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
           action: "get",
         }),
