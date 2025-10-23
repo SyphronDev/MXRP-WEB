@@ -2,6 +2,7 @@ const { connectDB } = require("./utils/database");
 const TiendaSchema = require("./models/TiendaSchema");
 const InventarioUsuario = require("./models/InventarioUsuario");
 const EconomyUser = require("./models/EconomyUser");
+const { authenticateRequest } = require("./utils/jwt");
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -15,6 +16,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers,
+        body: JSON.stringify({
+          error: "Unauthorized",
+          message: authResult.message,
+        }),
+      };
+    }
+
+    // Extraer el userId del usuario autenticado (ya no se confía en el body)
+    const discordId = authResult.user.userId;
+
     // Validar variables de entorno
     if (!process.env.MONGO_URI || !process.env.GUILD_ID) {
       return {
@@ -29,11 +46,10 @@ exports.handler = async (event, context) => {
 
     await connectDB();
 
-    // Parsear el cuerpo de la petición
-    let { discordId, articulo, cantidad, unidad, tipoTienda } = {};
+    // Parsear el cuerpo de la petición (ahora sin discordId ya que viene del token)
+    let { articulo, cantidad, unidad, tipoTienda } = {};
     try {
       const body = JSON.parse(event.body);
-      discordId = body.discordId;
       articulo = body.articulo;
       cantidad = body.cantidad;
       unidad = body.unidad || "x";
@@ -50,13 +66,13 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (!discordId || !articulo || !cantidad || !tipoTienda) {
+    if (!articulo || !cantidad || !tipoTienda) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           error: "Missing required fields",
-          message: "discordId, articulo, cantidad, and tipoTienda are required",
+          message: "articulo, cantidad, and tipoTienda are required",
         }),
       };
     }

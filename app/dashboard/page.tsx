@@ -235,9 +235,28 @@ export default function Dashboard() {
   >("economy");
   const router = useRouter();
 
+  // Función helper para obtener el token JWT
+  const getAuthToken = () => {
+    return localStorage.getItem("auth_token");
+  };
+
+  // Función helper para crear headers con autenticación
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem("discord_user");
-    if (!savedUser) {
+    const authToken = getAuthToken();
+
+    if (!savedUser || !authToken) {
       router.push("/");
       return;
     }
@@ -274,10 +293,8 @@ export default function Dashboard() {
       setEconomyLoading(true);
       const response = await fetch("/.netlify/functions/dashboard", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}), // Ya no enviamos discordId, el backend lo obtiene del token
       });
 
       const data = await response.json();
@@ -285,6 +302,13 @@ export default function Dashboard() {
       if (response.ok && data.success) {
         setEconomyData(data.user);
       } else {
+        if (response.status === 401) {
+          // Token inválido o expirado, redirigir al login
+          localStorage.removeItem("discord_user");
+          localStorage.removeItem("auth_token");
+          router.push("/");
+          return;
+        }
         setError(data.message || "Error al cargar los datos de economía");
       }
     } catch (error) {
@@ -299,10 +323,8 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/inventory", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();
@@ -368,10 +390,8 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/antecedentes", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();
@@ -446,11 +466,9 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/comprar", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
-          discordId: user.id,
+          // Ya no enviamos discordId, el backend lo obtiene del token
           articulo,
           cantidad,
           unidad,
@@ -556,10 +574,8 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/ine", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();
@@ -578,10 +594,8 @@ export default function Dashboard() {
     try {
       const response = await fetch("/.netlify/functions/pasaporte", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();
@@ -696,10 +710,8 @@ export default function Dashboard() {
       setIsGeneratingImage(true);
       const response = await fetch("/.netlify/functions/generate-ine-image", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ discordId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();

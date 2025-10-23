@@ -1,5 +1,6 @@
 const { connectDB } = require("./utils/database");
 const InventarioUsuario = require("./models/InventarioUsuario");
+const { authenticateRequest } = require("./utils/jwt");
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -13,6 +14,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          error: "Unauthorized",
+          message: authResult.message,
+        }),
+      };
+    }
+
+    // Extraer el userId del usuario autenticado
+    const discordId = authResult.user.userId;
+
     // Validar variables de entorno
     if (!process.env.MONGO_URI) {
       console.error("MONGO_URI environment variable is not set");
@@ -46,40 +66,6 @@ exports.handler = async (event, context) => {
 
     // Conectar a la base de datos
     await connectDB();
-
-    // Parsear el cuerpo de la petición
-    let discordId;
-    try {
-      const body = JSON.parse(event.body);
-      discordId = body.discordId;
-    } catch (parseError) {
-      console.error("Failed to parse request body:", parseError);
-      return {
-        statusCode: 400,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          error: "Invalid request body",
-          message: "Request body must be valid JSON",
-        }),
-      };
-    }
-
-    if (!discordId) {
-      console.error("Missing discordId in request");
-      return {
-        statusCode: 400,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          error: "Discord ID is required",
-        }),
-      };
-    }
 
     const guildId = process.env.GUILD_ID;
 

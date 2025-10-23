@@ -2,6 +2,7 @@ const { connectDB } = require("./utils/database");
 const InesSchema = require("./models/InesSchema");
 const { loadImage, createCanvas } = require("@napi-rs/canvas");
 const { createClient } = require("@supabase/supabase-js");
+const { authenticateRequest } = require("./utils/jwt");
 const path = require("path");
 
 // Inicializar cliente de Supabase
@@ -22,6 +23,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers,
+        body: JSON.stringify({
+          error: "Unauthorized",
+          message: authResult.message,
+        }),
+      };
+    }
+
+    // Extraer el userId del usuario autenticado
+    const discordId = authResult.user.userId;
+
     if (
       !process.env.MONGO_URI ||
       !process.env.GUILD_ID ||
@@ -39,30 +56,6 @@ exports.handler = async (event, context) => {
     }
 
     await connectDB();
-
-    let discordId;
-    try {
-      const body = JSON.parse(event.body);
-      discordId = body.discordId;
-    } catch (parseError) {
-      console.error("Failed to parse request body:", parseError);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: "Invalid request body",
-          message: "Request body must be valid JSON",
-        }),
-      };
-    }
-
-    if (!discordId) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Discord ID is required" }),
-      };
-    }
 
     const guildId = process.env.GUILD_ID;
 

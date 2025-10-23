@@ -1,3 +1,5 @@
+const { generateToken } = require("./utils/jwt");
+
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI || "https://mxrp.site";
@@ -228,6 +230,9 @@ exports.handler = async (event, context) => {
         `User ${userData.id} successfully authenticated and verified guild membership`
       );
 
+      // Generar JWT para el usuario
+      const jwtToken = generateToken(userData);
+
       return {
         statusCode: 200,
         headers: {
@@ -248,7 +253,8 @@ exports.handler = async (event, context) => {
                   userData.discriminator % 5
                 }.png`,
           },
-          accessToken: tokenData.access_token,
+          token: jwtToken, // JWT token firmado
+          // accessToken: tokenData.access_token, // Ya no necesitamos exponer el Discord access token
         }),
       };
     }

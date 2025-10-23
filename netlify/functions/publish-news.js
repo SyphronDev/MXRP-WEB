@@ -192,10 +192,45 @@ exports.handler = async (event, context) => {
         }))
       : [];
 
-    // Obtener el avatar del bot si se proporcionó CLIENT_ID
+    // Obtener información del bot desde Discord API
     let botIconUrl = thumbnailUrl;
-    if (!botIconUrl && process.env.CLIENT_ID) {
-      botIconUrl = `https://cdn.discordapp.com/app-icons/${process.env.CLIENT_ID}/icon.png`;
+
+    if (!botIconUrl) {
+      try {
+        // Obtener información del bot usando el bot token
+        const botResponse = await fetch(
+          "https://discord.com/api/v10/users/@me",
+          {
+            headers: {
+              Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (botResponse.ok) {
+          const botData = await botResponse.json();
+          if (botData.avatar) {
+            const avatarHash = botData.avatar;
+            const isAnimated = avatarHash.startsWith("a_");
+            botIconUrl = `https://cdn.discordapp.com/avatars/${
+              botData.id
+            }/${avatarHash}.${isAnimated ? "gif" : "png"}`;
+          }
+        } else {
+          console.warn("Could not fetch bot info, using CLIENT_ID fallback");
+          // Fallback a CLIENT_ID si la API falla
+          if (process.env.CLIENT_ID) {
+            botIconUrl = `https://cdn.discordapp.com/app-icons/${process.env.CLIENT_ID}/icon.png`;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching bot avatar:", error);
+        // Fallback a CLIENT_ID
+        if (process.env.CLIENT_ID) {
+          botIconUrl = `https://cdn.discordapp.com/app-icons/${process.env.CLIENT_ID}/icon.png`;
+        }
+      }
     }
 
     // Crear el embed para Discord
@@ -216,6 +251,9 @@ exports.handler = async (event, context) => {
       },
       timestamp: new Date().toISOString(),
     };
+
+    console.log("Bot Icon URL:", botIconUrl);
+    console.log("Embed thumbnail:", embed.thumbnail);
 
     // Enviar al webhook
     const webhookUrl = process.env.WEBHOOK_PERIODICO;

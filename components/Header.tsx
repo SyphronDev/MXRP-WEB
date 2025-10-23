@@ -69,6 +69,10 @@ export default function Header() {
       if (response.ok && data.success) {
         setUser(data.user);
         localStorage.setItem("discord_user", JSON.stringify(data.user));
+        // Guardar el token JWT para autenticación segura
+        if (data.token) {
+          localStorage.setItem("auth_token", data.token);
+        }
       } else {
         console.error("Discord auth failed:", data);
         alert(`Error de autenticación: ${data.error || "Error desconocido"}`);
@@ -99,6 +103,7 @@ export default function Header() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("discord_user");
+    localStorage.removeItem("auth_token"); // Eliminar también el token JWT
     setShowDropdown(false);
   };
 
