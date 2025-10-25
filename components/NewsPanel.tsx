@@ -148,14 +148,25 @@ export default function NewsPanel({ user, guildId }: NewsPanelProps) {
     setIsSubmitting(true);
     setMessage(null);
 
+    // Obtener el token JWT
+    const authToken = localStorage.getItem("auth_token");
+    if (!authToken) {
+      setMessage({
+        type: "error",
+        text: "Error: No se encontró token de autenticación. Por favor, inicia sesión nuevamente.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch("/.netlify/functions/publish-news", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          discordId: user.id,
           guildId: guildId,
           titulo: titulo.trim(),
           descripcion: descripcion.trim().replace(/\\n/g, "\n"),

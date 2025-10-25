@@ -1,3 +1,5 @@
+const { authenticateRequest } = require("./utils/jwt");
+
 const RBX_CLIENT_ID = process.env.RBX_CLIENT_ID;
 const RBX_CLIENT_SECRET = process.env.RBX_CLIENT_SECRET;
 const REDIRECT_URI = `${process.env.SITE_URL}/verify`;
@@ -5,7 +7,7 @@ const REDIRECT_URI = `${process.env.SITE_URL}/verify`;
 exports.handler = async (event, context) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   };
 
@@ -38,13 +40,29 @@ exports.handler = async (event, context) => {
     }
 
     if (event.httpMethod === "POST") {
-      const { code, discordId } = JSON.parse(event.body);
+      // Validar JWT - obtener usuario autenticado del token
+      const authResult = authenticateRequest(event);
+      if (authResult.error) {
+        return {
+          statusCode: authResult.statusCode,
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            error: "Unauthorized",
+            message: authResult.message,
+          }),
+        };
+      }
 
-      if (!code || !discordId) {
+      // Extraer el userId del usuario autenticado
+      const discordId = authResult.user.userId;
+
+      const { code } = JSON.parse(event.body || "{}");
+
+      if (!code) {
         return {
           statusCode: 400,
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ error: "Missing code or discordId" }),
+          body: JSON.stringify({ error: "Missing code" }),
         };
       }
 

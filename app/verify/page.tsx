@@ -51,14 +51,26 @@ function VerifyPageContent() {
         return;
       }
 
+      // Obtener el token JWT
+      const authToken = localStorage.getItem("auth_token");
+      if (!authToken) {
+        setStatus("error");
+        setMessage(
+          "Error: No se encontró token de autenticación. Por favor, inicia sesión nuevamente."
+        );
+        return;
+      }
+
       setIsLoading(true);
       try {
         const response = await fetch("/.netlify/functions/roblox-auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({
             code,
-            discordId: discordUser.id,
           }),
         });
 

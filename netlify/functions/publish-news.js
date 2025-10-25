@@ -1,11 +1,12 @@
 const { connectDB } = require("./utils/database");
 const NoticiasSchema = require("./models/NoticiasSchema");
+const { authenticateRequest } = require("./utils/jwt");
 
 exports.handler = async (event, context) => {
   // Configurar CORS
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 
@@ -26,10 +27,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Validar JWT - obtener usuario autenticado del token
+    const authResult = authenticateRequest(event);
+    if (authResult.error) {
+      return {
+        statusCode: authResult.statusCode,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: authResult.message,
+        }),
+      };
+    }
+
+    // Extraer el userId del usuario autenticado
+    const discordId = authResult.user.userId;
+
     await connectDB();
 
     const {
-      discordId,
       guildId,
       titulo,
       descripcion,
@@ -40,9 +56,9 @@ exports.handler = async (event, context) => {
       webhookIconUrl,
       webhookUsername,
       thumbnailUrl,
-    } = JSON.parse(event.body);
+    } = JSON.parse(event.body || "{}");
 
-    if (!discordId || !guildId || !titulo || !descripcion) {
+    if (!guildId || !titulo || !descripcion) {
       return {
         statusCode: 400,
         headers,
