@@ -45,6 +45,9 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AccountCard } from "@/components/dashboard/account-card";
 import { StatsGrid } from "@/components/dashboard/stats-grid";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { MobileTabs } from "@/components/ui/mobile-tabs";
+import { ResponsiveGrid, ResponsiveContainer, MobileStack } from "@/components/ui/responsive-grid";
+import MobileLayout from "@/components/layout/mobile-layout";
 
 interface DiscordUser {
   id: string;
@@ -935,7 +938,15 @@ export default function Dashboard() {
     economyData.efectivo;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <MobileLayout
+      user={user}
+      hasAdminAccess={hasAdminAccess}
+      hasPoliceAccess={hasPoliceAccess}
+      hasNewsAccess={hasNewsAccess}
+      hasSolicitudesAccess={hasSolicitudesAccess}
+      showAlerts={alertsData.length > 0}
+      alertsCount={alertsData.length}
+    >
       {/* Toast Container */}
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       
@@ -958,52 +969,43 @@ export default function Dashboard() {
         <div className="absolute top-1/2 left-1/2 w-60 h-60 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Animated Alerts Banner */}
+      <ResponsiveContainer className="py-4 lg:py-8">
+        {/* Animated Alerts Banner - Mobile Optimized */}
         {alertsData.length > 0 && (
-          <div className="mb-4 sm:mb-6 overflow-hidden">
+          <div className="mb-4 lg:mb-6 overflow-hidden">
             {(() => {
               const currentAlert = alertsData[currentAlertIndex];
               const colors = getAlertColor(currentAlert?.alerta || "");
 
               return (
-                <div
-                  className={`${colors.bg} ${colors.border} rounded-lg p-3 sm:p-4 backdrop-blur-md`}
+                <CardModern
+                  variant="glass"
+                  className={`${colors.bg} ${colors.border} p-3 lg:p-4`}
                 >
                   <div
                     key={currentAlertIndex}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 animate-slide-in"
-                    style={{
-                      animation: "slideInFromRight 0.5s ease-out",
-                    }}
+                    className="flex items-start gap-3 animate-slide-in-right"
                   >
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div
-                        className={`p-1.5 sm:p-2 ${colors.iconBg} rounded-lg flex-shrink-0`}
-                      >
-                        <Bell
-                          className={`h-4 w-4 sm:h-5 sm:w-5 ${colors.iconColor} animate-pulse`}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-white font-semibold text-sm sm:text-base">
+                    <div className={`p-2 ${colors.iconBg} rounded-lg flex-shrink-0`}>
+                      <Bell className={`h-4 w-4 ${colors.iconColor} animate-pulse`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                        <span className="text-white font-semibold text-sm">
                           {currentAlert?.servidor}
-                          {getServerProtocolo(currentAlert?.servidor || "") && (
-                            <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/10 text-white/80 text-xs rounded">
-                              Protocolo{" "}
-                              {getServerProtocolo(currentAlert?.servidor || "")}
-                            </span>
-                          )}
-                        </div>
-                        <div
-                          className={`${colors.textColor} text-xs sm:text-sm break-words`}
-                        >
-                          {currentAlert?.alerta}
-                        </div>
+                        </span>
+                        {getServerProtocolo(currentAlert?.servidor || "") && (
+                          <span className="px-2 py-0.5 bg-white/10 text-white/80 text-xs rounded-full w-fit">
+                            Protocolo {getServerProtocolo(currentAlert?.servidor || "")}
+                          </span>
+                        )}
                       </div>
+                      <p className={`${colors.textColor} text-xs sm:text-sm leading-relaxed`}>
+                        {currentAlert?.alerta}
+                      </p>
                     </div>
                   </div>
-                </div>
+                </CardModern>
               );
             })()}
           </div>
@@ -1023,154 +1025,226 @@ export default function Dashboard() {
           }
         `}</style>
 
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3 sm:gap-4">
+        {/* Header - Mobile Optimized */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col gap-4 mb-6">
+            {/* User Info - Mobile First */}
+            <div className="flex items-center gap-3 lg:hidden">
               {user && (
                 <Image
                   src={user.avatarUrl}
                   alt={user.username}
                   width={48}
                   height={48}
-                  className="rounded-full border-2 border-discord/50 sm:w-16 sm:h-16"
+                  className="rounded-full border-2 border-purple-500/50"
                 />
               )}
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
-                  ¡Bienvenido, {user?.username}!
+                <h1 className="text-xl font-bold text-white">
+                  ¡Hola, {user?.username}!
                 </h1>
-                <p className="text-white/60 text-sm sm:text-base md:text-lg">
-                  Panel General MXRP ER:LC
+                <p className="text-white/60 text-sm">
+                  Panel MXRP ER:LC
                 </p>
               </div>
             </div>
 
-            {/* Admin Panel Button */}
-            {hasAdminAccess && (
-              <button
-                onClick={() => router.push("/admin")}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-blue-500/30 transition-all duration-200 self-start sm:self-auto"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="text-sm font-medium">Panel Admin</span>
-              </button>
-            )}
+            {/* Desktop Header */}
+            <div className="hidden lg:flex lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
+                {user && (
+                  <Image
+                    src={user.avatarUrl}
+                    alt={user.username}
+                    width={64}
+                    height={64}
+                    className="rounded-full border-2 border-purple-500/50"
+                  />
+                )}
+                <div>
+                  <h1 className="text-3xl xl:text-4xl font-bold text-white mb-2">
+                    ¡Bienvenido, {user?.username}!
+                  </h1>
+                  <p className="text-white/60 text-lg">
+                    Panel General MXRP ER:LC
+                  </p>
+                </div>
+              </div>
 
-            {/* Police Database Button */}
-            {hasPoliceAccess && (
-              <button
-                onClick={() =>
-                  router.push(
-                    `/police-database?discordId=${user?.id}&guildId=${process.env.NEXT_PUBLIC_GUILD_ID}`
-                  )
-                }
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 text-blue-400 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-200 self-start sm:self-auto"
-              >
-                <Shield className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Base de Datos Policial
-                </span>
-              </button>
-            )}
+              {/* Admin Actions - Desktop Only */}
+              <div className="flex items-center gap-2">
+                {hasAdminAccess && (
+                  <ButtonModern
+                    variant="outline"
+                    size="md"
+                    icon={<Settings className="h-4 w-4" />}
+                    onClick={() => router.push("/admin")}
+                    className="text-purple-400 border-purple-500/30"
+                  >
+                    Panel Admin
+                  </ButtonModern>
+                )}
 
-            {/* News Panel Button */}
-            {hasNewsAccess && (
-              <button
-                onClick={() => (window.location.href = "/news-panel")}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400 rounded-lg hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 self-start sm:self-auto"
-              >
-                <Newspaper className="h-4 w-4" />
-                <span className="text-sm font-medium">Panel Noticias</span>
-              </button>
-            )}
+                {hasPoliceAccess && (
+                  <ButtonModern
+                    variant="outline"
+                    size="md"
+                    icon={<Shield className="h-4 w-4" />}
+                    onClick={() => router.push("/police-database")}
+                    className="text-cyan-400 border-cyan-500/30"
+                  >
+                    Base Policial
+                  </ButtonModern>
+                )}
 
-            {/* Admin Solicitudes Button - Solo para roles específicos */}
-            {hasSolicitudesAccess && (
-              <button
-                onClick={() => router.push("/admin/solicitudes")}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 text-orange-400 rounded-lg hover:from-orange-500/30 hover:to-red-500/30 transition-all duration-200 self-start sm:self-auto"
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Gestionar Solicitudes
-                </span>
-              </button>
-            )}
+                {hasNewsAccess && (
+                  <ButtonModern
+                    variant="outline"
+                    size="md"
+                    icon={<Newspaper className="h-4 w-4" />}
+                    onClick={() => router.push("/news-panel")}
+                    className="text-green-400 border-green-500/30"
+                  >
+                    Noticias
+                  </ButtonModern>
+                )}
 
-            {/* MXRP Logo */}
-            <div
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity self-start sm:self-auto"
-              onClick={() => {
-                window.location.href = "/";
-              }}
-            >
-              <Image
-                src="/images/Icon.png"
-                alt="MXRP"
-                width={32}
-                height={32}
-                className="rounded-md sm:w-12 sm:h-12"
-              />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                MXRP
-              </h2>
+                {hasSolicitudesAccess && (
+                  <ButtonModern
+                    variant="outline"
+                    size="md"
+                    icon={<Building2 className="h-4 w-4" />}
+                    onClick={() => router.push("/admin/solicitudes")}
+                    className="text-orange-400 border-orange-500/30"
+                  >
+                    Gestionar
+                  </ButtonModern>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions - Mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+              <ButtonModern
+                variant="outline"
+                size="sm"
+                icon={<Building2 className="h-4 w-4" />}
+                onClick={() => router.push("/solicitudes-empresa")}
+                className="whitespace-nowrap"
+              >
+                Solicitudes
+              </ButtonModern>
+              
+              {hasAdminAccess && (
+                <ButtonModern
+                  variant="outline"
+                  size="sm"
+                  icon={<Settings className="h-4 w-4" />}
+                  onClick={() => router.push("/admin")}
+                  className="whitespace-nowrap text-purple-400"
+                >
+                  Admin
+                </ButtonModern>
+              )}
+
+              {hasPoliceAccess && (
+                <ButtonModern
+                  variant="outline"
+                  size="sm"
+                  icon={<Shield className="h-4 w-4" />}
+                  onClick={() => router.push("/police-database")}
+                  className="whitespace-nowrap text-cyan-400"
+                >
+                  Policía
+                </ButtonModern>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="mb-6 md:mb-8">
-          <NavigationTabs
-            tabs={[
-              {
-                id: "economy",
-                label: "Economía",
-                icon: <Wallet className="h-4 w-4" />,
-                badge: economyData ? formatCurrency(totalBalance) : undefined,
-              },
-              {
-                id: "inventory",
-                label: "Inventario",
-                icon: <Package className="h-4 w-4" />,
-                badge: inventoryData.length > 0 ? inventoryData.length : undefined,
-              },
-              {
-                id: "documents",
-                label: "Documentos",
-                icon: <IdCard className="h-4 w-4" />,
-                badge: (ineData?.aprobada || pasaporteData?.aprobada) ? "✓" : undefined,
-              },
-              {
-                id: "antecedentes",
-                label: "Antecedentes",
-                icon: <Scale className="h-4 w-4" />,
-                badge: antecedentesData?.totalArrestos || undefined,
-              },
-              {
-                id: "tienda",
-                label: "Tienda",
-                icon: <Store className="h-4 w-4" />,
-                badge: tiendaData.length > 0 ? "Nuevo" : undefined,
-              },
-            ]}
-            activeTab={activeTab}
-            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
-            variant="default"
-            className="animate-slide-in-left"
-          />
-          
-          {/* Solicitudes Button */}
-          <div className="mt-4">
-            <ButtonModern
-              variant="outline"
-              size="md"
-              icon={<Building2 className="h-4 w-4" />}
-              onClick={() => router.push("/solicitudes-empresa")}
-              className="w-full sm:w-auto"
-            >
-              Solicitudes de Empresa
-            </ButtonModern>
+        {/* Navigation Tabs - Mobile Optimized */}
+        <div className="mb-6 lg:mb-8">
+          {/* Mobile Tabs */}
+          <div className="lg:hidden">
+            <MobileTabs
+              tabs={[
+                {
+                  id: "economy",
+                  label: "Economía",
+                  icon: <Wallet className="h-4 w-4" />,
+                  badge: balanceVisible && economyData ? "💰" : undefined,
+                },
+                {
+                  id: "inventory",
+                  label: "Inventario",
+                  icon: <Package className="h-4 w-4" />,
+                  badge: inventoryData.length > 0 ? inventoryData.length : undefined,
+                },
+                {
+                  id: "documents",
+                  label: "Documentos",
+                  icon: <IdCard className="h-4 w-4" />,
+                  badge: (ineData?.aprobada || pasaporteData?.aprobada) ? "✓" : undefined,
+                },
+                {
+                  id: "antecedentes",
+                  label: "Antecedentes",
+                  icon: <Scale className="h-4 w-4" />,
+                  badge: antecedentesData?.totalArrestos || undefined,
+                },
+                {
+                  id: "tienda",
+                  label: "Tienda",
+                  icon: <Store className="h-4 w-4" />,
+                  badge: tiendaData.length > 0 ? "🆕" : undefined,
+                },
+              ]}
+              activeTab={activeTab}
+              onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+              className="animate-slide-in-left"
+            />
+          </div>
+
+          {/* Desktop Tabs */}
+          <div className="hidden lg:block">
+            <NavigationTabs
+              tabs={[
+                {
+                  id: "economy",
+                  label: "Economía",
+                  icon: <Wallet className="h-4 w-4" />,
+                  badge: economyData ? formatCurrency(totalBalance) : undefined,
+                },
+                {
+                  id: "inventory",
+                  label: "Inventario",
+                  icon: <Package className="h-4 w-4" />,
+                  badge: inventoryData.length > 0 ? inventoryData.length : undefined,
+                },
+                {
+                  id: "documents",
+                  label: "Documentos",
+                  icon: <IdCard className="h-4 w-4" />,
+                  badge: (ineData?.aprobada || pasaporteData?.aprobada) ? "✓" : undefined,
+                },
+                {
+                  id: "antecedentes",
+                  label: "Antecedentes",
+                  icon: <Scale className="h-4 w-4" />,
+                  badge: antecedentesData?.totalArrestos || undefined,
+                },
+                {
+                  id: "tienda",
+                  label: "Tienda",
+                  icon: <Store className="h-4 w-4" />,
+                  badge: tiendaData.length > 0 ? "Nuevo" : undefined,
+                },
+              ]}
+              activeTab={activeTab}
+              onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+              variant="default"
+              className="animate-slide-in-left"
+            />
           </div>
         </div>
 
@@ -1208,8 +1282,12 @@ export default function Dashboard() {
               </CardModern>
             </div>
 
-            {/* Accounts Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 md:mb-8">
+            {/* Accounts Grid - Responsive */}
+            <ResponsiveGrid
+              cols={{ default: 1, sm: 2, lg: 4 }}
+              gap={4}
+              className="mb-6 lg:mb-8"
+            >
               <AccountCard
                 title="Cuenta de Salario"
                 balance={economyData.cuentas.salario.balance}
@@ -1257,7 +1335,7 @@ export default function Dashboard() {
                 index={3}
                 balanceVisible={balanceVisible}
               />
-            </div>
+            </ResponsiveGrid>
 
             {/* Additional Stats */}
             <StatsGrid economyData={economyData} />
@@ -1282,73 +1360,84 @@ export default function Dashboard() {
           </>
         )}
         {activeTab === "inventory" && (
-          <>
-            {/* Inventory Section */}
-            <div className="mt-8 sm:mt-12">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
-                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+          <div className="space-y-6">
+            {/* Section Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-500/20 rounded-xl">
+                  <Package className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl lg:text-2xl font-bold text-white">
                     Inventario
                   </h2>
+                  <p className="text-white/60 text-sm">
+                    {inventoryData.length} artículos disponibles
+                  </p>
                 </div>
-                <span className="px-2 sm:px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto">
-                  {inventoryData.length} artículos
-                </span>
               </div>
+            </div>
 
-              {inventoryData.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {inventoryData.map((item, index) => (
-                    <div
-                      key={index}
-                      className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl hover:bg-black/50 transition-all duration-300"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-white font-semibold text-sm sm:text-base break-words">
-                          {item.articulo}
-                        </h3>
-                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
-                          {item.cantidadFormateada}
+            {inventoryData.length > 0 ? (
+              <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 3 }} gap={4}>
+                {inventoryData.map((item, index) => (
+                  <CardModern
+                    key={index}
+                    variant="glass"
+                    className="p-4 animate-scale-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-white font-semibold text-sm lg:text-base break-words flex-1 mr-2">
+                        {item.articulo}
+                      </h3>
+                      <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium whitespace-nowrap">
+                        {item.cantidadFormateada}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-white/60 text-xs">ID:</span>
+                        <span className="text-white/80 text-xs font-mono truncate">
+                          {item.identificador}
                         </span>
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-white/60 text-xs sm:text-sm">
-                          <span className="font-medium">ID:</span>{" "}
-                          <span className="truncate">{item.identificador}</span>
-                        </p>
-                        <p className="text-white/60 text-xs sm:text-sm">
-                          <span className="font-medium">Comprado:</span>{" "}
-                          {new Date(item.fechaCompra).toLocaleDateString(
-                            "es-MX"
-                          )}
-                        </p>
-                        {item.precioCompra > 0 && (
-                          <p className="text-white/40 text-xs">
-                            <span className="font-medium">Precio:</span>
-                            {formatCurrency(item.precioCompra)}
-                          </p>
-                        )}
+                      
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-white/60 text-xs">Comprado:</span>
+                        <span className="text-white/80 text-xs">
+                          {new Date(item.fechaCompra).toLocaleDateString("es-MX")}
+                        </span>
                       </div>
+                      
+                      {item.precioCompra > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                          <span className="text-white/60 text-xs">Precio:</span>
+                          <span className="text-green-400 text-xs font-medium">
+                            {formatCurrency(item.precioCompra)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-8 text-center">
-                  <Package className="h-12 w-12 text-white/40 mx-auto mb-4" />
-                  <p className="text-white/60 text-lg">
-                    No tienes artículos en tu inventario
-                  </p>
-                  <p className="text-white/40 text-sm mt-2">
-                    Los artículos aparecerán aquí cuando los obtengas en el
-                    servidor
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
+                  </CardModern>
+                ))}
+              </ResponsiveGrid>
+            ) : (
+              <CardModern variant="glass" className="p-8 text-center">
+                <Package className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                <h3 className="text-white font-semibold text-lg mb-2">
+                  Inventario vacío
+                </h3>
+                <p className="text-white/60 text-sm lg:text-base mb-4">
+                  No tienes artículos en tu inventario
+                </p>
+                <p className="text-white/40 text-xs lg:text-sm">
+                  Los artículos aparecerán aquí cuando los obtengas en el servidor
+                </p>
+              </CardModern>
+            )}
+          </div>
         )}
 
         {/* Documents Tab */}
@@ -2274,7 +2363,7 @@ export default function Dashboard() {
         </div>
 
 
-      </div>
-    </div>
+      </ResponsiveContainer>
+    </MobileLayout>
   );
 }
