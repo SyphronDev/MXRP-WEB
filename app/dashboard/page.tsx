@@ -231,6 +231,7 @@ export default function Dashboard() {
   const [, setCheckingAdminAccess] = useState(true);
   const [hasPoliceAccess, setHasPoliceAccess] = useState(false);
   const [hasNewsAccess, setHasNewsAccess] = useState(false);
+  const [hasSolicitudesAccess, setHasSolicitudesAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
@@ -630,8 +631,22 @@ export default function Dashboard() {
 
       if (data.success && data.hasAdminAccess) {
         setHasAdminAccess(true);
+
+        // Verificar permisos específicos para solicitudes
+        const rolesSolicitudes = [
+          process.env.NEXT_PUBLIC_Administrador,
+          process.env.NEXT_PUBLIC_DepartamentoRol,
+          process.env.NEXT_PUBLIC_SupervisorRol,
+        ].filter(Boolean);
+
+        const tieneRolSolicitudes = data.permissions?.roles?.some(
+          (role: string) => rolesSolicitudes.includes(role)
+        );
+
+        setHasSolicitudesAccess(!!tieneRolSolicitudes);
       } else {
         setHasAdminAccess(false);
+        setHasSolicitudesAccess(false);
       }
     } catch (error) {
       console.error("Error checking admin access:", error);
@@ -1003,6 +1018,19 @@ export default function Dashboard() {
                 <Shield className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   Base de Datos Policial
+                </span>
+              </button>
+            )}
+
+            {/* Admin Solicitudes Button - Solo para roles específicos */}
+            {hasSolicitudesAccess && (
+              <button
+                onClick={() => router.push("/admin/solicitudes")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 text-orange-400 rounded-lg hover:from-orange-500/30 hover:to-red-500/30 transition-all duration-200 self-start sm:self-auto"
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Gestionar Solicitudes
                 </span>
               </button>
             )}

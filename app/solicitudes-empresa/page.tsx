@@ -416,24 +416,39 @@ export default function SolicitudesEmpresaPage() {
                     />
                   </div>
 
-                  {/* Tipo */}
-                  <div className="space-y-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Tag className="h-4 w-4" />
-                      Tipo *
-                    </label>
-                    <select
-                      name="tipo"
-                      value={formData.tipo}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    >
-                      <option value="Empresa Legal">Empresa Legal</option>
-                      <option value="Empresa Ilegal">Empresa Ilegal</option>
-                      <option value="Facción Legal">Facción Legal</option>
-                      <option value="Facción Ilegal">Facción Ilegal</option>
-                    </select>
-                  </div>
+                   {/* Tipo */}
+                   <div className="space-y-2">
+                     <label className="text-white font-medium flex items-center gap-2">
+                       <Tag className="h-4 w-4" />
+                       Tipo *
+                     </label>
+                     <div className="relative">
+                       <select
+                         name="tipo"
+                         value={formData.tipo}
+                         onChange={handleInputChange}
+                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                       >
+                         <option value="Empresa Legal" className="bg-gray-800 text-white">
+                           🏢 Empresa Legal
+                         </option>
+                         <option value="Empresa Ilegal" className="bg-gray-800 text-white">
+                           🏭 Empresa Ilegal
+                         </option>
+                         <option value="Facción Legal" className="bg-gray-800 text-white">
+                           👮 Facción Legal
+                         </option>
+                         <option value="Facción Ilegal" className="bg-gray-800 text-white">
+                           🚨 Facción Ilegal
+                         </option>
+                       </select>
+                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                         <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                         </svg>
+                       </div>
+                     </div>
+                   </div>
 
                   {/* Color del rol */}
                   <div className="space-y-2">

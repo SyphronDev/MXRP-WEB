@@ -54,7 +54,24 @@ const SolicitudEmpresaSchema = new mongoose.Schema(
     imagenBanner: {
       type: String,
       required: true,
-      match: /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i,
+      validate: {
+        validator: function (v) {
+          // Permitir URLs de Discord y otros servicios de imágenes
+          const discordPattern = /^https?:\/\/cdn\.discordapp\.com\/.+$/i;
+          const imagePattern = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)$/i;
+          const imgurPattern = /^https?:\/\/i\.imgur\.com\/.+$/i;
+          const gyazoPattern = /^https?:\/\/gyazo\.com\/.+$/i;
+
+          return (
+            discordPattern.test(v) ||
+            imagePattern.test(v) ||
+            imgurPattern.test(v) ||
+            gyazoPattern.test(v)
+          );
+        },
+        message:
+          "Debe ser una URL válida de imagen (Discord, Imgur, Gyazo o archivo de imagen)",
+      },
     },
     linkDiscord: {
       type: String,
@@ -203,6 +220,9 @@ SolicitudEmpresaSchema.methods.denegar = async function (
 };
 
 // Crear el modelo de Mongoose
-const SolicitudEmpresa = mongoose.model("SolicitudEmpresa", SolicitudEmpresaSchema);
+const SolicitudEmpresa = mongoose.model(
+  "SolicitudEmpresa",
+  SolicitudEmpresaSchema
+);
 
 module.exports = SolicitudEmpresa;
