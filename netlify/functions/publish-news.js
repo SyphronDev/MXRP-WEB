@@ -268,8 +268,7 @@ exports.handler = async (event, context) => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log("Bot Icon URL:", botIconUrl);
-    console.log("Embed thumbnail:", embed.thumbnail);
+    // Bot icon and embed configured
 
     // Enviar al webhook
     const webhookUrl = process.env.WEBHOOK_PERIODICO;

@@ -413,7 +413,6 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Protocolos recibidos:", data.protocolos);
         setProtocoloData(data.protocolos || []);
       } else {
         console.error("Error fetching protocolo data:", data.message);
@@ -434,7 +433,6 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Antecedentes recibidos:", data.antecedentes);
         setAntecedentesData(data.antecedentes);
         setEstadisticasAntecedentes(data.estadisticas);
       } else {
@@ -458,7 +456,6 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Usuarios peligrosos recibidos:", data.usuariosPeligrosos);
         setUsuariosPeligrosos(data.usuariosPeligrosos || []);
       } else {
         console.error("Error fetching usuarios peligrosos data:", data.message);
@@ -481,7 +478,6 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Tienda data recibida:", data.tiendas);
         setTiendaData(data.tiendas || []);
       } else {
         console.error("Error fetching tienda data:", data.message);
@@ -714,20 +710,10 @@ export default function Dashboard() {
 
       const data = await response.json();
 
-      // Debug temporal
-      console.log("🔍 News access check response:", data);
-      console.log("👤 Discord ID:", discordId);
-      console.log("🏠 Guild ID:", process.env.NEXT_PUBLIC_GUILD_ID);
-
       if (data.success && data.hasPeriodistaAccess) {
         setHasNewsAccess(true);
-        console.log(
-          "✅ Usuario tiene acceso de periodista - Botón debería aparecer"
-        );
       } else {
         setHasNewsAccess(false);
-        console.log("❌ Usuario NO tiene acceso de periodista:", data.message);
-        console.log("🔧 Rol ID configurado:", data.periodistaRoleId);
       }
     } catch (error) {
       console.error("Error checking news access:", error);
@@ -750,23 +736,10 @@ export default function Dashboard() {
 
       const data = await response.json();
 
-      // Debug temporal
-      console.log("🔍 Solicitudes access check response:", data);
-      console.log("👤 Discord ID:", discordId);
-      console.log("🏠 Guild ID:", process.env.NEXT_PUBLIC_GUILD_ID);
-
       if (data.success && data.hasSolicitudesAccess) {
         setHasSolicitudesAccess(true);
-        console.log(
-          "✅ Usuario tiene acceso para gestionar solicitudes - Botón debería aparecer"
-        );
       } else {
         setHasSolicitudesAccess(false);
-        console.log(
-          "❌ Usuario NO tiene acceso para gestionar solicitudes:",
-          data.message
-        );
-        console.log("🔧 Roles configurados:", data.rolesSolicitudes);
       }
     } catch (error) {
       console.error("Error checking solicitudes access:", error);
@@ -860,12 +833,7 @@ export default function Dashboard() {
   };
 
   const getServerProtocolo = (servidor: string) => {
-    // Buscar el protocolo que coincida con el servidor
     const protocolo = protocoloData.find((p) => p.servidor === servidor);
-    console.log(
-      `Buscando protocolo para servidor: ${servidor}, encontrado:`,
-      protocolo
-    );
     return protocolo ? protocolo.protocolo : null;
   };
 
@@ -1073,6 +1041,17 @@ export default function Dashboard() {
 
               {/* Admin Actions - Desktop Only */}
               <div className="flex items-center gap-2">
+                <ButtonModern
+                  variant="primary"
+                  size="md"
+                  icon={<Building2 className="h-4 w-4" />}
+                  onClick={() => router.push("/solicitudes-empresa")}
+                  gradient={true}
+                  glow={true}
+                >
+                  Solicitudes Empresa
+                </ButtonModern>
+
                 {hasAdminAccess && (
                   <ButtonModern
                     variant="outline"
@@ -1126,13 +1105,15 @@ export default function Dashboard() {
             {/* Quick Actions - Mobile */}
             <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
               <ButtonModern
-                variant="outline"
+                variant="primary"
                 size="sm"
                 icon={<Building2 className="h-4 w-4" />}
                 onClick={() => router.push("/solicitudes-empresa")}
                 className="whitespace-nowrap"
+                gradient={true}
+                glow={true}
               >
-                Solicitudes
+                Solicitudes Empresa
               </ButtonModern>
               
               {hasAdminAccess && (

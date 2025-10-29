@@ -568,7 +568,7 @@ async function enviarDMNotificacion(
       }
     );
 
-    console.log(`DM enviado a usuario ${userId} sobre solicitud ${estado}`);
+    // DM sent to user
   } catch (error) {
     console.error("Error enviando DM:", error);
   }

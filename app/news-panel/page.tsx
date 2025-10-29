@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Newspaper } from "lucide-react";
 import Image from "next/image";
 import NewsPanel from "../../components/NewsPanel";
+import AdminLayout from "@/components/layout/admin-layout";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { CardModern } from "@/components/ui/card-modern";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { AlertCircle } from "lucide-react";
 
 interface DiscordUser {
   id: string;
@@ -90,96 +95,68 @@ export default function NewsPanelPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
-          <p className="text-white/80 text-lg">Verificando permisos...</p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="pulse"
+        size="lg"
+        text="Verificando permisos de periodista..."
+        fullScreen={true}
+      />
     );
   }
 
   if (!hasNewsAccess || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <Newspaper className="h-16 w-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">
-            Acceso Denegado
-          </h1>
-          <p className="text-white/80 mb-6">
-            No tienes permisos para acceder al Panel de Noticias.
-          </p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-discord hover:bg-discord/80 text-white rounded-lg transition-colors"
-          >
-            Volver al Dashboard
-          </button>
+      <AdminLayout
+        title="Sin Acceso"
+        subtitle="Permisos de periodista requeridos"
+        user={user}
+        showBackButton={true}
+        backUrl="/dashboard"
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <CardModern variant="glass" className="p-8 text-center max-w-md mx-auto">
+            <Newspaper className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-4">Acceso Denegado</h2>
+            <p className="text-white/80 mb-6">
+              No tienes permisos para acceder al Panel de Noticias.
+            </p>
+            <ButtonModern
+              variant="primary"
+              size="md"
+              onClick={() => router.push("/dashboard")}
+              className="w-full"
+            >
+              Volver al Dashboard
+            </ButtonModern>
+          </CardModern>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-discord/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3 sm:gap-4">
-              {user && (
-                <Image
-                  src={user.avatarUrl}
-                  alt={user.username}
-                  width={48}
-                  height={48}
-                  className="rounded-full border-2 border-discord/50 sm:w-16 sm:h-16"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
-                  Panel de Noticias MXRP
-                </h1>
-                <p className="text-white/60 text-sm sm:text-base md:text-lg">
-                  Crea y publica noticias para la comunidad
-                </p>
-              </div>
-            </div>
-
-            {/* MXRP Logo */}
-            <div
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity self-start sm:self-auto"
-              onClick={() => {
-                window.location.href = "/dashboard";
-              }}
-            >
-              <Image
-                src="/images/Icon.png"
-                alt="MXRP"
-                width={32}
-                height={32}
-                className="rounded-md sm:w-12 sm:h-12"
-              />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                MXRP
-              </h2>
-            </div>
-          </div>
-        </div>
-
-        {/* News Panel */}
+    <AdminLayout
+      title="Panel de Noticias"
+      subtitle="Gestión de contenido y publicaciones"
+      user={user}
+      showBackButton={true}
+      backUrl="/dashboard"
+    >
+      <Suspense
+        fallback={
+          <LoadingModern
+            variant="pulse"
+            size="lg"
+            text="Cargando panel de noticias..."
+            fullScreen={false}
+          />
+        }
+      >
         <NewsPanel
           user={user}
           guildId={process.env.NEXT_PUBLIC_GUILD_ID || ""}
         />
-      </div>
-    </div>
+      </Suspense>
+    </AdminLayout>
   );
 }

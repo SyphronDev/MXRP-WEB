@@ -21,6 +21,16 @@ import {
   Building2,
 } from "lucide-react";
 import Image from "next/image";
+import AdminLayout from "@/components/layout/admin-layout";
+import { CardModern } from "@/components/ui/card-modern";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { ResponsiveGrid, ResponsiveContainer } from "@/components/ui/responsive-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { ToastContainer, useToast } from "@/components/ui/notification-toast";
+import { NavigationTabs } from "@/components/ui/navigation-tabs";
+import { MobileTabs } from "@/components/ui/mobile-tabs";
+import { formatDate } from "@/lib/utils";
 
 interface DiscordUser {
   id: string;
@@ -241,592 +251,395 @@ export default function AdminPanel() {
     }
   };
 
+  const toast = useToast();
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
-          <p className="text-white/80 text-lg">Verificando permisos...</p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="pulse"
+        size="lg"
+        text="Verificando permisos administrativos..."
+        fullScreen={true}
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">
-            Acceso Denegado
-          </h1>
-          <p className="text-white/80 mb-6">{error}</p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-discord hover:bg-discord/80 text-white rounded-lg transition-colors"
-          >
-            Volver al Dashboard
-          </button>
+      <AdminLayout
+        title="Acceso Denegado"
+        subtitle="No tienes permisos para acceder"
+        user={user}
+        showBackButton={true}
+        backUrl="/dashboard"
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <CardModern variant="glass" className="p-8 text-center max-w-md mx-auto">
+            <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-4">Acceso Denegado</h2>
+            <p className="text-white/80 mb-6">{error}</p>
+            <ButtonModern
+              variant="primary"
+              size="md"
+              onClick={() => router.push("/dashboard")}
+              className="w-full"
+            >
+              Volver al Dashboard
+            </ButtonModern>
+          </CardModern>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   if (!hasAccess || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <Shield className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">Sin Acceso</h1>
-          <p className="text-white/80 mb-6">
-            No tienes permisos para acceder al panel administrativo.
-          </p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-discord hover:bg-discord/80 text-white rounded-lg transition-colors"
-          >
-            Volver al Dashboard
-          </button>
+      <AdminLayout
+        title="Sin Acceso"
+        subtitle="Permisos insuficientes"
+        user={user}
+        showBackButton={true}
+        backUrl="/dashboard"
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <CardModern variant="glass" className="p-8 text-center max-w-md mx-auto">
+            <Shield className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-4">Sin Acceso</h2>
+            <p className="text-white/80 mb-6">
+              No tienes permisos para acceder al panel administrativo.
+            </p>
+            <ButtonModern
+              variant="primary"
+              size="md"
+              onClick={() => router.push("/dashboard")}
+              className="w-full"
+            >
+              Volver al Dashboard
+            </ButtonModern>
+          </CardModern>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-discord/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    <AdminLayout
+      title="Panel Administrativo"
+      subtitle="Gestión y estadísticas del servidor"
+      user={user}
+      showBackButton={true}
+      backUrl="/dashboard"
+    >
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+
+      {/* Admin Stats Cards */}
+      <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={6} className="mb-8">
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-500/20 rounded-xl">
+              <Shield className="h-6 w-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Tier Actual</h3>
+              <p className="text-2xl font-bold text-red-400">{profile.tier}</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Clock className="h-6 w-6 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Tiempo Total</h3>
+              <p className="text-2xl font-bold text-blue-400">{profile.tiempoHoras}h</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <FileText className="h-6 w-6 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Tickets</h3>
+              <p className="text-2xl font-bold text-green-400">{profile.ticketsAtendidos}</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-500/20 rounded-xl">
+              <TrendingUp className="h-6 w-6 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Estado</h3>
+              <StatusBadge
+                status={profile.cumpleHoras ? "success" : "warning"}
+                text={profile.cumpleHoras ? "Cumple" : "No Cumple"}
+                size="sm"
+              />
+            </div>
+          </div>
+        </CardModern>
+      </ResponsiveGrid>
+
+      {/* Navigation Tabs */}
+      <div className="mb-8">
+        <div className="lg:hidden">
+          <MobileTabs
+            tabs={[
+              {
+                id: "profile",
+                label: "Perfil",
+                icon: <User className="h-4 w-4" />,
+                badge: profile.cumpleHoras ? "✅" : "⚠️",
+              },
+              {
+                id: "statistics",
+                label: "Estadísticas",
+                icon: <BarChart3 className="h-4 w-4" />,
+                badge: profile.ticketsAtendidos.toString(),
+              },
+              ...(hasSolicitudesAccess ? [{
+                id: "solicitudes" as const,
+                label: "Solicitudes",
+                icon: <Building2 className="h-4 w-4" />,
+                badge: "Admin",
+              }] : []),
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+          />
+        </div>
+
+        <div className="hidden lg:block">
+          <NavigationTabs
+            tabs={[
+              {
+                id: "profile",
+                label: "Perfil de Staff",
+                icon: <User className="h-4 w-4" />,
+                badge: profile.cumpleHoras ? "Activo" : "Inactivo",
+              },
+              {
+                id: "statistics",
+                label: "Estadísticas",
+                icon: <BarChart3 className="h-4 w-4" />,
+                badge: `${profile.ticketsAtendidos} tickets`,
+              },
+              ...(hasSolicitudesAccess ? [{
+                id: "solicitudes" as const,
+                label: "Gestión de Solicitudes",
+                icon: <Building2 className="h-4 w-4" />,
+                badge: "Admin",
+              }] : []),
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+            variant="default"
+          />
+        </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5 text-white/60" />
-              </button>
-              {user && (
-                <Image
-                  src={user.avatarUrl}
-                  alt={user.username}
-                  width={48}
-                  height={48}
-                  className="rounded-full border-2 border-discord/50 sm:w-16 sm:h-16"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
-                  Panel Administrativo
-                </h1>
-                <p className="text-white/60 text-sm sm:text-base md:text-lg">
-                  Gestión de Staff MXRP ER:LC
-                </p>
-              </div>
-            </div>
-
-            {/* MXRP Logo */}
-            <div
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity self-start sm:self-auto"
-              onClick={() => {
-                window.location.href = "/";
-              }}
-            >
-              <Image
-                src="/images/Icon.png"
-                alt="MXRP"
-                width={32}
-                height={32}
-                className="rounded-md sm:w-12 sm:h-12"
-              />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                MXRP
-              </h2>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="mb-6 md:mb-8">
-          <div className="overflow-x-auto">
-            <div className="flex space-x-1 bg-black/20 backdrop-blur-md border border-white/20 rounded-lg p-1 min-w-max">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "profile"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <User className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Perfil</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("statistics")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "statistics"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Estadísticas</span>
-              </button>
-              {hasSolicitudesAccess && (
-                <button
-                  onClick={() => setActiveTab("solicitudes")}
-                  className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                    activeTab === "solicitudes"
-                      ? "bg-discord text-white shadow-lg"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span className="text-sm sm:text-base">Solicitudes</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "profile" && (
-          <>
-            {/* Profile Status Card */}
-            <div className="mb-6 md:mb-8">
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                      Estado del Perfil
-                    </h2>
-                    <div className="flex items-center gap-3">
-                      <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                        {profile.cumpleHoras ? "✅" : "❌"} {user?.username}
-                      </p>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          profile.cumpleHoras
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {profile.cumpleHoras ? "Cumple Horas" : "No Cumple"}
-                      </span>
-                    </div>
-                    <p className="text-white/60 text-sm mt-2">
-                      {profile.cumpleHoras
-                        ? "🎉 Cumple con las 14 horas semanales requeridas"
-                        : "⚠️ No cumple con las 14 horas semanales requeridas"}
-                    </p>
-                  </div>
-                  <div className="p-2 sm:p-3 md:p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-lg md:rounded-xl">
-                    <Shield className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
-                  </div>
+      {/* Tab Content */}
+      {activeTab === "profile" && (
+        <div className="space-y-6">
+          {/* Profile Status Card */}
+          <CardModern variant="gradient" className="p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-xl lg:text-2xl font-bold text-white">
+                    {user?.username}
+                  </h2>
+                  <StatusBadge
+                    status={profile.cumpleHoras ? "success" : "warning"}
+                    text={profile.cumpleHoras ? "Cumple Horas" : "No Cumple"}
+                    size="md"
+                  />
                 </div>
-              </div>
-            </div>
-
-            {/* Profile Information Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 md:mb-8">
-              {/* Tier */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
-                    <Award className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Tier Actual
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.tier}
-                </p>
-              </div>
-
-              {/* Tiempo Total */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Tiempo Semanal
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {formatTime(profile.tiempoTotal)}
-                </p>
-                <p className="text-white/60 text-xs">
-                  ({profile.tiempoHoras} horas)
-                </p>
-              </div>
-
-              {/* Calificación */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-lg">
-                    <Star className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Calificación
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.calificacionEstrellas}
-                </p>
-                <p className="text-white/60 text-xs">
-                  ({profile.calificacion}/5)
-                </p>
-              </div>
-
-              {/* Tickets Atendidos */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
-                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Usuarios Atendidos
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.ticketsAtendidos}
-                </p>
-              </div>
-
-              {/* Tickets Procesados */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg">
-                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Tickets Procesados
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.ticket}
-                </p>
-              </div>
-
-              {/* Invitados */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-pink-500/20 rounded-lg">
-                    <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-pink-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Personas Invitadas
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.invitados}
-                </p>
-              </div>
-            </div>
-
-            {/* Additional Information */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Tiempo de Contratación */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Tiempo de Contratación
-                  </h3>
-                </div>
-                <p className="text-base sm:text-lg font-semibold text-white">
-                  {formatDate(profile.tiempoContratado)}
-                </p>
-              </div>
-
-              {/* Estado de Inactividad */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Estado de Inactividad
-                  </h3>
-                </div>
-                <p className="text-base sm:text-lg font-semibold text-white">
-                  {profile.inactividad}
-                </p>
-              </div>
-            </div>
-
-            {/* Warns y Notas Administrativas */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Warns Administrativos */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-red-500/20 rounded-lg">
-                    <AlertTriangle className="h-6 w-6 text-red-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white">
-                    Warns Administrativos
-                  </h3>
-                </div>
-                {profile.warnsAdministrativos.length > 0 &&
-                profile.warnsAdministrativos[0]?.Warn?.length > 0 ? (
-                  <div className="space-y-3">
-                    {profile.warnsAdministrativos[0].Warn.map((warn, index) => (
-                      <div
-                        key={index}
-                        className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-white font-semibold">
-                            Warn #{index + 1}
-                          </h4>
-                          <span className="text-red-400 text-sm">
-                            {formatDate(warn.Aplicado)}
-                          </span>
-                        </div>
-                        <p className="text-white/80 text-sm mb-2">
-                          {warn.Warn}
-                        </p>
-                        <p className="text-white/60 text-xs">
-                          Aplicado por:{" "}
-                          {warn.AplicadorInfo?.tag || warn.Aplicador}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-white/60">
-                    No hay warns administrativos registrados
-                  </p>
-                )}
-              </div>
-
-              {/* Notas Administrativas */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-blue-500/20 rounded-lg">
-                    <FileText className="h-6 w-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white">
-                    Notas Administrativas
-                  </h3>
-                </div>
-                {profile.notasAdministrativas.length > 0 ? (
-                  <div className="space-y-3">
-                    {profile.notasAdministrativas.map((nota, index) => (
-                      <div
-                        key={index}
-                        className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-white font-semibold">
-                            Nota #{index + 1}
-                          </h4>
-                          <span className="text-blue-400 text-sm">
-                            {formatDate(nota.Aplicado)}
-                          </span>
-                        </div>
-                        <p className="text-white/80 text-sm mb-2">
-                          {nota.Nota}
-                        </p>
-                        <p className="text-white/60 text-xs">
-                          Aplicado por:{" "}
-                          {nota.AplicadorInfo?.tag || nota.Aplicador}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-white/60">
-                    No hay notas administrativas registradas
-                  </p>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Statistics Tab */}
-        {activeTab === "statistics" && (
-          <>
-            {/* Statistics Overview */}
-            <div className="mb-6 md:mb-8">
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                      Rendimiento General
-                    </h2>
-                    <p
-                      className={`text-2xl sm:text-3xl md:text-4xl font-bold ${getPerformanceColor(
-                        profile.rendimientoGeneral
-                      )}`}
-                    >
-                      {profile.rendimientoGeneral}
-                    </p>
-                    <p className="text-white/60 text-sm mt-2">
-                      Basado en horas cumplidas y calificación promedio
-                    </p>
-                  </div>
-                  <div className="p-2 sm:p-3 md:p-4 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg md:rounded-xl">
-                    <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 md:mb-8">
-              {/* Progreso Semanal */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
-                    <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Progreso Semanal
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {profile.progresoSemanal}%
-                </p>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${profile.progresoSemanal}%` }}
-                  ></div>
-                </div>
-                <p className="text-white/60 text-xs mt-2">
+                <p className="text-white/60 text-sm lg:text-base">
                   {profile.cumpleHoras
-                    ? "Meta alcanzada"
-                    : `Faltan ${14 - profile.tiempoHoras}h`}
+                    ? "🎉 Cumple con las 14 horas semanales requeridas"
+                    : "⚠️ No cumple con las 14 horas semanales requeridas"}
                 </p>
               </div>
-
-              {/* Eficiencia */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                    <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Eficiencia
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {profile.eficiencia}%
-                </p>
-                <p className="text-white/60 text-xs">
-                  {profile.ticket > 0 ? "Resolución de tickets" : "Sin datos"}
-                </p>
-              </div>
-
-              {/* Tiempo Total Hoy */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-lg">
-                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Tiempo Hoy
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {formatTime(profile.tiempoTotalHoy * 60)}
-                </p>
-              </div>
-
-              {/* Robux Status */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
-                    <Star className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Robux
-                  </h3>
-                </div>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                  {profile.robuxReclamados === null
-                    ? "N/A"
-                    : profile.robuxReclamados
-                    ? "✅"
-                    : "❌"}
-                </p>
-                <p className="text-white/60 text-xs">
-                  {profile.robuxReclamados === null
-                    ? "Sin estado"
-                    : profile.robuxReclamados
-                    ? "Reclamados"
-                    : "No reclamados"}
-                </p>
+              <div className="p-4 bg-red-500/20 rounded-xl">
+                <Shield className="h-8 w-8 text-red-400" />
               </div>
             </div>
-          </>
-        )}
+          </CardModern>
 
-        {/* Solicitudes Tab */}
-        {activeTab === "solicitudes" && hasSolicitudesAccess && (
-          <div className="space-y-6">
-            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-purple-500/20 rounded-lg">
-                  <Building2 className="h-6 w-6 text-purple-400" />
+          {/* Profile Information Grid */}
+          <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={4}>
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-purple-500/20 rounded-xl">
+                  <Award className="h-6 w-6 text-purple-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">
-                    Gestión de Solicitudes
-                  </h2>
-                  <p className="text-white/60 text-sm">
-                    Revisar y gestionar solicitudes de empresas/facciones
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Tier Actual
+                  </h3>
+                  <p className="text-xl font-bold text-white">{profile.tier}</p>
+                </div>
+              </div>
+            </CardModern>
+
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-blue-500/20 rounded-xl">
+                  <Clock className="h-6 w-6 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Tiempo Semanal
+                  </h3>
+                  <p className="text-xl font-bold text-white">{profile.tiempoHoras}h</p>
+                </div>
+              </div>
+            </CardModern>
+
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-yellow-500/20 rounded-xl">
+                  <Star className="h-6 w-6 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Calificación
+                  </h3>
+                  <p className="text-xl font-bold text-white">{profile.calificacionEstrellas || "⭐⭐⭐⭐⭐"}</p>
+                </div>
+              </div>
+            </CardModern>
+
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-green-500/20 rounded-xl">
+                  <Users className="h-6 w-6 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Tickets Atendidos
+                  </h3>
+                  <p className="text-xl font-bold text-white">{profile.ticketsAtendidos}</p>
+                </div>
+              </div>
+            </CardModern>
+          </ResponsiveGrid>
+
+          {/* Additional Information */}
+          <ResponsiveGrid cols={{ default: 1, sm: 2 }} gap={4}>
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-orange-500/20 rounded-xl">
+                  <Calendar className="h-6 w-6 text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Tiempo Contratado
+                  </h3>
+                  <p className="text-lg font-semibold text-white">
+                    {formatDate(profile.tiempoContratado)}
                   </p>
                 </div>
               </div>
+            </CardModern>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => router.push("/admin/solicitudes")}
-                  className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 text-left"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <Building2 className="h-5 w-5 text-purple-400" />
-                    <h3 className="font-semibold text-white">
-                      Solicitudes Pendientes
-                    </h3>
-                  </div>
-                  <p className="text-white/60 text-sm">
-                    Revisar y aprobar/denegar solicitudes de empresas y
-                    facciones
+            <CardModern variant="glass" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-cyan-500/20 rounded-xl">
+                  <Activity className="h-6 w-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-white/60 text-sm uppercase tracking-wider">
+                    Rendimiento
+                  </h3>
+                  <p className="text-lg font-semibold text-white">
+                    {profile.rendimientoGeneral || "Excelente"}
                   </p>
-                </button>
-
-                <button
-                  onClick={() => router.push("/solicitudes-empresa")}
-                  className="p-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-200 text-left"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <FileText className="h-5 w-5 text-blue-400" />
-                    <h3 className="font-semibold text-white">
-                      Crear Solicitud
-                    </h3>
-                  </div>
-                  <p className="text-white/60 text-sm">
-                    Crear una nueva solicitud de empresa o facción
-                  </p>
-                </button>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+            </CardModern>
+          </ResponsiveGrid>
+        </div>
+      )}
+
+      {activeTab === "statistics" && (
+        <div className="space-y-6">
+          <CardModern variant="glass" className="p-8 text-center">
+            <BarChart3 className="h-16 w-16 text-white/40 mx-auto mb-4" />
+            <h3 className="text-white font-semibold text-lg mb-2">
+              Estadísticas Detalladas
+            </h3>
+            <p className="text-white/60 mb-6">
+              Las estadísticas detalladas estarán disponibles próximamente
+            </p>
+            <ButtonModern
+              variant="outline"
+              size="md"
+              onClick={() => setActiveTab("profile")}
+            >
+              Ver Perfil
+            </ButtonModern>
+          </CardModern>
+        </div>
+      )}
+
+      {activeTab === "solicitudes" && hasSolicitudesAccess && (
+        <div className="space-y-6">
+          <ResponsiveGrid cols={{ default: 1, sm: 2 }} gap={6}>
+            <CardModern variant="glass" className="p-6">
+              <div className="text-center">
+                <div className="p-4 bg-blue-500/20 rounded-xl w-fit mx-auto mb-4">
+                  <Building2 className="h-8 w-8 text-blue-400" />
+                </div>
+                <h3 className="text-white font-semibold text-lg mb-2">
+                  Gestionar Solicitudes
+                </h3>
+                <p className="text-white/60 text-sm mb-4">
+                  Revisar y gestionar solicitudes de empresas y facciones
+                </p>
+                <ButtonModern
+                  variant="primary"
+                  size="md"
+                  onClick={() => router.push("/admin/solicitudes")}
+                  className="w-full"
+                >
+                  Ir a Solicitudes
+                </ButtonModern>
+              </div>
+            </CardModern>
+
+            <CardModern variant="glass" className="p-6">
+              <div className="text-center">
+                <div className="p-4 bg-green-500/20 rounded-xl w-fit mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-green-400" />
+                </div>
+                <h3 className="text-white font-semibold text-lg mb-2">
+                  Nueva Solicitud
+                </h3>
+                <p className="text-white/60 text-sm mb-4">
+                  Crear una nueva solicitud de empresa o facción
+                </p>
+                <ButtonModern
+                  variant="outline"
+                  size="md"
+                  onClick={() => router.push("/solicitudes-empresa")}
+                  className="w-full"
+                >
+                  Crear Solicitud
+                </ButtonModern>
+              </div>
+            </CardModern>
+          </ResponsiveGrid>
+        </div>
+      )}
+    </AdminLayout>
   );
 }

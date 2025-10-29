@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -12,7 +10,20 @@ import {
   AlertTriangle,
   Calendar,
   Clock,
+  User,
+  FileText,
+  Filter,
+  Download,
 } from "lucide-react";
+import AdminLayout from "@/components/layout/admin-layout";
+import { CardModern } from "@/components/ui/card-modern";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { ResponsiveGrid, ResponsiveContainer } from "@/components/ui/responsive-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { ToastContainer, useToast } from "@/components/ui/notification-toast";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { formatDate } from "@/lib/utils";
 
 interface AntecedenteDetalle {
   fecha: string;
@@ -62,6 +73,7 @@ function PoliceDatabaseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const guildId = searchParams.get("guildId");
+  const toast = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AntecedenteUsuario[]>([]);
@@ -85,6 +97,44 @@ function PoliceDatabaseContent() {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
+  };
+
+  const handleViewDetails = async (userId: string) => {
+    try {
+      setDetailsLoading(true);
+      const response = await fetch("/.netlify/functions/police-database", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "getAntecedentesDetails",
+          guildId,
+          userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem("discord_user");
+        localStorage.removeItem("auth_token");
+        router.push("/");
+        return;
+      }
+
+      if (data.success) {
+        setSelectedUser(data.antecedentes);
+        setError(null);
+      } else {
+        setError(data.message || "Error al obtener los detalles");
+        toast.error("Error", data.message || "No se pudieron cargar los detalles");
+      }
+    } catch (error) {
+      console.error("Error fetching details:", error);
+      setError("Error de conexión");
+      toast.error("Error de conexión", "No se pudo conectar con el servidor");
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const handleSearchAntecedentes = useCallback(async () => {
@@ -139,54 +189,6 @@ function PoliceDatabaseContent() {
     });
   };
 
-  const handleViewDetails = async (userId: string) => {
-    try {
-      setDetailsLoading(true);
-      const response = await fetch("/.netlify/functions/police-database", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          action: "getUserAntecedentes",
-          guildId,
-          userId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401) {
-        localStorage.removeItem("discord_user");
-        localStorage.removeItem("auth_token");
-        router.push("/");
-        return;
-      }
-
-      if (data.success) {
-        const antecedentes = data.antecedentes;
-        if (antecedentes && !antecedentes.estadisticas) {
-          antecedentes.estadisticas = {
-            totalArrestos: antecedentes.totalArrestos || 0,
-            arrestosActivos:
-              antecedentes.antecedentes?.filter(
-                (a: AntecedenteDetalle) => a.activo
-              ).length || 0,
-            arrestosUltimoMes: 0,
-            esUsuarioPeligroso: antecedentes.usuarioPeligroso || false,
-            fechaUltimoArresto: antecedentes.fechaUltimoArresto,
-          };
-        }
-        setSelectedUser(antecedentes);
-      } else {
-        setError(data.message || "Error al obtener detalles");
-      }
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-      setError("Error de conexión");
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
-
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -198,548 +200,327 @@ function PoliceDatabaseContent() {
 
   if (!guildId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-black/40 backdrop-blur-md border-white/20">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-white mb-2">
-                Acceso Denegado
-              </h1>
-              <p className="text-white/60">
-                No se proporcionaron los parámetros necesarios para acceder a la
-                base de datos policial.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminLayout
+        title="Acceso Denegado"
+        subtitle="Parámetros insuficientes"
+        showBackButton={true}
+        backUrl="/dashboard"
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <CardModern variant="glass" className="p-8 text-center max-w-md mx-auto">
+            <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-4">Acceso Denegado</h2>
+            <p className="text-white/60 mb-6">
+              No se proporcionaron los parámetros necesarios para acceder a la
+              base de datos policial.
+            </p>
+            <ButtonModern
+              variant="primary"
+              size="md"
+              onClick={() => router.push("/dashboard")}
+              className="w-full"
+            >
+              Volver al Dashboard
+            </ButtonModern>
+          </CardModern>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-      </div>
+    <AdminLayout
+      title="Base de Datos Policial"
+      subtitle="Sistema de consulta de antecedentes"
+      showBackButton={true}
+      backUrl="/dashboard"
+    >
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
 
-      {/* Grid background */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
-          `,
-            backgroundSize: "50px 50px",
-          }}
-        ></div>
-      </div>
-
-      {/* Scanning effect overlay */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 via-transparent to-transparent animate-scan"></div>
-      </div>
-
-      <style jsx>{`
-        @keyframes scan {
-          0% {
-            transform: translateY(-100%);
-          }
-          100% {
-            transform: translateY(100vh);
-          }
-        }
-        .animate-scan {
-          animation: scan 8s linear infinite;
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
-        }
-      `}</style>
-
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="bg-black/40 backdrop-blur-md border border-blue-500/30 rounded-xl p-4 sm:p-6 shadow-lg shadow-blue-500/10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Logo y título */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="relative">
-                  <Image
-                    src="/images/Icon.png"
-                    alt="MXRP"
-                    width={48}
-                    height={48}
-                    className="rounded-md sm:w-14 sm:h-14"
-                  />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">
-                    Base de Datos Policial
-                  </h1>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                    <p className="text-white/60 text-sm sm:text-base">
-                      Sistema de consulta de antecedentes
-                    </p>
-                    <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30 animate-pulse w-fit">
-                      SISTEMA ACTIVO
-                    </span>
-                  </div>
-                </div>
+      {/* System Status */}
+      <div className="mb-6">
+        <CardModern variant="neon" className="p-4 lg:p-6">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="p-3 bg-cyan-500/20 rounded-xl">
+                <Shield className="h-6 w-6 text-cyan-400" />
               </div>
-
-              {/* Botón de regreso */}
-              <Button
-                onClick={() => router.push("/dashboard")}
-                className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200 w-full sm:w-auto justify-center"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm sm:text-base">
-                  Volver al Dashboard
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-white mb-1">
+                Sistema de Base de Datos Policial
+              </h2>
+              <div className="flex items-center gap-2">
+                <StatusBadge status="success" text="SISTEMA ACTIVO" size="sm" />
+                <span className="text-white/60 text-sm">
+                  Consulta de antecedentes en tiempo real
                 </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg backdrop-blur-md">
-            <p className="text-red-400">{error}</p>
-            <Button
-              onClick={() => setError(null)}
-              className="mt-2"
-              variant="outline"
-              size="sm"
-            >
-              Cerrar
-            </Button>
-          </div>
-        )}
-
-        {/* Barra de búsqueda */}
-        <div className="mb-4 sm:mb-6">
-          <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10">
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-blue-400/60" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSearchAntecedentes()
-                    }
-                    className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm sm:text-base"
-                    placeholder="Buscar por ID o username..."
-                  />
-                </div>
-                <Button
-                  onClick={handleSearchAntecedentes}
-                  disabled={searchLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 font-medium shadow-lg shadow-blue-500/20 transition-all duration-200 text-sm sm:text-base"
-                >
-                  {searchLoading ? "Buscando..." : "Buscar"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Resultados */}
-        {searchResults.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-black/40 backdrop-blur-md border border-blue-500/20 rounded-lg p-3 sm:p-4 shadow-lg shadow-blue-500/10 gap-3 sm:gap-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">
-                    Resultados de Búsqueda
-                  </h3>
-                  <p className="text-white/40 text-xs sm:text-sm">
-                    {searchResults.length}{" "}
-                    {searchResults.length === 1
-                      ? "usuario encontrado"
-                      : "usuarios encontrados"}
-                  </p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full border border-blue-500/30 w-fit">
-                {searchResults.length}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {searchResults.map((result, index) => (
-                <Card
-                  key={result.userId}
-                  className={`bg-black/40 backdrop-blur-md hover:bg-black/50 transition-all duration-300 animate-fadeInUp hover:shadow-lg ${
-                    result.usuarioPeligroso
-                      ? "border-red-500/40 hover:border-red-500/60 hover:shadow-red-500/20"
-                      : "border-white/20 hover:border-blue-500/40 hover:shadow-blue-500/20"
-                  }`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between mb-3 sm:mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-white mb-1 truncate">
-                          {result.username || "Usuario Desconocido"}
-                        </h3>
-                        <p className="text-white/40 text-xs sm:text-sm truncate">
-                          ID: {result.userId}
-                        </p>
-                      </div>
-                      {result.usuarioPeligroso && (
-                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse flex-shrink-0 ml-2">
-                          ⚠ PELIGROSO
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Total Arrestos
-                        </span>
-                        <span className="text-white font-semibold text-sm sm:text-base">
-                          {result.totalArrestos}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Arrestos Activos
-                        </span>
-                        <span className="text-white font-semibold text-sm sm:text-base">
-                          {result.estadisticas.arrestosActivos}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-xs sm:text-sm">
-                          Último Mes
-                        </span>
-                        <span className="text-white font-semibold text-sm sm:text-base">
-                          {result.estadisticas.arrestosUltimoMes}
-                        </span>
-                      </div>
-                      {result.fechaUltimoArresto && (
-                        <div className="pt-2 border-t border-white/10">
-                          <span className="text-white/40 text-xs">
-                            Último Arresto:
-                          </span>
-                          <p className="text-white/80 text-xs sm:text-sm">
-                            {formatDate(result.fechaUltimoArresto)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={() => handleViewDetails(result.userId)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200"
-                    >
-                      Ver Detalles
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ) : searchLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-discord mx-auto mb-4"></div>
-            <p className="text-white/60">Buscando usuarios...</p>
-          </div>
-        ) : (
-          <Card className="bg-black/40 backdrop-blur-md border-white/20">
-            <CardContent className="text-center py-12">
-              <Shield className="h-16 w-16 text-white/40 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">
-                No se encontraron resultados
-              </h3>
-              <p className="text-white/60">
-                Intenta con otro término de búsqueda o deja el campo vacío para
-                ver todos los usuarios
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Modal de Detalles del Usuario */}
-        {selectedUser && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto animate-fadeIn">
-            <div className="min-h-screen flex items-start sm:items-center justify-center p-0 sm:p-4">
-              <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border-t sm:border border-blue-500/40 sm:rounded-xl w-full max-w-6xl sm:my-4 shadow-2xl shadow-blue-500/20 animate-fadeInUp min-h-screen sm:min-h-0">
-                <div className="p-4 sm:p-6">
-                  {/* Header del Modal */}
-                  <div className="sticky top-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-white/10 mb-4 sm:mb-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                        <div className="relative">
-                          <Image
-                            src="/images/Icon.png"
-                            alt="MXRP"
-                            width={40}
-                            height={40}
-                            className="rounded-md sm:w-12 sm:h-12"
-                          />
-                          {selectedUser.usuarioPeligroso && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
-                              {selectedUser.username || "Usuario Desconocido"}
-                            </h2>
-                            {selectedUser.usuarioPeligroso && (
-                              <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 animate-pulse w-fit">
-                                ⚠ PELIGROSO
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-white/60 text-xs sm:text-sm truncate">
-                            ID: {selectedUser.userId}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => setSelectedUser(null)}
-                        className="bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/40 transition-all duration-200 px-4 sm:px-6 ml-2"
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Estadísticas */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                    <Card className="bg-black/40 backdrop-blur-md border-red-500/20 shadow-lg shadow-red-500/10 hover:border-red-500/40 transition-all duration-200">
-                      <CardContent className="p-3 sm:p-4 lg:p-6">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                          <div className="p-1.5 sm:p-2 bg-red-500/20 rounded-lg">
-                            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
-                          </div>
-                          <span className="text-white/60 text-xs sm:text-sm">
-                            Total Arrestos
-                          </span>
-                        </div>
-                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                          {selectedUser.totalArrestos}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-black/40 backdrop-blur-md border-yellow-500/20 shadow-lg shadow-yellow-500/10 hover:border-yellow-500/40 transition-all duration-200">
-                      <CardContent className="p-3 sm:p-4 lg:p-6">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                          <div className="p-1.5 sm:p-2 bg-yellow-500/20 rounded-lg">
-                            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-                          </div>
-                          <span className="text-white/60 text-xs sm:text-sm">
-                            Arrestos Activos
-                          </span>
-                        </div>
-                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                          {selectedUser.estadisticas.arrestosActivos}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 hover:border-blue-500/40 transition-all duration-200">
-                      <CardContent className="p-3 sm:p-4 lg:p-6">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                          <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-lg">
-                            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                          </div>
-                          <span className="text-white/60 text-xs sm:text-sm">
-                            Último Mes
-                          </span>
-                        </div>
-                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                          {selectedUser.estadisticas.arrestosUltimoMes}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className={`backdrop-blur-md shadow-lg transition-all duration-200 ${
-                        selectedUser.usuarioPeligroso
-                          ? "bg-red-500/10 border-red-500/40 shadow-red-500/20 hover:border-red-500/60"
-                          : "bg-green-500/10 border-green-500/40 shadow-green-500/20 hover:border-green-500/60"
-                      }`}
-                    >
-                      <CardContent className="p-3 sm:p-4 lg:p-6">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                          <div
-                            className={`p-1.5 sm:p-2 rounded-lg ${
-                              selectedUser.usuarioPeligroso
-                                ? "bg-red-500/20"
-                                : "bg-green-500/20"
-                            }`}
-                          >
-                            <Shield
-                              className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                                selectedUser.usuarioPeligroso
-                                  ? "text-red-400"
-                                  : "text-green-400"
-                              }`}
-                            />
-                          </div>
-                          <span className="text-white/60 text-xs sm:text-sm">
-                            Estado
-                          </span>
-                        </div>
-                        <p
-                          className={`text-lg sm:text-xl lg:text-2xl font-bold ${
-                            selectedUser.usuarioPeligroso
-                              ? "text-red-400"
-                              : "text-green-400"
-                          }`}
-                        >
-                          {selectedUser.usuarioPeligroso
-                            ? "PELIGROSO"
-                            : "SEGURO"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Historial de Antecedentes */}
-                  <Card className="bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10 mb-4 sm:mb-0">
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-4 border-b border-white/10">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-500/20 rounded-lg">
-                            <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                          </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-white">
-                            Historial de Antecedentes
-                          </h3>
-                        </div>
-                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30 w-fit">
-                          {selectedUser.antecedentes.length} registros
-                        </span>
-                      </div>
-
-                      {selectedUser.antecedentes.length === 0 ? (
-                        <div className="text-center py-8">
-                          <Shield className="h-12 w-12 text-white/40 mx-auto mb-4" />
-                          <p className="text-white/60">
-                            No hay antecedentes registrados
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {selectedUser.antecedentes.map(
-                            (antecedente, index) => (
-                              <div
-                                key={index}
-                                className={`p-3 sm:p-4 rounded-lg border ${
-                                  antecedente.activo
-                                    ? "bg-red-500/10 border-red-500/30"
-                                    : "bg-white/5 border-white/10"
-                                }`}
-                              >
-                                <div className="flex items-start justify-between mb-2 gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="text-white font-semibold mb-1 text-sm sm:text-base break-words">
-                                      {antecedente.motivo}
-                                    </h4>
-                                    <div className="flex items-center gap-2 text-xs text-white/60 flex-wrap">
-                                      <Calendar className="h-3 w-3 flex-shrink-0" />
-                                      <span className="break-all">
-                                        {formatDate(antecedente.fecha)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {antecedente.activo && (
-                                    <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 w-fit flex-shrink-0">
-                                      ACTIVO
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-2 border-t border-white/10">
-                                  <div className="min-w-0">
-                                    <span className="text-white/40 text-xs block mb-1">
-                                      Arrestado por:
-                                    </span>
-                                    <p className="text-white text-xs sm:text-sm font-medium break-words">
-                                      {antecedente.arrestadoPorTag}
-                                    </p>
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className="text-white/40 text-xs block mb-1">
-                                      Duración:
-                                    </span>
-                                    <p className="text-white text-xs sm:text-sm font-medium">
-                                      {formatTime(antecedente.duracion)}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Botón de cerrar al final (móvil) */}
-                  <div className="mt-4 sm:hidden">
-                    <Button
-                      onClick={() => setSelectedUser(null)}
-                      className="w-full bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/40 transition-all duration-200 py-3"
-                    >
-                      Cerrar Detalles
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
-        )}
-
-        {/* Loading overlay para detalles */}
-        {detailsLoading && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-discord mx-auto mb-4"></div>
-              <p className="text-white/80 text-lg">Cargando detalles...</p>
-            </div>
-          </div>
-        )}
+        </CardModern>
       </div>
-    </div>
+
+      {error && (
+        <div className="mb-6">
+          <CardModern variant="glass" className="p-4 border-red-500/30 bg-red-500/10">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-400 mb-2">{error}</p>
+                <ButtonModern
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setError(null)}
+                >
+                  Cerrar
+                </ButtonModern>
+              </div>
+            </div>
+          </CardModern>
+        </div>
+      )}
+
+      {/* Search Section */}
+      <div className="mb-8">
+        <CardModern variant="glass" className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Search className="h-5 w-5 text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">
+              Búsqueda de Antecedentes
+            </h3>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Buscar por nombre de usuario o ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSearchAntecedentes()}
+                className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+              />
+            </div>
+            <ButtonModern
+              variant="primary"
+              size="md"
+              icon={<Search className="h-4 w-4" />}
+              onClick={handleSearchAntecedentes}
+              loading={searchLoading}
+              className="sm:w-auto"
+            >
+              Buscar
+            </ButtonModern>
+          </div>
+        </CardModern>
+      </div>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div className="mb-8">
+          <ResponsiveTable
+            data={searchResults}
+            columns={[
+              {
+                key: "username",
+                label: "Usuario",
+                render: (value, row) => (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-white/60" />
+                    <span className="font-medium">{value || "Usuario desconocido"}</span>
+                  </div>
+                ),
+              },
+              {
+                key: "userTag",
+                label: "Tag",
+                render: (value) => (
+                  <span className="text-white/80 font-mono text-sm">
+                    {value || "N/A"}
+                  </span>
+                ),
+              },
+              {
+                key: "totalArrestos",
+                label: "Total Arrestos",
+                render: (value) => (
+                  <span className="font-semibold text-orange-400">{value}</span>
+                ),
+              },
+              {
+                key: "usuarioPeligroso",
+                label: "Estado",
+                render: (value) => (
+                  <StatusBadge
+                    status={value ? "warning" : "success"}
+                    text={value ? "Peligroso" : "Normal"}
+                    size="sm"
+                  />
+                ),
+              },
+              {
+                key: "fechaUltimoArresto",
+                label: "Último Arresto",
+                render: (value) => (
+                  <span className="text-white/80 text-sm">
+                    {value ? formatDate(value) : "Nunca"}
+                  </span>
+                ),
+              },
+            ]}
+            actions={[
+              {
+                label: "Ver Detalles",
+                icon: <FileText className="h-4 w-4" />,
+                onClick: (row) => handleViewDetails(row.userId),
+              },
+            ]}
+            searchable={false}
+            emptyMessage="No se encontraron resultados"
+            loading={searchLoading}
+          />
+        </div>
+      )}
+
+      {/* User Details */}
+      {selectedUser && (
+        <div className="space-y-6">
+          <CardModern variant="gradient" className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Detalles de {selectedUser.username || "Usuario"}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge
+                    status={selectedUser.usuarioPeligroso ? "warning" : "success"}
+                    text={selectedUser.usuarioPeligroso ? "Usuario Peligroso" : "Usuario Normal"}
+                    size="md"
+                  />
+                  <span className="text-white/60 text-sm">
+                    ID: {selectedUser.userId}
+                  </span>
+                </div>
+              </div>
+              <ButtonModern
+                variant="outline"
+                size="md"
+                icon={<Download className="h-4 w-4" />}
+                onClick={() => {
+                  // Implementar descarga de reporte
+                  toast.info("Función próximamente", "La descarga de reportes estará disponible pronto");
+                }}
+              >
+                Descargar Reporte
+              </ButtonModern>
+            </div>
+
+            <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={4}>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white mb-1">
+                  {selectedUser.totalArrestos}
+                </div>
+                <div className="text-white/60 text-sm">Total Arrestos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-400 mb-1">
+                  {selectedUser.estadisticas.arrestosActivos}
+                </div>
+                <div className="text-white/60 text-sm">Arrestos Activos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-400 mb-1">
+                  {selectedUser.estadisticas.arrestosUltimoMes}
+                </div>
+                <div className="text-white/60 text-sm">Último Mes</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400 mb-1">
+                  {selectedUser.estadisticas.fechaUltimoArresto 
+                    ? formatDate(selectedUser.estadisticas.fechaUltimoArresto)
+                    : "Nunca"
+                  }
+                </div>
+                <div className="text-white/60 text-sm">Último Arresto</div>
+              </div>
+            </ResponsiveGrid>
+          </CardModern>
+
+          {/* Antecedentes List */}
+          <CardModern variant="glass" className="p-6">
+            <h4 className="text-lg font-semibold text-white mb-4">
+              Historial de Antecedentes ({selectedUser.antecedentes.length})
+            </h4>
+            
+            {selectedUser.antecedentes.length > 0 ? (
+              <ResponsiveTable
+                data={selectedUser.antecedentes}
+                columns={[
+                  {
+                    key: "fecha",
+                    label: "Fecha",
+                    render: (value) => (
+                      <span className="text-white/80 text-sm">
+                        {formatDate(value)}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "motivo",
+                    label: "Motivo",
+                    render: (value) => (
+                      <span className="text-white font-medium">{value}</span>
+                    ),
+                  },
+                  {
+                    key: "arrestadoPorTag",
+                    label: "Arrestado Por",
+                    render: (value, row) => (
+                      <span className="text-white/80 text-sm">
+                        {value || row.arrestadoPor}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "duracion",
+                    label: "Duración",
+                    render: (value) => (
+                      <span className="text-orange-400 font-medium">
+                        {value} min
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "activo",
+                    label: "Estado",
+                    render: (value) => (
+                      <StatusBadge
+                        status={value ? "warning" : "success"}
+                        text={value ? "Activo" : "Cumplido"}
+                        size="sm"
+                      />
+                    ),
+                  },
+                ]}
+                searchable={true}
+                searchPlaceholder="Buscar en antecedentes..."
+                itemsPerPage={10}
+                emptyMessage="No hay antecedentes registrados"
+              />
+            ) : (
+              <div className="text-center py-8">
+                <Shield className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/60">No hay antecedentes registrados</p>
+              </div>
+            )}
+          </CardModern>
+        </div>
+      )}
+    </AdminLayout>
   );
 }
 
@@ -747,14 +528,12 @@ export default function PoliceDatabasePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-white/80 text-lg">
-              Cargando base de datos policial...
-            </p>
-          </div>
-        </div>
+        <LoadingModern
+          variant="pulse"
+          size="lg"
+          text="Cargando base de datos policial..."
+          fullScreen={true}
+        />
       }
     >
       <PoliceDatabaseContent />

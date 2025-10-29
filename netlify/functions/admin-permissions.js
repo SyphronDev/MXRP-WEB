@@ -15,7 +15,7 @@ const redisClient = redis.createClient({
 });
 
 redisClient.on("error", (err) => console.error("Redis Error:", err));
-redisClient.on("connect", () => console.log("Connected to Redis"));
+redisClient.on("connect", () => {});
 
 // Connect to Redis
 (async () => {
@@ -57,9 +57,7 @@ class PermisosManager {
         `permissions:${this.guildId}`
       );
       if (cachedPermisos) {
-        console.log(
-          `📦 [PERMISOS] Cargados desde caché Redis para guild ${this.guildId}`
-        );
+        // Permisos cargados desde caché
         this.permisosData = JSON.parse(cachedPermisos);
         this.processPermisos();
         return { loaded: true, embed: null };
@@ -84,9 +82,7 @@ class PermisosManager {
         TTL_PERMISSIONS,
         JSON.stringify(this.permisosData)
       );
-      console.log(
-        `💾 [PERMISOS] Guardados en caché Redis para guild ${this.guildId}`
-      );
+      // Permisos guardados en caché
 
       this.processPermisos();
       return { loaded: true, embed: null };

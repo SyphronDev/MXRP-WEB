@@ -55,7 +55,7 @@ exports.handler = async (event, context) => {
     });
 
     if (!alertsData) {
-      console.log(`No alerts data found for guild ${guildId}`);
+      // No alerts data found
       return {
         statusCode: 200,
         headers: {
@@ -85,9 +85,7 @@ exports.handler = async (event, context) => {
       notify: alertsData.Notify,
     };
 
-    console.log(
-      `Successfully retrieved alerts data for guild ${guildId}: ${alertsResponse.totalAlerts} alerts`
-    );
+    // Alerts data retrieved successfully
 
     return {
       statusCode: 200,

@@ -15,7 +15,7 @@ const redisClient = redis.createClient({
 });
 
 redisClient.on("error", (err) => console.error("Redis Error:", err));
-redisClient.on("connect", () => console.log("Connected to Redis"));
+redisClient.on("connect", () => {});
 
 // Connect to Redis
 (async () => {
@@ -222,9 +222,7 @@ exports.handler = async (event, context) => {
     const cachedProfile = await redisClient.get(cacheKey);
 
     if (cachedProfile && action === "get") {
-      console.log(
-        `📦 [ADMIN_PROFILE] Cargado desde caché Redis para usuario ${discordId}`
-      );
+      // Perfil cargado desde caché
       return {
         statusCode: 200,
         headers,
@@ -329,9 +327,7 @@ exports.handler = async (event, context) => {
       TTL_USER_DATA,
       JSON.stringify(profileData)
     );
-    console.log(
-      `💾 [ADMIN_PROFILE] Guardado en caché Redis para usuario ${discordId}`
-    );
+    // Perfil guardado en caché
 
     return {
       statusCode: 200,
