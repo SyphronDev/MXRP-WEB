@@ -16,6 +16,9 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
+  Eye,
+  Clock,
+  XCircle,
 } from "lucide-react";
 
 interface DiscordUser {
@@ -28,7 +31,12 @@ interface DiscordUser {
 interface SolicitudEmpresa {
   id: string;
   nombreEmpresa: string;
+  dueno: string;
+  funcion: string;
   tipo: string;
+  colorRol: string;
+  imagenBanner: string;
+  linkDiscord: string;
   estado: string;
   fechaCreacion: string;
   fechaRevision?: string;
