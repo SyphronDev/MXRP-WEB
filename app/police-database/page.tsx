@@ -61,7 +61,6 @@ interface AntecedenteUsuario {
 function PoliceDatabaseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const discordId = searchParams.get("discordId");
   const guildId = searchParams.get("guildId");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,17 +71,30 @@ function PoliceDatabaseContent() {
     useState<AntecedentesCompletos | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
+  // Funciones para manejar JWT
+  const getAuthToken = () => {
+    return localStorage.getItem("auth_token");
+  };
+
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   const handleSearchAntecedentes = useCallback(async () => {
     try {
       setSearchLoading(true);
       const response = await fetch("/.netlify/functions/police-database", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           action: "searchAntecedentes",
-          discordId,
           guildId,
           query: searchQuery.trim() || undefined,
           limit: 50,
@@ -90,6 +102,13 @@ function PoliceDatabaseContent() {
       });
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem("discord_user");
+        localStorage.removeItem("auth_token");
+        router.push("/");
+        return;
+      }
 
       if (data.success) {
         setSearchResults(data.resultados);
@@ -102,13 +121,13 @@ function PoliceDatabaseContent() {
     } finally {
       setSearchLoading(false);
     }
-  }, [discordId, guildId, searchQuery]);
+  }, [guildId, searchQuery, router]);
 
   useEffect(() => {
-    if (discordId && guildId && searchResults.length === 0) {
+    if (guildId && searchResults.length === 0) {
       handleSearchAntecedentes();
     }
-  }, [discordId, guildId, searchResults.length, handleSearchAntecedentes]);
+  }, [guildId, searchResults.length, handleSearchAntecedentes]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-MX", {
@@ -125,18 +144,22 @@ function PoliceDatabaseContent() {
       setDetailsLoading(true);
       const response = await fetch("/.netlify/functions/police-database", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           action: "getUserAntecedentes",
-          discordId,
           guildId,
           userId,
         }),
       });
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem("discord_user");
+        localStorage.removeItem("auth_token");
+        router.push("/");
+        return;
+      }
 
       if (data.success) {
         const antecedentes = data.antecedentes;
@@ -173,7 +196,7 @@ function PoliceDatabaseContent() {
     return `${mins}m`;
   };
 
-  if (!discordId || !guildId) {
+  if (!guildId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md bg-black/40 backdrop-blur-md border-white/20">

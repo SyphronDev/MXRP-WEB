@@ -21,35 +21,57 @@ export default function NewsPanelPage() {
   const [hasNewsAccess, setHasNewsAccess] = useState(false);
   const router = useRouter();
 
+  // Funciones para manejar JWT
+  const getAuthToken = () => {
+    return localStorage.getItem("auth_token");
+  };
+
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem("discord_user");
-    if (!savedUser) {
+    const authToken = getAuthToken();
+
+    if (!savedUser || !authToken) {
       router.push("/");
       return;
     }
 
     const userData = JSON.parse(savedUser);
     setUser(userData);
-    checkNewsAccess(userData.id);
+    checkNewsAccess();
   }, [router]);
 
-  const checkNewsAccess = async (discordId: string) => {
+  const checkNewsAccess = async () => {
     try {
       const response = await fetch(
         "/.netlify/functions/periodista-permissions",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
-            discordId,
             guildId: process.env.NEXT_PUBLIC_GUILD_ID,
           }),
         }
       );
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem("discord_user");
+        localStorage.removeItem("auth_token");
+        router.push("/");
+        return;
+      }
 
       if (data.success && data.hasPeriodistaAccess) {
         setHasNewsAccess(true);
@@ -161,7 +183,3 @@ export default function NewsPanelPage() {
     </div>
   );
 }
-
-
-
-
