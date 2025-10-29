@@ -202,4 +202,7 @@ SolicitudEmpresaSchema.methods.denegar = async function (
   return await this.save();
 };
 
-module.exports = SolicitudEmpresaSchema;
+// Crear el modelo de Mongoose
+const SolicitudEmpresa = mongoose.model("SolicitudEmpresa", SolicitudEmpresaSchema);
+
+module.exports = SolicitudEmpresa;

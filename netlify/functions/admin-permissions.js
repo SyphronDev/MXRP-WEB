@@ -409,6 +409,7 @@ exports.handler = async (event, context) => {
           specialPerm: permisosManager.SpecialPerm,
           highEnd: permisosManager.HighEnd,
           characterKill: permisosManager.CharacterKill,
+          roles: userRoles, // Incluir los roles del usuario
         },
       }),
     };

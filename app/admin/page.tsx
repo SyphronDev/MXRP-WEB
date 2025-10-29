@@ -89,6 +89,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [hasSolicitudesAccess, setHasSolicitudesAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "profile" | "statistics" | "solicitudes"
   >("profile");
@@ -141,6 +142,19 @@ export default function AdminPanel() {
         if (permissionsData.success && permissionsData.hasAdminAccess) {
           setHasAccess(true);
           setPermissions(permissionsData.permissions);
+
+          // Verificar permisos específicos para solicitudes
+          const rolesSolicitudes = [
+            process.env.Administrador,
+            process.env.DepartamentoRol,
+            process.env.SupervisorRol,
+          ].filter(Boolean);
+
+          const tieneRolSolicitudes = permissionsData.permissions?.roles?.some(
+            (role: string) => rolesSolicitudes.includes(role)
+          );
+
+          setHasSolicitudesAccess(!!tieneRolSolicitudes);
           fetchProfile(discordId);
         } else {
           setError("No tienes permisos para acceder al panel administrativo.");
@@ -363,17 +377,19 @@ export default function AdminPanel() {
                 <BarChart3 className="h-4 w-4" />
                 <span className="text-sm sm:text-base">Estadísticas</span>
               </button>
-              <button
-                onClick={() => setActiveTab("solicitudes")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "solicitudes"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Solicitudes</span>
-              </button>
+              {hasSolicitudesAccess && (
+                <button
+                  onClick={() => setActiveTab("solicitudes")}
+                  className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                    activeTab === "solicitudes"
+                      ? "bg-discord text-white shadow-lg"
+                      : "text-white/60 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">Solicitudes</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -758,7 +774,7 @@ export default function AdminPanel() {
         )}
 
         {/* Solicitudes Tab */}
-        {activeTab === "solicitudes" && (
+        {activeTab === "solicitudes" && hasSolicitudesAccess && (
           <div className="space-y-6">
             <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
