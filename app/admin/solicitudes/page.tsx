@@ -273,11 +273,11 @@ export default function AdminSolicitudesPage() {
 
           {/* Botón de regreso */}
           <Button
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push("/dashboard")}
             className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Volver al Panel Admin</span>
+            <span>Volver al Dashboard</span>
           </Button>
         </div>
 
@@ -338,7 +338,7 @@ export default function AdminSolicitudesPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {solicitudes.map((solicitud) => (
                 <Card
                   key={solicitud.id}
@@ -346,75 +346,140 @@ export default function AdminSolicitudesPage() {
                 >
                   <CardContent className="p-6">
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-6">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-white mb-1 truncate">
+                        <h3 className="text-xl font-bold text-white mb-2 truncate">
                           {solicitud.nombreEmpresa}
                         </h3>
-                        <p className="text-white/60 text-sm truncate">
-                          {solicitud.tipo}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-blue-400" />
+                          <p className="text-blue-400 text-sm font-medium">
+                            {solicitud.tipo}
+                          </p>
+                        </div>
                       </div>
-                      <span className="px-2 py-1 text-xs rounded-full border text-yellow-400 bg-yellow-500/20 border-yellow-500/30 flex items-center gap-1">
+                      <span className="px-3 py-1 text-xs rounded-full border text-yellow-400 bg-yellow-500/20 border-yellow-500/30 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         PENDIENTE
                       </span>
                     </div>
 
-                    {/* Información del solicitante */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Solicitante:</span>
-                        <span className="text-white">{solicitud.userTag}</span>
+                    {/* Banner en grande */}
+                    {solicitud.imagenBanner && (
+                      <div className="mb-6">
+                        <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          Banner de la Empresa/Facción
+                        </p>
+                        <div className="relative group">
+                          <img
+                            src={solicitud.imagenBanner}
+                            alt="Banner"
+                            className="w-full h-48 object-cover rounded-lg border border-white/10 hover:border-blue-500/40 transition-all duration-200"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                            <Eye className="h-8 w-8 text-white" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Dueño:</span>
-                        <span className="text-white">{solicitud.dueno}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Fecha:</span>
-                        <span className="text-white">
-                          {formatDate(solicitud.fechaCreacion)}
-                        </span>
+                    )}
+
+                    {/* Información detallada */}
+                    <div className="space-y-4 mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Solicitante:
+                            </span>
+                            <span className="text-white font-medium">
+                              {solicitud.userTag}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <Briefcase className="h-4 w-4" />
+                              Dueño:
+                            </span>
+                            <span className="text-white font-medium">
+                              {solicitud.dueno}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Fecha:
+                            </span>
+                            <span className="text-white font-medium">
+                              {formatDate(solicitud.fechaCreacion)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <Palette className="h-4 w-4" />
+                              Color Rol:
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-4 h-4 rounded border border-white/20"
+                                style={{ backgroundColor: solicitud.colorRol }}
+                              ></div>
+                              <span className="text-white font-medium">
+                                {solicitud.colorRol}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <Link className="h-4 w-4" />
+                              Discord:
+                            </span>
+                            <a
+                              href={solicitud.linkDiscord}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 font-medium truncate max-w-32"
+                            >
+                              Ver Servidor
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Función */}
-                    <div className="mb-4">
-                      <p className="text-white/60 text-xs mb-1">Función:</p>
-                      <p className="text-white text-sm">{solicitud.funcion}</p>
+                    <div className="mb-6">
+                      <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" />
+                        Función de la Empresa/Facción
+                      </p>
+                      <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <p className="text-white text-sm leading-relaxed">
+                          {solicitud.funcion}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Banner preview */}
-                    {solicitud.imagenBanner && (
-                      <div className="mb-4">
-                        <img
-                          src={solicitud.imagenBanner}
-                          alt="Banner"
-                          className="w-full h-24 object-cover rounded-lg border border-white/10"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      </div>
-                    )}
-
                     {/* Botones de acción */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button
                         onClick={() => handleAprobar(solicitud)}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                        size="sm"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white h-10"
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-4 w-4 mr-2" />
                         Aprobar
                       </Button>
                       <Button
                         onClick={() => handleDenegar(solicitud)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                        size="sm"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white h-10"
                       >
-                        <XCircle className="h-4 w-4 mr-1" />
+                        <XCircle className="h-4 w-4 mr-2" />
                         Denegar
                       </Button>
                     </div>
@@ -497,7 +562,7 @@ export default function AdminSolicitudesPage() {
                 <Button
                   onClick={() => setShowModal(false)}
                   variant="outline"
-                  className="px-6"
+                  className="px-6 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40"
                 >
                   Cancelar
                 </Button>

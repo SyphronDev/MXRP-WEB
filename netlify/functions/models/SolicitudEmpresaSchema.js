@@ -198,25 +198,32 @@ SolicitudEmpresaSchema.methods.aprobar = async function (
   return await this.save();
 };
 
-// Método para denegar solicitud
+// Método para denegar solicitud (elimina el documento)
 SolicitudEmpresaSchema.methods.denegar = async function (
   revisorUserId,
   revisorUsername,
   revisorRol,
   motivo
 ) {
-  this.estado = "denegada";
-  this.revisadoPor = {
+  // Guardar información del revisor antes de eliminar
+  const revisorInfo = {
     userId: revisorUserId,
     username: revisorUsername,
     rol: revisorRol,
   };
-  this.fechaRevision = new Date();
-  this.motivoDenegacion = motivo;
-  this.fechaActualizacion = new Date();
-  this.dmEnviada = false;
-
-  return await this.save();
+  
+  // Eliminar el documento de la base de datos
+  await this.deleteOne();
+  
+  // Retornar información para el DM
+  return {
+    eliminado: true,
+    revisorInfo,
+    motivo,
+    nombreEmpresa: this.nombreEmpresa,
+    tipo: this.tipo,
+    userId: this.userId
+  };
 };
 
 // Crear el modelo de Mongoose

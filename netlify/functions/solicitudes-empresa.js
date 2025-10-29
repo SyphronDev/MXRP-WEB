@@ -342,6 +342,8 @@ async function aprobarSolicitud(discordId, username, data, headers) {
     solicitud.userId,
     "aprobada",
     solicitud.nombreEmpresa,
+    solicitud.tipo,
+    username,
     motivo.trim()
   );
 
@@ -407,15 +409,22 @@ async function denegarSolicitud(discordId, username, data, headers) {
     };
   }
 
-  // Denegar la solicitud
-  await solicitud.denegar(discordId, username, permisos.rol, motivo.trim());
-
-  // Enviar DM al usuario
-  await enviarDMNotificacion(
-    solicitud.userId,
-    "denegada",
-    solicitud.nombreEmpresa,
+  // Denegar la solicitud (elimina el documento)
+  const resultadoDenegacion = await solicitud.denegar(
+    discordId,
+    username,
+    permisos.rol,
     motivo.trim()
+  );
+
+  // Enviar DM al usuario con la información guardada antes de eliminar
+  await enviarDMNotificacion(
+    resultadoDenegacion.userId,
+    "denegada",
+    resultadoDenegacion.nombreEmpresa,
+    resultadoDenegacion.tipo,
+    resultadoDenegacion.revisorInfo.username,
+    resultadoDenegacion.motivo
   );
 
   return {
@@ -477,7 +486,14 @@ async function verificarPermisosAdministrativos(discordId, guildId) {
 }
 
 // Enviar notificación DM
-async function enviarDMNotificacion(userId, estado, nombreEmpresa, motivo) {
+async function enviarDMNotificacion(
+  userId,
+  estado,
+  nombreEmpresa,
+  tipo,
+  revisadoPor,
+  motivo
+) {
   try {
     // Crear canal DM con el usuario
     const dmResponse = await fetch(
@@ -507,13 +523,26 @@ async function enviarDMNotificacion(userId, estado, nombreEmpresa, motivo) {
         estado === "aprobada"
           ? "✅ Solicitud Aprobada"
           : "❌ Solicitud Denegada",
-      description: `Tu solicitud para **${nombreEmpresa}** ha sido ${
+      description: `Tu solicitud ha sido ${
         estado === "aprobada" ? "aprobada" : "denegada"
       }.`,
       color: estado === "aprobada" ? 0x00ff00 : 0xff0000,
       fields: [
         {
-          name: "Motivo",
+          name: "📋 Detalles de la Solicitud",
+          value: `**Nombre:** ${nombreEmpresa}\n**Tipo:** ${tipo}`,
+          inline: false,
+        },
+        {
+          name: "👤 Revisado por",
+          value: revisadoPor,
+          inline: true,
+        },
+        {
+          name:
+            estado === "aprobada"
+              ? "✅ Motivo de Aprobación"
+              : "❌ Motivo de Denegación",
           value: motivo,
           inline: false,
         },
