@@ -1053,19 +1053,6 @@ export default function Dashboard() {
               </button>
             )}
 
-            {/* Admin Solicitudes Button - Solo para roles específicos */}
-            {hasSolicitudesAccess && (
-              <button
-                onClick={() => router.push("/admin/solicitudes")}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 text-orange-400 rounded-lg hover:from-orange-500/30 hover:to-red-500/30 transition-all duration-200 self-start sm:self-auto"
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Gestionar Solicitudes
-                </span>
-              </button>
-            )}
-
             {/* News Panel Button */}
             {hasNewsAccess && (
               <button
@@ -1179,17 +1166,6 @@ export default function Dashboard() {
                   <span className="text-sm sm:text-base">Solicitudes</span>
                 </button>
               </div>
-              <button
-                onClick={() => setActiveTab("solicitudes")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "solicitudes"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Solicitudes</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1395,8 +1371,6 @@ export default function Dashboard() {
             </div>
           </>
         )}
-
-        {/* Inventory Tab */}
         {activeTab === "inventory" && (
           <>
             {/* Inventory Section */}
