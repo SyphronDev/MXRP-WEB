@@ -99,9 +99,18 @@ function PoliceDatabaseContent() {
     };
   };
 
-  const handleViewDetails = async (userId: string) => {
+  const handleViewDetails = useCallback(async (userId: string) => {
+    // Prevenir llamadas múltiples
+    if (detailsLoading) {
+      console.log("Already loading details, skipping...");
+      return;
+    }
+
     try {
+      console.log("Fetching details for userId:", userId);
       setDetailsLoading(true);
+      setError(null);
+      
       const response = await fetch("/.netlify/functions/police-database", {
         method: "POST",
         headers: getAuthHeaders(),
@@ -113,6 +122,7 @@ function PoliceDatabaseContent() {
       });
 
       const data = await response.json();
+      console.log("Details response:", data);
 
       if (response.status === 401) {
         localStorage.removeItem("discord_user");
@@ -124,18 +134,34 @@ function PoliceDatabaseContent() {
       if (data.success) {
         setSelectedUser(data.antecedentes);
         setError(null);
+        toast.addToast({
+          type: "success",
+          title: "Detalles cargados",
+          message: "Información del usuario obtenida correctamente",
+          duration: 3000,
+        });
       } else {
         setError(data.message || "Error al obtener los detalles");
-        toast.error("Error", data.message || "No se pudieron cargar los detalles");
+        toast.addToast({
+          type: "error",
+          title: "Error al cargar detalles",
+          message: data.message || "No se pudieron cargar los detalles",
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error("Error fetching details:", error);
       setError("Error de conexión");
-      toast.error("Error de conexión", "No se pudo conectar con el servidor");
+      toast.addToast({
+        type: "error",
+        title: "Error de conexión",
+        message: "No se pudo conectar con el servidor",
+        duration: 4000,
+      });
     } finally {
       setDetailsLoading(false);
     }
-  };
+  }, [detailsLoading, guildId, router, toast]);
 
   const handleSearchAntecedentes = useCallback(async () => {
     try {
@@ -198,10 +224,10 @@ function PoliceDatabaseContent() {
     return `${mins}m`;
   };
 
-  // Debug info
-  console.log("Police Database - guildId from URL:", searchParams.get("guildId"));
-  console.log("Police Database - guildId from env:", process.env.NEXT_PUBLIC_GUILD_ID);
-  console.log("Police Database - final guildId:", guildId);
+  // Debug info (remove in production)
+  // console.log("Police Database - guildId from URL:", searchParams.get("guildId"));
+  // console.log("Police Database - guildId from env:", process.env.NEXT_PUBLIC_GUILD_ID);
+  // console.log("Police Database - final guildId:", guildId);
 
   if (!guildId) {
     return (
@@ -219,11 +245,6 @@ function PoliceDatabaseContent() {
               No se proporcionaron los parámetros necesarios para acceder a la
               base de datos policial. Verifica que la variable NEXT_PUBLIC_GUILD_ID esté configurada.
             </p>
-            <div className="text-left text-xs text-white/40 mb-4 p-3 bg-black/20 rounded">
-              <p>Debug info:</p>
-              <p>URL guildId: {searchParams.get("guildId") || "null"}</p>
-              <p>Env guildId: {process.env.NEXT_PUBLIC_GUILD_ID || "null"}</p>
-            </div>
             <ButtonModern
               variant="primary"
               size="md"
