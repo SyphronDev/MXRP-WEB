@@ -111,35 +111,18 @@ function PoliceDatabaseContent() {
       setDetailsLoading(true);
       setError(null);
       
-      // Intentar con diferentes acciones si la primera falla
-      const actions = ["getUserAntecedentes", "getDetails", "getAntecedentes", "obtenerDetalles"];
-      let response: Response | null = null;
-      let data: any = null;
-      
-      for (const action of actions) {
-        console.log(`Trying action: ${action}`);
-        response = await fetch("/.netlify/functions/police-database", {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            action,
-            guildId,
-            userId,
-          }),
-        });
+      const response = await fetch("/.netlify/functions/police-database", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "getUserAntecedentes",
+          guildId,
+          userId,
+        }),
+      });
 
-        data = await response.json();
-        console.log(`Response for ${action}:`, data);
-        
-        // Si la acción es válida (no es "Invalid action"), usar esta respuesta
-        if (!data.error || data.error !== "Invalid action") {
-          break;
-        }
-      }
-      
-      if (!response || !data) {
-        throw new Error("No se pudo obtener respuesta del servidor");
-      }
+      const data = await response.json();
+      console.log("Details response:", data);
 
       if (response.status === 401) {
         localStorage.removeItem("discord_user");
@@ -149,7 +132,24 @@ function PoliceDatabaseContent() {
       }
 
       if (data.success) {
-        setSelectedUser(data.antecedentes);
+        console.log("Full response data:", data);
+        console.log("Antecedentes:", data.antecedentes);
+        console.log("Estadisticas:", data.estadisticas);
+        
+        // Construir el objeto con la estructura esperada
+        const userDetails = {
+          ...data.antecedentes,
+          estadisticas: data.estadisticas || data.antecedentes?.estadisticas || {
+            totalArrestos: data.antecedentes?.totalArrestos || 0,
+            arrestosActivos: 0,
+            arrestosUltimoMes: 0,
+            esUsuarioPeligroso: data.antecedentes?.usuarioPeligroso || false,
+            fechaUltimoArresto: data.antecedentes?.fechaUltimoArresto || null,
+          }
+        };
+        
+        console.log("Processed user details:", userDetails);
+        setSelectedUser(userDetails);
         setError(null);
         toast.addToast({
           type: "success",
