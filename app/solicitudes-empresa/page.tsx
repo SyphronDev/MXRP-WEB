@@ -416,39 +416,61 @@ export default function SolicitudesEmpresaPage() {
                     />
                   </div>
 
-                   {/* Tipo */}
-                   <div className="space-y-2">
-                     <label className="text-white font-medium flex items-center gap-2">
-                       <Tag className="h-4 w-4" />
-                       Tipo *
-                     </label>
-                     <div className="relative">
-                       <select
-                         name="tipo"
-                         value={formData.tipo}
-                         onChange={handleInputChange}
-                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
-                       >
-                         <option value="Empresa Legal" className="bg-gray-800 text-white">
-                           🏢 Empresa Legal
-                         </option>
-                         <option value="Empresa Ilegal" className="bg-gray-800 text-white">
-                           🏭 Empresa Ilegal
-                         </option>
-                         <option value="Facción Legal" className="bg-gray-800 text-white">
-                           👮 Facción Legal
-                         </option>
-                         <option value="Facción Ilegal" className="bg-gray-800 text-white">
-                           🚨 Facción Ilegal
-                         </option>
-                       </select>
-                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                         <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                         </svg>
-                       </div>
-                     </div>
-                   </div>
+                  {/* Tipo */}
+                  <div className="space-y-2">
+                    <label className="text-white font-medium flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      Tipo *
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="tipo"
+                        value={formData.tipo}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option
+                          value="Empresa Legal"
+                          className="bg-gray-800 text-white"
+                        >
+                          🏢 Empresa Legal
+                        </option>
+                        <option
+                          value="Empresa Ilegal"
+                          className="bg-gray-800 text-white"
+                        >
+                          🏭 Empresa Ilegal
+                        </option>
+                        <option
+                          value="Facción Legal"
+                          className="bg-gray-800 text-white"
+                        >
+                          👮 Facción Legal
+                        </option>
+                        <option
+                          value="Facción Ilegal"
+                          className="bg-gray-800 text-white"
+                        >
+                          🚨 Facción Ilegal
+                        </option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg
+                          className="w-5 h-5 text-white/40"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Color del rol */}
                   <div className="space-y-2">
@@ -561,24 +583,28 @@ export default function SolicitudesEmpresaPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {solicitudes.map((solicitud) => (
                 <Card
                   key={solicitud.id}
                   className="bg-black/40 backdrop-blur-md border-white/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-6">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-white mb-1 truncate">
+                        <h3 className="text-xl font-bold text-white mb-2 truncate">
                           {solicitud.nombreEmpresa}
                         </h3>
-                        <p className="text-white/60 text-sm truncate">
-                          {solicitud.tipo}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-blue-400" />
+                          <p className="text-blue-400 text-sm font-medium">
+                            {solicitud.tipo}
+                          </p>
+                        </div>
                       </div>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full border flex items-center gap-1 ${getEstadoColor(
+                        className={`px-3 py-1 text-xs rounded-full border flex items-center gap-1 ${getEstadoColor(
                           solicitud.estado
                         )}`}
                       >
@@ -587,40 +613,107 @@ export default function SolicitudesEmpresaPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Creada:</span>
-                        <span className="text-white">
-                          {formatDate(solicitud.fechaCreacion)}
-                        </span>
+                    {/* Banner en grande */}
+                    {solicitud.imagenBanner && (
+                      <div className="mb-6">
+                        <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          Banner de la Empresa/Facción
+                        </p>
+                        <div className="relative group">
+                          <img
+                            src={solicitud.imagenBanner}
+                            alt="Banner"
+                            className="w-full h-48 object-cover rounded-lg border border-white/10 hover:border-blue-500/40 transition-all duration-200"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                            <Eye className="h-8 w-8 text-white" />
+                          </div>
+                        </div>
                       </div>
-                      {solicitud.fechaRevision && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-white/60">Revisada:</span>
-                          <span className="text-white">
-                            {formatDate(solicitud.fechaRevision)}
-                          </span>
+                    )}
+
+                    {/* Información detallada */}
+                    <div className="space-y-4 mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/60 flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Creada:
+                            </span>
+                            <span className="text-white font-medium">
+                              {formatDate(solicitud.fechaCreacion)}
+                            </span>
+                          </div>
+                          {solicitud.fechaRevision && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-white/60 flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                Revisada:
+                              </span>
+                              <span className="text-white font-medium">
+                                {formatDate(solicitud.fechaRevision)}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {solicitud.revisadoPor && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-white/60">Revisado por:</span>
-                          <span className="text-white">
-                            {solicitud.revisadoPor.username} (
-                            {solicitud.revisadoPor.rol})
-                          </span>
+                        <div className="space-y-3">
+                          {solicitud.revisadoPor && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-white/60 flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                Revisado por:
+                              </span>
+                              <span className="text-white font-medium">
+                                {solicitud.revisadoPor.username}
+                              </span>
+                            </div>
+                          )}
+                          {solicitud.revisadoPor && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-white/60 flex items-center gap-2">
+                                <Briefcase className="h-4 w-4" />
+                                Rol:
+                              </span>
+                              <span className="text-white font-medium">
+                                {solicitud.revisadoPor.rol}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
 
-                    {(solicitud.motivoAprobacion ||
-                      solicitud.motivoDenegacion) && (
-                      <div className="pt-3 border-t border-white/10">
-                        <p className="text-white/60 text-xs mb-1">Motivo:</p>
-                        <p className="text-white text-sm">
-                          {solicitud.motivoAprobacion ||
-                            solicitud.motivoDenegacion}
+                    {/* Motivos */}
+                    {solicitud.motivoAprobacion && (
+                      <div className="mb-6">
+                        <p className="text-green-400 text-sm mb-2 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Motivo de Aprobación
                         </p>
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                          <p className="text-white text-sm leading-relaxed">
+                            {solicitud.motivoAprobacion}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {solicitud.motivoDenegacion && (
+                      <div className="mb-6">
+                        <p className="text-red-400 text-sm mb-2 flex items-center gap-2">
+                          <XCircle className="h-4 w-4" />
+                          Motivo de Denegación
+                        </p>
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                          <p className="text-white text-sm leading-relaxed">
+                            {solicitud.motivoDenegacion}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </CardContent>
