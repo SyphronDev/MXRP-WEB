@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Loader2,
   TrendingUp,
-  DollarSign,
   Coins,
   Package,
   Clock,
@@ -31,8 +30,21 @@ import {
   Settings,
   Newspaper,
   Building2,
+  ArrowUp,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import Image from "next/image";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { CardModern } from "@/components/ui/card-modern";
+import { NavigationTabs } from "@/components/ui/navigation-tabs";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { ToastContainer, useToast } from "@/components/ui/notification-toast";
+import { useScrollToTop } from "@/components/ui/smooth-scroll";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { AccountCard } from "@/components/dashboard/account-card";
+import { StatsGrid } from "@/components/dashboard/stats-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface DiscordUser {
   id: string;
@@ -233,14 +245,14 @@ export default function Dashboard() {
   const [hasNewsAccess, setHasNewsAccess] = useState(false);
   const [hasSolicitudesAccess, setHasSolicitudesAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    | "economy"
-    | "inventory"
-    | "documents"
-    | "antecedentes"
-    | "tienda"
-    | "solicitudes"
+    "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
   >("economy");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [balanceVisible, setBalanceVisible] = useState(true);
+  
   const router = useRouter();
+  const toast = useToast();
+  const scrollToTop = useScrollToTop();
 
   // Función helper para obtener el token JWT
   const getAuthToken = () => {
@@ -288,6 +300,16 @@ export default function Dashboard() {
     checkNewsAccess("");
     checkSolicitudesAccess("");
   }, [router]);
+
+  // Scroll to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Efecto para rotar las alertas cada 3 minutos
   useEffect(() => {
@@ -491,8 +513,9 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert(
-          `¡Compra exitosa! Compraste ${cantidad}${unidad} ${articulo} por ${formatCurrency(
+        toast.success(
+          "¡Compra exitosa!",
+          `Compraste ${cantidad}${unidad} ${articulo} por ${formatCurrency(
             data.compra.costoTotal
           )}`
         );
@@ -501,11 +524,11 @@ export default function Dashboard() {
         fetchInventoryData(user.id);
         fetchTiendaData();
       } else {
-        alert(`Error: ${data.message}`);
+        toast.error("Error en la compra", data.message);
       }
     } catch (error) {
       console.error("Error comprando artículo:", error);
-      alert("Error al realizar la compra");
+      toast.error("Error de conexión", "No se pudo realizar la compra");
     } finally {
       setIsComprando(false);
     }
@@ -545,7 +568,7 @@ export default function Dashboard() {
 
     const cantidad = parseFloat(cantidadCompra);
     if (isNaN(cantidad) || cantidad <= 0) {
-      alert("Por favor ingresa una cantidad válida");
+      toast.warning("Cantidad inválida", "Por favor ingresa una cantidad válida");
       return;
     }
 
@@ -558,8 +581,9 @@ export default function Dashboard() {
     if (item) {
       const cantidadMaxima = getCantidadMaxima(item, unidadCompra);
       if (cantidad > cantidadMaxima) {
-        alert(
-          `No hay suficiente stock. Máximo disponible: ${cantidadMaxima}${unidadCompra}`
+        toast.warning(
+          "Stock insuficiente",
+          `Máximo disponible: ${cantidadMaxima}${unidadCompra}`
         );
         return;
       }
@@ -776,23 +800,7 @@ export default function Dashboard() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Nunca";
-    return new Date(dateString).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   const getAlertColor = (alerta: string) => {
     const alertaLower = alerta.toLowerCase();
@@ -860,12 +868,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
-          <p className="text-white/80 text-lg">Cargando tu dashboard...</p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="spinner"
+        size="lg"
+        text="Cargando tu dashboard..."
+        fullScreen={true}
+      />
     );
   }
 
@@ -889,15 +897,12 @@ export default function Dashboard() {
 
   if (economyLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
-          <p className="text-white/80 text-lg">Cargando datos de economía...</p>
-          <p className="text-white/60 text-sm mt-2">
-            Conectando con la base de datos
-          </p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="pulse"
+        size="lg"
+        text="Cargando datos de economía..."
+        fullScreen={true}
+      />
     );
   }
 
@@ -931,10 +936,26 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Toast Container */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+      
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <ButtonModern
+          variant="primary"
+          size="md"
+          icon={<ArrowUp className="h-4 w-4" />}
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-40 shadow-lg shadow-purple-500/25"
+          glow={true}
+        />
+      )}
+
       {/* Background particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-discord/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-60 h-60 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
@@ -1100,73 +1121,56 @@ export default function Dashboard() {
 
         {/* Navigation Tabs */}
         <div className="mb-6 md:mb-8">
-          <div className="overflow-x-auto">
-            <div className="flex space-x-1 bg-black/20 backdrop-blur-md border border-white/20 rounded-lg p-1 min-w-max">
-              <button
-                onClick={() => setActiveTab("economy")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "economy"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Wallet className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Economía</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("inventory")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "inventory"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Package className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Inventario</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("documents")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "documents"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <IdCard className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Documentos</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("antecedentes")}
-                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "antecedentes"
-                    ? "bg-discord text-white shadow-lg"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Scale className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Antecedentes</span>
-              </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveTab("tienda")}
-                  className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                    activeTab === "tienda"
-                      ? "bg-discord text-white shadow-lg"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <Store className="h-4 w-4" />
-                  <span className="text-sm sm:text-base">Tienda</span>
-                </button>
-                <button
-                  onClick={() => router.push("/solicitudes-empresa")}
-                  className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap text-white/60 hover:text-white hover:bg-white/10"
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span className="text-sm sm:text-base">Solicitudes</span>
-                </button>
-              </div>
-            </div>
+          <NavigationTabs
+            tabs={[
+              {
+                id: "economy",
+                label: "Economía",
+                icon: <Wallet className="h-4 w-4" />,
+                badge: economyData ? formatCurrency(totalBalance) : undefined,
+              },
+              {
+                id: "inventory",
+                label: "Inventario",
+                icon: <Package className="h-4 w-4" />,
+                badge: inventoryData.length > 0 ? inventoryData.length : undefined,
+              },
+              {
+                id: "documents",
+                label: "Documentos",
+                icon: <IdCard className="h-4 w-4" />,
+                badge: (ineData?.aprobada || pasaporteData?.aprobada) ? "✓" : undefined,
+              },
+              {
+                id: "antecedentes",
+                label: "Antecedentes",
+                icon: <Scale className="h-4 w-4" />,
+                badge: antecedentesData?.totalArrestos || undefined,
+              },
+              {
+                id: "tienda",
+                label: "Tienda",
+                icon: <Store className="h-4 w-4" />,
+                badge: tiendaData.length > 0 ? "Nuevo" : undefined,
+              },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+            variant="default"
+            className="animate-slide-in-left"
+          />
+          
+          {/* Solicitudes Button */}
+          <div className="mt-4">
+            <ButtonModern
+              variant="outline"
+              size="md"
+              icon={<Building2 className="h-4 w-4" />}
+              onClick={() => router.push("/solicitudes-empresa")}
+              className="w-full sm:w-auto"
+            >
+              Solicitudes de Empresa
+            </ButtonModern>
           </div>
         </div>
 
@@ -1174,199 +1178,105 @@ export default function Dashboard() {
         {activeTab === "economy" && (
           <>
             {/* Total Balance Card */}
-            <div className="mb-6 md:mb-8">
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
+            <div className="mb-6 md:mb-8 animate-scale-in">
+              <CardModern variant="gradient" glow={true} className="p-4 sm:p-6 md:p-8">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                      Balance Total
-                    </h2>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h2 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
+                        Balance Total
+                      </h2>
+                      <ButtonModern
+                        variant="ghost"
+                        size="sm"
+                        icon={balanceVisible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        onClick={() => setBalanceVisible(!balanceVisible)}
+                        className="p-1 h-6 w-6"
+                      />
+                    </div>
                     <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                      {formatCurrency(totalBalance)}
+                      {balanceVisible ? formatCurrency(totalBalance) : "••••••"}
+                    </p>
+                    <p className="text-white/40 text-sm mt-1">
+                      Última actualización: {formatDate(economyData.lastCobro)}
                     </p>
                   </div>
-                  <div className="p-2 sm:p-3 md:p-4 bg-gradient-to-br from-discord/20 to-blue-500/20 rounded-lg md:rounded-xl">
-                    <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
+                  <div className="p-3 md:p-4 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-xl border border-purple-500/30">
+                    <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-purple-400" />
                   </div>
                 </div>
-              </div>
+              </CardModern>
             </div>
 
             {/* Accounts Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 md:mb-8">
-              {/* Cuenta de Salario */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
-                    <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      economyData.cuentas.salario.activa
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {economyData.cuentas.salario.activa ? "Activa" : "Inactiva"}
-                  </span>
-                </div>
-                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                  Cuenta de Salario
-                </h3>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {formatCurrency(economyData.cuentas.salario.balance)}
-                </p>
-                <p className="text-white/40 text-xs">
-                  Tipo: {economyData.tipoCuenta}
-                </p>
-              </div>
-
-              {/* Cuenta Corriente */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                    <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      economyData.cuentas.corriente.activa
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {economyData.cuentas.corriente.activa
-                      ? "Activa"
-                      : "Inactiva"}
-                  </span>
-                </div>
-                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                  Cuenta Corriente
-                </h3>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {formatCurrency(economyData.cuentas.corriente.balance)}
-                </p>
-                <p className="text-white/40 text-xs">Cuenta principal</p>
-              </div>
-
-              {/* Efectivo */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-lg">
-                    <Banknote className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
-                  </div>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
-                    Disponible
-                  </span>
-                </div>
-                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                  Efectivo
-                </h3>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {formatCurrency(economyData.efectivo)}
-                </p>
-                <p className="text-white/40 text-xs">Dinero en mano</p>
-              </div>
-
-              {/* Dinero Negro */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl hover:bg-black/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
-                    <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
-                  </div>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                    Oculto
-                  </span>
-                </div>
-                <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider mb-1 sm:mb-2">
-                  Dinero Negro
-                </h3>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">
-                  {formatCurrency(economyData.dineroNegro)}
-                </p>
-                <p className="text-white/40 text-xs">Fondos no declarados</p>
-              </div>
+              <AccountCard
+                title="Cuenta de Salario"
+                balance={economyData.cuentas.salario.balance}
+                isActive={economyData.cuentas.salario.activa}
+                icon={Wallet}
+                iconColor="text-green-400"
+                iconBg="bg-green-500/20"
+                subtitle={`Tipo: ${economyData.tipoCuenta}`}
+                index={0}
+                balanceVisible={balanceVisible}
+              />
+              
+              <AccountCard
+                title="Cuenta Corriente"
+                balance={economyData.cuentas.corriente.balance}
+                isActive={economyData.cuentas.corriente.activa}
+                icon={CreditCard}
+                iconColor="text-blue-400"
+                iconBg="bg-blue-500/20"
+                subtitle="Cuenta principal"
+                index={1}
+                balanceVisible={balanceVisible}
+              />
+              
+              <AccountCard
+                title="Efectivo"
+                balance={economyData.efectivo}
+                isActive={true}
+                icon={Banknote}
+                iconColor="text-yellow-400"
+                iconBg="bg-yellow-500/20"
+                subtitle="Dinero en mano"
+                index={2}
+                balanceVisible={balanceVisible}
+              />
+              
+              <AccountCard
+                title="Dinero Negro"
+                balance={economyData.dineroNegro}
+                isActive={true}
+                icon={Coins}
+                iconColor="text-red-400"
+                iconBg="bg-red-500/20"
+                subtitle="Fondos no declarados"
+                index={3}
+                balanceVisible={balanceVisible}
+              />
             </div>
 
-            {/* Additional Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Deuda */}
-              {economyData.deuda > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg">
-                      <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
-                    </div>
-                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                      Deuda Pendiente
-                    </h3>
-                  </div>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">
-                    {formatCurrency(economyData.deuda)}
-                  </p>
-                </div>
-              )}
-
-              {/* Divisa USD */}
-              {economyData.divisas.usd > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
-                      <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
-                    </div>
-                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                      Divisa USD
-                    </h3>
-                  </div>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                    ${economyData.divisas.usd.toFixed(2)} USD
-                  </p>
-                </div>
-              )}
-
-              {/* Divisa BTC */}
-              {economyData.divisas.btc > 0 && (
-                <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg">
-                      <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400" />
-                    </div>
-                    <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                      Divisa BTC
-                    </h3>
-                  </div>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                    ₿{economyData.divisas.btc.toFixed(8)} BTC
-                  </p>
-                </div>
-              )}
-
-              {/* Last Payment */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-white/60 text-xs sm:text-sm uppercase tracking-wider">
-                    Último Cobro
-                  </h3>
-                </div>
-                <p className="text-base sm:text-lg font-semibold text-white">
-                  {formatDate(economyData.lastCobro)}
-                </p>
-              </div>
-            </div>
+            {/* Additional Stats */}
+            <StatsGrid economyData={economyData} />
 
             {/* Status Badges */}
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap gap-4 animate-slide-in-left">
               {economyData.sat && (
-                <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
-                  ✓ SAT Registrado
-                </span>
+                <StatusBadge
+                  status="success"
+                  text="SAT Registrado"
+                  size="md"
+                />
               )}
               {economyData.empresarial && (
-                <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
-                  ✓ Cuenta Empresarial
-                </span>
+                <StatusBadge
+                  status="info"
+                  text="Cuenta Empresarial"
+                  size="md"
+                />
               )}
             </div>
           </>
@@ -2363,44 +2273,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Solicitudes Tab */}
-        {activeTab === "solicitudes" && (
-          <>
-            {/* Solicitudes Section */}
-            <div className="mt-8 sm:mt-12">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
-                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                    Solicitudes de Empresas/Facciones
-                  </h2>
-                </div>
-              </div>
 
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 shadow-xl">
-                <div className="text-center">
-                  <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-3 sm:mb-4" />
-                  <h3 className="text-white font-semibold text-lg sm:text-xl mb-2">
-                    Sistema de Solicitudes
-                  </h3>
-                  <p className="text-white/60 text-sm sm:text-base mb-6">
-                    Aquí puedes gestionar las solicitudes de empresas y
-                    facciones
-                  </p>
-                  <button
-                    onClick={() => router.push("/solicitudes-empresa")}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 mx-auto"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    <span className="font-medium">Crear Nueva Solicitud</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
