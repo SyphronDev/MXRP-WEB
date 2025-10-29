@@ -233,7 +233,12 @@ export default function Dashboard() {
   const [hasNewsAccess, setHasNewsAccess] = useState(false);
   const [hasSolicitudesAccess, setHasSolicitudesAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "economy" | "inventory" | "documents" | "antecedentes" | "tienda"
+    | "economy"
+    | "inventory"
+    | "documents"
+    | "antecedentes"
+    | "tienda"
+    | "solicitudes"
   >("economy");
   const router = useRouter();
 
@@ -281,6 +286,7 @@ export default function Dashboard() {
     checkAdminAccess("");
     checkPoliceAccess("");
     checkNewsAccess("");
+    checkSolicitudesAccess("");
   }, [router]);
 
   // Efecto para rotar las alertas cada 3 minutos
@@ -631,22 +637,8 @@ export default function Dashboard() {
 
       if (data.success && data.hasAdminAccess) {
         setHasAdminAccess(true);
-
-        // Verificar permisos específicos para solicitudes
-        const rolesSolicitudes = [
-          process.env.NEXT_PUBLIC_Administrador,
-          process.env.NEXT_PUBLIC_DepartamentoRol,
-          process.env.NEXT_PUBLIC_SupervisorRol,
-        ].filter(Boolean);
-
-        const tieneRolSolicitudes = data.permissions?.roles?.some(
-          (role: string) => rolesSolicitudes.includes(role)
-        );
-
-        setHasSolicitudesAccess(!!tieneRolSolicitudes);
       } else {
         setHasAdminAccess(false);
-        setHasSolicitudesAccess(false);
       }
     } catch (error) {
       console.error("Error checking admin access:", error);
@@ -713,6 +705,45 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error checking news access:", error);
       setHasNewsAccess(false);
+    }
+  };
+
+  const checkSolicitudesAccess = async (discordId: string) => {
+    try {
+      const response = await fetch(
+        "/.netlify/functions/solicitudes-permissions",
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            guildId: process.env.NEXT_PUBLIC_GUILD_ID,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      // Debug temporal
+      console.log("🔍 Solicitudes access check response:", data);
+      console.log("👤 Discord ID:", discordId);
+      console.log("🏠 Guild ID:", process.env.NEXT_PUBLIC_GUILD_ID);
+
+      if (data.success && data.hasSolicitudesAccess) {
+        setHasSolicitudesAccess(true);
+        console.log(
+          "✅ Usuario tiene acceso para gestionar solicitudes - Botón debería aparecer"
+        );
+      } else {
+        setHasSolicitudesAccess(false);
+        console.log(
+          "❌ Usuario NO tiene acceso para gestionar solicitudes:",
+          data.message
+        );
+        console.log("🔧 Roles configurados:", data.rolesSolicitudes);
+      }
+    } catch (error) {
+      console.error("Error checking solicitudes access:", error);
+      setHasSolicitudesAccess(false);
     }
   };
 
@@ -1046,16 +1077,18 @@ export default function Dashboard() {
               </button>
             )}
 
-            {/* Solicitudes de Empresas Button */}
-            <button
-              onClick={() => router.push("/solicitudes-empresa")}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 self-start sm:self-auto"
-            >
-              <Building2 className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Solicitudes de Empresas
-              </span>
-            </button>
+            {/* Admin Solicitudes Button - Solo para roles específicos */}
+            {hasSolicitudesAccess && (
+              <button
+                onClick={() => router.push("/admin/solicitudes")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 text-orange-400 rounded-lg hover:from-orange-500/30 hover:to-red-500/30 transition-all duration-200 self-start sm:self-auto"
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Gestionar Solicitudes
+                </span>
+              </button>
+            )}
 
             {/* MXRP Logo */}
             <div
@@ -1126,16 +1159,36 @@ export default function Dashboard() {
                 <Scale className="h-4 w-4" />
                 <span className="text-sm sm:text-base">Antecedentes</span>
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab("tienda")}
+                  className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                    activeTab === "tienda"
+                      ? "bg-discord text-white shadow-lg"
+                      : "text-white/60 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Store className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">Tienda</span>
+                </button>
+                <button
+                  onClick={() => router.push("/solicitudes-empresa")}
+                  className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap text-white/60 hover:text-white hover:bg-white/10"
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">Solicitudes</span>
+                </button>
+              </div>
               <button
-                onClick={() => setActiveTab("tienda")}
+                onClick={() => setActiveTab("solicitudes")}
                 className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
-                  activeTab === "tienda"
+                  activeTab === "solicitudes"
                     ? "bg-discord text-white shadow-lg"
                     : "text-white/60 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <Store className="h-4 w-4" />
-                <span className="text-sm sm:text-base">Tienda</span>
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Solicitudes</span>
               </button>
             </div>
           </div>
@@ -2335,6 +2388,45 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Solicitudes Tab */}
+        {activeTab === "solicitudes" && (
+          <>
+            {/* Solicitudes Section */}
+            <div className="mt-8 sm:mt-12">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                    Solicitudes de Empresas/Facciones
+                  </h2>
+                </div>
+              </div>
+
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-6 sm:p-8 shadow-xl">
+                <div className="text-center">
+                  <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-white font-semibold text-lg sm:text-xl mb-2">
+                    Sistema de Solicitudes
+                  </h3>
+                  <p className="text-white/60 text-sm sm:text-base mb-6">
+                    Aquí puedes gestionar las solicitudes de empresas y
+                    facciones
+                  </p>
+                  <button
+                    onClick={() => router.push("/solicitudes-empresa")}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 mx-auto"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    <span className="font-medium">Crear Nueva Solicitud</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
