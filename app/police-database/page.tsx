@@ -111,18 +111,35 @@ function PoliceDatabaseContent() {
       setDetailsLoading(true);
       setError(null);
       
-      const response = await fetch("/.netlify/functions/police-database", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          action: "getAntecedentesDetails",
-          guildId,
-          userId,
-        }),
-      });
+      // Intentar con diferentes acciones si la primera falla
+      const actions = ["getUserAntecedentes", "getDetails", "getAntecedentes", "obtenerDetalles"];
+      let response: Response | null = null;
+      let data: any = null;
+      
+      for (const action of actions) {
+        console.log(`Trying action: ${action}`);
+        response = await fetch("/.netlify/functions/police-database", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            action,
+            guildId,
+            userId,
+          }),
+        });
 
-      const data = await response.json();
-      console.log("Details response:", data);
+        data = await response.json();
+        console.log(`Response for ${action}:`, data);
+        
+        // Si la acción es válida (no es "Invalid action"), usar esta respuesta
+        if (!data.error || data.error !== "Invalid action") {
+          break;
+        }
+      }
+      
+      if (!response || !data) {
+        throw new Error("No se pudo obtener respuesta del servidor");
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("discord_user");
