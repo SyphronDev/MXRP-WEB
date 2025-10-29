@@ -1069,7 +1069,10 @@ export default function Dashboard() {
                     variant="outline"
                     size="md"
                     icon={<Shield className="h-4 w-4" />}
-                    onClick={() => router.push("/police-database")}
+                    onClick={() => {
+                      console.log("Navigating to police database with guildId:", process.env.NEXT_PUBLIC_GUILD_ID);
+                      router.push(`/police-database?guildId=${process.env.NEXT_PUBLIC_GUILD_ID}`);
+                    }}
                     className="text-cyan-400 border-cyan-500/30"
                   >
                     Base Policial
@@ -1133,7 +1136,10 @@ export default function Dashboard() {
                   variant="outline"
                   size="sm"
                   icon={<Shield className="h-4 w-4" />}
-                  onClick={() => router.push("/police-database")}
+                  onClick={() => {
+                    console.log("Navigating to police database (mobile) with guildId:", process.env.NEXT_PUBLIC_GUILD_ID);
+                    router.push(`/police-database?guildId=${process.env.NEXT_PUBLIC_GUILD_ID}`);
+                  }}
                   className="whitespace-nowrap text-cyan-400"
                 >
                   Policía

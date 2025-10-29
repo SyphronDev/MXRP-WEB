@@ -72,7 +72,7 @@ interface AntecedenteUsuario {
 function PoliceDatabaseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const guildId = searchParams.get("guildId");
+  const guildId = searchParams.get("guildId") || process.env.NEXT_PUBLIC_GUILD_ID;
   const toast = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -198,6 +198,11 @@ function PoliceDatabaseContent() {
     return `${mins}m`;
   };
 
+  // Debug info
+  console.log("Police Database - guildId from URL:", searchParams.get("guildId"));
+  console.log("Police Database - guildId from env:", process.env.NEXT_PUBLIC_GUILD_ID);
+  console.log("Police Database - final guildId:", guildId);
+
   if (!guildId) {
     return (
       <AdminLayout
@@ -212,8 +217,13 @@ function PoliceDatabaseContent() {
             <h2 className="text-xl font-bold text-white mb-4">Acceso Denegado</h2>
             <p className="text-white/60 mb-6">
               No se proporcionaron los parámetros necesarios para acceder a la
-              base de datos policial.
+              base de datos policial. Verifica que la variable NEXT_PUBLIC_GUILD_ID esté configurada.
             </p>
+            <div className="text-left text-xs text-white/40 mb-4 p-3 bg-black/20 rounded">
+              <p>Debug info:</p>
+              <p>URL guildId: {searchParams.get("guildId") || "null"}</p>
+              <p>Env guildId: {process.env.NEXT_PUBLIC_GUILD_ID || "null"}</p>
+            </div>
             <ButtonModern
               variant="primary"
               size="md"

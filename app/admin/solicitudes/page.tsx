@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   Building2,
   User,
@@ -20,7 +17,24 @@ import {
   Clock,
   Eye,
   MessageSquare,
+  Filter,
+  Search,
+  FileText,
+  Calendar,
+  AlertCircle,
+  Users,
 } from "lucide-react";
+import AdminLayout from "@/components/layout/admin-layout";
+import { CardModern } from "@/components/ui/card-modern";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { ResponsiveGrid, ResponsiveContainer } from "@/components/ui/responsive-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { ToastContainer, useToast } from "@/components/ui/notification-toast";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { NavigationTabs } from "@/components/ui/navigation-tabs";
+import { MobileTabs } from "@/components/ui/mobile-tabs";
+import { formatDate } from "@/lib/utils";
 
 interface DiscordUser {
   username: string;
@@ -44,21 +58,19 @@ interface SolicitudPendiente {
   fechaCreacion: string;
 }
 
-export default function AdminSolicitudesPage() {
+function AdminSolicitudesContent() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [solicitudes, setSolicitudes] = useState<SolicitudPendiente[]>([]);
-  const [selectedSolicitud, setSelectedSolicitud] =
-    useState<SolicitudPendiente | null>(null);
+  const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudPendiente | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [action, setAction] = useState<"aprobar" | "denegar" | null>(null);
   const [motivo, setMotivo] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
   const router = useRouter();
+  const toast = useToast();
 
   // Funciones para manejar JWT
   const getAuthToken = () => {
@@ -113,16 +125,20 @@ export default function AdminSolicitudesPage() {
       if (data.success) {
         setSolicitudes(data.solicitudes);
       } else {
-        setMessage({
+        toast.addToast({
           type: "error",
-          text: data.message || "Error cargando solicitudes",
+          title: "Error al cargar",
+          message: data.message || "Error cargando solicitudes",
+          duration: 4000,
         });
       }
     } catch (error) {
       console.error("Error cargando solicitudes:", error);
-      setMessage({
+      toast.addToast({
         type: "error",
-        text: "Error de conexión. Intenta nuevamente.",
+        title: "Error de conexión",
+        message: "No se pudieron cargar las solicitudes",
+        duration: 4000,
       });
     } finally {
       setLoading(false);
@@ -145,23 +161,23 @@ export default function AdminSolicitudesPage() {
 
   const handleSubmitAction = async () => {
     if (!selectedSolicitud || !motivo.trim()) {
-      setMessage({
+      toast.addToast({
         type: "error",
-        text: "El motivo es obligatorio",
+        title: "Campo requerido",
+        message: "El motivo es obligatorio",
+        duration: 3000,
       });
       return;
     }
 
     setSubmitting(true);
-    setMessage(null);
 
     try {
       const response = await fetch("/.netlify/functions/solicitudes-empresa", {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          action:
-            action === "aprobar" ? "aprobarSolicitud" : "denegarSolicitud",
+          action: action === "aprobar" ? "aprobarSolicitud" : "denegarSolicitud",
           solicitudId: selectedSolicitud.id,
           motivo: motivo.trim(),
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
@@ -178,9 +194,11 @@ export default function AdminSolicitudesPage() {
       }
 
       if (data.success) {
-        setMessage({
+        toast.addToast({
           type: "success",
-          text: data.message,
+          title: action === "aprobar" ? "Solicitud aprobada" : "Solicitud denegada",
+          message: data.message,
+          duration: 4000,
         });
         setShowModal(false);
         setSelectedSolicitud(null);
@@ -188,394 +206,478 @@ export default function AdminSolicitudesPage() {
         setMotivo("");
         cargarSolicitudes();
       } else {
-        setMessage({
+        toast.addToast({
           type: "error",
-          text: data.message,
+          title: "Error al procesar",
+          message: data.message,
+          duration: 4000,
         });
       }
     } catch (error) {
       console.error("Error procesando solicitud:", error);
-      setMessage({
+      toast.addToast({
         type: "error",
-        text: "Error de conexión. Intenta nuevamente.",
+        title: "Error de conexión",
+        message: "No se pudo procesar la solicitud",
+        duration: 4000,
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-white/80 text-lg">Cargando solicitudes...</p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="pulse"
+        size="lg"
+        text="Cargando solicitudes de empresa..."
+        fullScreen={true}
+      />
     );
   }
 
+  // Filtrar solicitudes según búsqueda y filtros
+  const filteredSolicitudes = solicitudes.filter((solicitud) => {
+    const matchesSearch = 
+      solicitud.nombreEmpresa.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      solicitud.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      solicitud.dueno.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = filterType === "all" || solicitud.tipo === filterType;
+    
+    return matchesSearch && matchesFilter;
+  });
+
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        {/* Background particles */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
+    <AdminLayout
+      title="Gestionar Solicitudes"
+      subtitle="Administración de solicitudes de empresa"
+      user={user}
+      showBackButton={true}
+      backUrl="/admin"
+    >
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
 
-        <div className="relative z-10 container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                {user && (
-                  <Image
-                    src={user.avatarUrl}
-                    alt={user.username}
-                    width={48}
-                    height={48}
-                    className="rounded-full border-2 border-blue-500/50 sm:w-16 sm:h-16"
-                  />
-                )}
-                <div>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
-                    Panel de Administración
-                  </h1>
-                  <p className="text-white/60 text-sm sm:text-base md:text-lg">
-                    Revisar y gestionar solicitudes de empresas/facciones
-                  </p>
-                </div>
-              </div>
-
-              {/* MXRP Logo */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Image
-                  src="/images/Icon.png"
-                  alt="MXRP"
-                  width={32}
-                  height={32}
-                  className="rounded-md sm:w-12 sm:h-12"
-                />
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                  MXRP
-                </h2>
-              </div>
+      {/* Solicitudes Stats */}
+      <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={6} className="mb-8">
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <FileText className="h-6 w-6 text-blue-400" />
             </div>
+            <div>
+              <h3 className="text-white font-semibold">Total Solicitudes</h3>
+              <p className="text-2xl font-bold text-blue-400">{solicitudes.length}</p>
+            </div>
+          </div>
+        </CardModern>
 
-            {/* Botón de regreso */}
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Volver al Dashboard</span>
-            </Button>
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-500/20 rounded-xl">
+              <Clock className="h-6 w-6 text-orange-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Pendientes</h3>
+              <p className="text-2xl font-bold text-orange-400">{filteredSolicitudes.length}</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <CheckCircle className="h-6 w-6 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Estado</h3>
+              <StatusBadge status="success" text="Sistema Activo" size="sm" />
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-500/20 rounded-xl">
+              <Users className="h-6 w-6 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Administrador</h3>
+              <p className="text-2xl font-bold text-purple-400">Activo</p>
+            </div>
+          </div>
+        </CardModern>
+      </ResponsiveGrid>
+
+      {/* Search and Filters */}
+      <CardModern variant="glass" className="p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <Search className="h-5 w-5 text-blue-400" />
+          </div>
+          <h3 className="text-white font-semibold text-lg">Buscar y Filtrar</h3>
+        </div>
+        
+        <ResponsiveGrid cols={{ default: 1, lg: 2 }} gap={4}>
+          <div className="space-y-2">
+            <label className="text-white/70 text-sm">Buscar solicitudes:</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por empresa, usuario o dueño..."
+                className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
+            </div>
           </div>
 
-          {/* Mensaje de estado */}
-          {message && (
-            <div
-              className={`mb-6 p-4 rounded-lg backdrop-blur-md border ${
-                message.type === "success"
-                  ? "bg-green-500/10 border-green-500/20 text-green-400"
-                  : "bg-red-500/10 border-red-500/20 text-red-400"
-              }`}
+          <div className="space-y-2">
+            <label className="text-white/70 text-sm">Filtrar por tipo:</label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             >
-              <p>{message.text}</p>
-              <Button
-                onClick={() => setMessage(null)}
-                className="mt-2"
-                variant="outline"
-                size="sm"
-              >
-                Cerrar
-              </Button>
-            </div>
-          )}
+              <option value="all">Todos los tipos</option>
+              <option value="empresa">Empresa</option>
+              <option value="organizacion">Organización</option>
+              <option value="negocio">Negocio</option>
+            </select>
+          </div>
+        </ResponsiveGrid>
+      </CardModern>
 
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="bg-black/40 backdrop-blur-md border-yellow-500/20 shadow-lg shadow-yellow-500/10">
-              <CardContent className="p-4">
+      {/* Solicitudes Table */}
+      {filteredSolicitudes.length > 0 ? (
+        <CardModern variant="glass" className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <Building2 className="h-5 w-5 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold text-lg">
+                Solicitudes Pendientes ({filteredSolicitudes.length})
+              </h3>
+              <p className="text-white/60 text-sm">
+                Gestiona las solicitudes de empresa pendientes de aprobación
+              </p>
+            </div>
+          </div>
+
+          <ResponsiveTable
+            data={filteredSolicitudes}
+            columns={[
+              {
+                key: "nombreEmpresa",
+                label: "Empresa",
+                render: (value, row) => (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Building2 className="h-4 w-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{value}</p>
+                      <p className="text-white/60 text-sm">{row.tipo}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "username",
+                label: "Solicitante",
+                render: (value, row) => (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-white/60" />
+                    <div>
+                      <p className="text-white font-medium">{value}</p>
+                      <p className="text-white/60 text-sm">{row.userTag}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "dueno",
+                label: "Dueño",
+                render: (value) => (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-white/60" />
+                    <span className="text-white">{value}</span>
+                  </div>
+                ),
+              },
+              {
+                key: "fechaCreacion",
+                label: "Fecha",
+                render: (value) => (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-white/60" />
+                    <span className="text-white/80 text-sm">{formatDate(value)}</span>
+                  </div>
+                ),
+              },
+            ]}
+            actions={[
+              {
+                label: "Ver Detalles",
+                icon: <Eye className="h-4 w-4" />,
+                onClick: (row) => {
+                  setSelectedSolicitud(row);
+                  setShowModal(true);
+                  setAction(null);
+                },
+                variant: "default",
+              },
+              {
+                label: "Aprobar",
+                icon: <CheckCircle className="h-4 w-4" />,
+                onClick: (row) => handleAprobar(row),
+                variant: "default",
+              },
+              {
+                label: "Denegar",
+                icon: <XCircle className="h-4 w-4" />,
+                onClick: (row) => handleDenegar(row),
+                variant: "warning",
+              },
+            ]}
+          />
+        </CardModern>
+      ) : (
+        <CardModern variant="glass" className="p-12 text-center">
+          <Building2 className="h-16 w-16 text-white/40 mx-auto mb-4" />
+          <h3 className="text-white font-semibold text-xl mb-2">
+            No hay solicitudes
+          </h3>
+          <p className="text-white/60 mb-6">
+            {searchQuery || filterType !== "all" 
+              ? "No se encontraron solicitudes que coincidan con los filtros"
+              : "No hay solicitudes pendientes en este momento"
+            }
+          </p>
+          {(searchQuery || filterType !== "all") && (
+            <ButtonModern
+              variant="outline"
+              size="md"
+              onClick={() => {
+                setSearchQuery("");
+                setFilterType("all");
+              }}
+            >
+              Limpiar Filtros
+            </ButtonModern>
+          )}
+        </CardModern>
+      )}
+
+      {/* Modal de Detalles/Acción */}
+      {showModal && selectedSolicitud && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <CardModern variant="glass" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Clock className="h-8 w-8 text-yellow-400" />
+                  <div className="p-3 bg-blue-500/20 rounded-xl">
+                    <Building2 className="h-6 w-6 text-blue-400" />
+                  </div>
                   <div>
-                    <p className="text-white/60 text-sm">Pendientes</p>
-                    <p className="text-2xl font-bold text-white">
-                      {solicitudes.length}
-                    </p>
+                    <h2 className="text-xl font-bold text-white">
+                      {action ? (action === "aprobar" ? "Aprobar Solicitud" : "Denegar Solicitud") : "Detalles de Solicitud"}
+                    </h2>
+                    <p className="text-white/60">{selectedSolicitud.nombreEmpresa}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Lista de solicitudes pendientes */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-white mb-4">
-              Solicitudes Pendientes
-            </h2>
-
-            {solicitudes.length === 0 ? (
-              <Card className="bg-black/40 backdrop-blur-md border-white/20">
-                <CardContent className="text-center py-12">
-                  <Building2 className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    No hay solicitudes pendientes
-                  </h3>
-                  <p className="text-white/60">
-                    Todas las solicitudes han sido procesadas
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                {solicitudes.map((solicitud) => (
-                  <Card
-                    key={solicitud.id}
-                    className="bg-black/40 backdrop-blur-md border-white/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
-                  >
-                    <CardContent className="p-6">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-bold text-white mb-2 truncate">
-                            {solicitud.nombreEmpresa}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <Tag className="h-4 w-4 text-blue-400" />
-                            <p className="text-blue-400 text-sm font-medium">
-                              {solicitud.tipo}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 text-xs rounded-full border text-yellow-400 bg-yellow-500/20 border-yellow-500/30 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          PENDIENTE
-                        </span>
-                      </div>
-
-                      {/* Banner en grande */}
-                      {solicitud.imagenBanner && (
-                        <div className="mb-6">
-                          <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4" />
-                            Banner de la Empresa/Facción
-                          </p>
-                          <div className="relative group">
-                            <img
-                              src={solicitud.imagenBanner}
-                              alt="Banner"
-                              className="w-full h-48 object-cover rounded-lg border border-white/10 hover:border-blue-500/40 transition-all duration-200"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
-                              <Eye className="h-8 w-8 text-white" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Información detallada */}
-                      <div className="space-y-4 mb-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-3">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <User className="h-4 w-4" />
-                                Solicitante:
-                              </span>
-                              <span className="text-white font-medium">
-                                {solicitud.userTag}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <Briefcase className="h-4 w-4" />
-                                Dueño:
-                              </span>
-                              <span className="text-white font-medium">
-                                {solicitud.dueno}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                Fecha:
-                              </span>
-                              <span className="text-white font-medium">
-                                {formatDate(solicitud.fechaCreacion)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <Palette className="h-4 w-4" />
-                                Color Rol:
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-4 h-4 rounded border border-white/20"
-                                  style={{
-                                    backgroundColor: solicitud.colorRol,
-                                  }}
-                                ></div>
-                                <span className="text-white font-medium">
-                                  {solicitud.colorRol}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <Link className="h-4 w-4" />
-                                Discord:
-                              </span>
-                              <a
-                                href={solicitud.linkDiscord}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-400 hover:text-blue-300 font-medium truncate max-w-32"
-                              >
-                                Ver Servidor
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Función */}
-                      <div className="mb-6">
-                        <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
-                          <Briefcase className="h-4 w-4" />
-                          Función de la Empresa/Facción
-                        </p>
-                        <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-                          <p className="text-white text-sm leading-relaxed">
-                            {solicitud.funcion}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Botones de acción */}
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={() => handleAprobar(solicitud)}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white h-10"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Aprobar
-                        </Button>
-                        <Button
-                          onClick={() => handleDenegar(solicitud)}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white h-10"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Denegar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                <ButtonModern
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedSolicitud(null);
+                    setAction(null);
+                    setMotivo("");
+                  }}
+                  icon={<XCircle className="h-4 w-4" />}
+                />
               </div>
-            )}
-          </div>
+
+              {/* Detalles de la solicitud */}
+              <div className="space-y-6 mb-6">
+                <ResponsiveGrid cols={{ default: 1, sm: 2 }} gap={4}>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Nombre de la Empresa:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.nombreEmpresa}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Tipo:</label>
+                    <StatusBadge 
+                      status="info" 
+                      text={selectedSolicitud.tipo} 
+                      size="sm" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Dueño:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.dueno}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Función:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.funcion}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Solicitante:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.username}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Fecha de Solicitud:</label>
+                    <p className="text-white/80">{formatDate(selectedSolicitud.fechaCreacion)}</p>
+                  </div>
+                </ResponsiveGrid>
+
+                {selectedSolicitud.colorRol && (
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Color del Rol:</label>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-6 h-6 rounded-full border border-white/20"
+                        style={{ backgroundColor: selectedSolicitud.colorRol }}
+                      />
+                      <span className="text-white font-mono text-sm">{selectedSolicitud.colorRol}</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedSolicitud.imagenBanner && (
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Banner de la Empresa:</label>
+                    <img
+                      src={selectedSolicitud.imagenBanner}
+                      alt="Banner de empresa"
+                      className="w-full max-w-md h-32 object-cover rounded-lg border border-white/20"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+
+                {selectedSolicitud.linkDiscord && (
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">Link de Discord:</label>
+                    <a
+                      href={selectedSolicitud.linkDiscord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline break-all"
+                    >
+                      {selectedSolicitud.linkDiscord}
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Formulario de acción */}
+              {action && (
+                <div className="space-y-4 mb-6 p-4 bg-black/20 rounded-lg border border-white/10">
+                  <div className="flex items-center gap-2">
+                    {action === "aprobar" ? (
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-400" />
+                    )}
+                    <h3 className={`font-semibold ${action === "aprobar" ? "text-green-400" : "text-red-400"}`}>
+                      {action === "aprobar" ? "Aprobar Solicitud" : "Denegar Solicitud"}
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-sm">
+                      Motivo {action === "aprobar" ? "de aprobación" : "de denegación"} *
+                    </label>
+                    <textarea
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                      placeholder={`Escribe el motivo de ${action === "aprobar" ? "aprobación" : "denegación"}...`}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Botones de acción */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {!action ? (
+                  <>
+                    <ButtonModern
+                      variant="success"
+                      size="md"
+                      onClick={() => setAction("aprobar")}
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      className="flex-1"
+                    >
+                      Aprobar Solicitud
+                    </ButtonModern>
+                    <ButtonModern
+                      variant="danger"
+                      size="md"
+                      onClick={() => setAction("denegar")}
+                      icon={<XCircle className="h-4 w-4" />}
+                      className="flex-1"
+                    >
+                      Denegar Solicitud
+                    </ButtonModern>
+                  </>
+                ) : (
+                  <>
+                    <ButtonModern
+                      variant="outline"
+                      size="md"
+                      onClick={() => {
+                        setAction(null);
+                        setMotivo("");
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Cancelar
+                    </ButtonModern>
+                    <ButtonModern
+                      variant={action === "aprobar" ? "success" : "danger"}
+                      size="md"
+                      onClick={handleSubmitAction}
+                      loading={submitting}
+                      icon={action === "aprobar" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                      className="flex-1"
+                    >
+                      {submitting 
+                        ? `${action === "aprobar" ? "Aprobando" : "Denegando"}...` 
+                        : `${action === "aprobar" ? "Confirmar Aprobación" : "Confirmar Denegación"}`
+                      }
+                    </ButtonModern>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardModern>
         </div>
+      )}
+    </AdminLayout>
+  );
+}
 
-        {/* Modal de confirmación */}
-        {showModal && selectedSolicitud && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-blue-500/40 shadow-2xl shadow-blue-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-white">
-                    {action === "aprobar"
-                      ? "Aprobar Solicitud"
-                      : "Denegar Solicitud"}
-                  </h3>
-                  <Button
-                    onClick={() => setShowModal(false)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    ✕
-                  </Button>
-                </div>
-
-                <div className="mb-4">
-                  <p className="text-white/80 mb-2">
-                    {action === "aprobar"
-                      ? `¿Estás seguro de que quieres aprobar la solicitud de "${selectedSolicitud.nombreEmpresa}"?`
-                      : `¿Estás seguro de que quieres denegar la solicitud de "${selectedSolicitud.nombreEmpresa}"?`}
-                  </p>
-                  <p className="text-white/60 text-sm">
-                    {action === "aprobar"
-                      ? "Se creará el rol correspondiente y se notificará al usuario."
-                      : "Se notificará al usuario con el motivo de la denegación."}
-                  </p>
-                </div>
-
-                <div className="space-y-2 mb-6">
-                  <label className="text-white font-medium flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Motivo *
-                  </label>
-                  <textarea
-                    value={motivo}
-                    onChange={(e) => setMotivo(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
-                    placeholder={
-                      action === "aprobar"
-                        ? "Ej: Cumple con todos los requisitos establecidos..."
-                        : "Ej: No cumple con los requisitos mínimos..."
-                    }
-                    rows={3}
-                    maxLength={500}
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleSubmitAction}
-                    disabled={submitting || !motivo.trim()}
-                    className={`flex-1 ${
-                      action === "aprobar"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-red-600 hover:bg-red-700"
-                    } text-white`}
-                  >
-                    {submitting
-                      ? "Procesando..."
-                      : action === "aprobar"
-                      ? "Aprobar"
-                      : "Denegar"}
-                  </Button>
-                  <Button
-                    onClick={() => setShowModal(false)}
-                    variant="outline"
-                    className="px-6 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
-    </ProtectedRoute>
+export default function AdminSolicitudesPage() {
+  return (
+    <Suspense
+      fallback={
+        <LoadingModern
+          variant="pulse"
+          size="lg"
+          text="Cargando gestión de solicitudes..."
+          fullScreen={true}
+        />
+      }
+    >
+      <AdminSolicitudesContent />
+    </Suspense>
   );
 }

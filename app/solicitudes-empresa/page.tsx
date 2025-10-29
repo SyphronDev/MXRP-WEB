@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import {
   Building2,
@@ -19,7 +17,22 @@ import {
   Eye,
   Clock,
   XCircle,
+  FileText,
+  Send,
+  Calendar,
+  Users,
+  Globe,
 } from "lucide-react";
+import MobileLayout from "@/components/layout/mobile-layout";
+import { CardModern } from "@/components/ui/card-modern";
+import { ButtonModern } from "@/components/ui/button-modern";
+import { ResponsiveGrid, ResponsiveContainer } from "@/components/ui/responsive-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LoadingModern } from "@/components/ui/loading-modern";
+import { ToastContainer, useToast } from "@/components/ui/notification-toast";
+import { NavigationTabs } from "@/components/ui/navigation-tabs";
+import { MobileTabs } from "@/components/ui/mobile-tabs";
+import { formatDate } from "@/lib/utils";
 
 interface DiscordUser {
   username: string;
@@ -48,17 +61,15 @@ interface SolicitudEmpresa {
   };
 }
 
-export default function SolicitudesEmpresaPage() {
+function SolicitudesEmpresaContent() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [solicitudes, setSolicitudes] = useState<SolicitudEmpresa[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [activeTab, setActiveTab] = useState<"solicitudes" | "nueva" | "historial">("solicitudes");
+  const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudEmpresa | null>(null);
   const router = useRouter();
+  const toast = useToast();
 
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -155,15 +166,16 @@ export default function SolicitudesEmpresaPage() {
       !formData.imagenBanner.trim() ||
       !formData.linkDiscord.trim()
     ) {
-      setMessage({
+      toast.addToast({
         type: "error",
-        text: "Todos los campos son obligatorios",
+        title: "Campos requeridos",
+        message: "Todos los campos son obligatorios",
+        duration: 4000,
       });
       return;
     }
 
     setSubmitting(true);
-    setMessage(null);
 
     try {
       const response = await fetch("/.netlify/functions/solicitudes-empresa", {
@@ -186,9 +198,11 @@ export default function SolicitudesEmpresaPage() {
       }
 
       if (data.success) {
-        setMessage({
+        toast.addToast({
           type: "success",
-          text: data.message,
+          title: "Solicitud enviada",
+          message: data.message,
+          duration: 5000,
         });
         setFormData({
           nombreEmpresa: "",
@@ -199,538 +213,620 @@ export default function SolicitudesEmpresaPage() {
           imagenBanner: "",
           linkDiscord: "",
         });
-        setShowForm(false);
+        setActiveTab("solicitudes");
         cargarSolicitudes();
       } else {
-        setMessage({
+        toast.addToast({
           type: "error",
-          text: data.message,
+          title: "Error al enviar",
+          message: data.message,
+          duration: 4000,
         });
       }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
-      setMessage({
+      toast.addToast({
         type: "error",
-        text: "Error de conexión. Intenta nuevamente.",
+        title: "Error de conexión",
+        message: "No se pudo enviar la solicitud",
+        duration: 4000,
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case "pendiente":
-        return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30";
-      case "aprobada":
-        return "text-green-400 bg-green-500/20 border-green-500/30";
-      case "denegada":
-        return "text-red-400 bg-red-500/20 border-red-500/30";
-      default:
-        return "text-gray-400 bg-gray-500/20 border-gray-500/30";
-    }
-  };
-
-  const getEstadoIcon = (estado: string) => {
-    switch (estado) {
-      case "pendiente":
-        return <AlertCircle className="h-4 w-4" />;
-      case "aprobada":
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-white/80 text-lg">Cargando solicitudes...</p>
-        </div>
-      </div>
+      <LoadingModern
+        variant="pulse"
+        size="lg"
+        text="Cargando solicitudes de empresa..."
+        fullScreen={true}
+      />
     );
   }
 
+  // Filtrar solicitudes por estado
+  const solicitudesPendientes = solicitudes.filter(s => s.estado === "pendiente");
+  const solicitudesAprobadas = solicitudes.filter(s => s.estado === "aprobada");
+  const solicitudesDenegadas = solicitudes.filter(s => s.estado === "denegada");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+    <MobileLayout
+      user={user}
+    >
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3 sm:gap-4">
-              {user && (
-                <Image
-                  src={user.avatarUrl}
-                  alt={user.username}
-                  width={48}
-                  height={48}
-                  className="rounded-full border-2 border-blue-500/50 sm:w-16 sm:h-16"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
-                  Solicitudes de Empresas/Facciones
-                </h1>
-                <p className="text-white/60 text-sm sm:text-base md:text-lg">
-                  Crea y gestiona tus solicitudes de empresas y facciones
-                </p>
-              </div>
+      {/* Solicitudes Stats */}
+      <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={6} className="mb-8">
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Building2 className="h-6 w-6 text-blue-400" />
             </div>
-
-            {/* MXRP Logo */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Image
-                src="/images/Icon.png"
-                alt="MXRP"
-                width={32}
-                height={32}
-                className="rounded-md sm:w-12 sm:h-12"
-              />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                MXRP
-              </h2>
+            <div>
+              <h3 className="text-white font-semibold">Total Solicitudes</h3>
+              <p className="text-2xl font-bold text-blue-400">{solicitudes.length}</p>
             </div>
           </div>
+        </CardModern>
 
-          {/* Botón de regreso */}
-          <Button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Volver al Dashboard</span>
-          </Button>
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-500/20 rounded-xl">
+              <Clock className="h-6 w-6 text-orange-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Pendientes</h3>
+              <p className="text-2xl font-bold text-orange-400">{solicitudesPendientes.length}</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <CheckCircle className="h-6 w-6 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Aprobadas</h3>
+              <p className="text-2xl font-bold text-green-400">{solicitudesAprobadas.length}</p>
+            </div>
+          </div>
+        </CardModern>
+
+        <CardModern variant="gradient" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-500/20 rounded-xl">
+              <XCircle className="h-6 w-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Denegadas</h3>
+              <p className="text-2xl font-bold text-red-400">{solicitudesDenegadas.length}</p>
+            </div>
+          </div>
+        </CardModern>
+      </ResponsiveGrid>
+
+      {/* Navigation Tabs */}
+      <div className="mb-8">
+        <div className="lg:hidden">
+          <MobileTabs
+            tabs={[
+              {
+                id: "solicitudes",
+                label: "Mis Solicitudes",
+                icon: <FileText className="h-4 w-4" />,
+                badge: solicitudes.length.toString(),
+              },
+              {
+                id: "nueva",
+                label: "Nueva",
+                icon: <Building2 className="h-4 w-4" />,
+                badge: "Crear",
+              },
+              {
+                id: "historial",
+                label: "Historial",
+                icon: <Calendar className="h-4 w-4" />,
+              },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+          />
         </div>
 
-        {/* Mensaje de estado */}
-        {message && (
-          <div
-            className={`mb-6 p-4 rounded-lg backdrop-blur-md border ${
-              message.type === "success"
-                ? "bg-green-500/10 border-green-500/20 text-green-400"
-                : "bg-red-500/10 border-red-500/20 text-red-400"
-            }`}
-          >
-            <p>{message.text}</p>
-            <Button
-              onClick={() => setMessage(null)}
-              className="mt-2"
-              variant="outline"
-              size="sm"
-            >
-              Cerrar
-            </Button>
-          </div>
-        )}
+        <div className="hidden lg:block">
+          <NavigationTabs
+            tabs={[
+              {
+                id: "solicitudes",
+                label: "Mis Solicitudes",
+                icon: <FileText className="h-4 w-4" />,
+                badge: `${solicitudes.length} Total`,
+              },
+              {
+                id: "nueva",
+                label: "Nueva Solicitud",
+                icon: <Building2 className="h-4 w-4" />,
+                badge: "Crear",
+              },
+              {
+                id: "historial",
+                label: "Historial Completo",
+                icon: <Calendar className="h-4 w-4" />,
+                badge: "Ver Todo",
+              },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as typeof activeTab)}
+            variant="default"
+          />
+        </div>
+      </div>
 
-        {/* Botón para crear nueva solicitud */}
-        {!showForm && (
-          <div className="mb-6">
-            <Button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-medium shadow-lg shadow-blue-500/20 transition-all duration-200"
-            >
-              <Building2 className="h-5 w-5 mr-2" />
-              Crear Nueva Solicitud
-            </Button>
-          </div>
-        )}
-
-        {/* Formulario de solicitud */}
-        {showForm && (
-          <Card className="mb-6 bg-black/40 backdrop-blur-md border-blue-500/20 shadow-lg shadow-blue-500/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">
-                  Nueva Solicitud de Empresa/Facción
-                </h2>
-                <Button
-                  onClick={() => setShowForm(false)}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancelar
-                </Button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Nombre de la empresa/facción */}
-                  <div className="space-y-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      Nombre de la Empresa/Facción *
-                    </label>
-                    <input
-                      type="text"
-                      name="nombreEmpresa"
-                      value={formData.nombreEmpresa}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      placeholder="Ej: Empresa de Transportes MX"
-                      maxLength={100}
-                    />
-                  </div>
-
-                  {/* Dueño */}
-                  <div className="space-y-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Dueño *
-                    </label>
-                    <input
-                      type="text"
-                      name="dueno"
-                      value={formData.dueno}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      placeholder="Ej: Juan Pérez"
-                      maxLength={100}
-                    />
-                  </div>
-
-                  {/* Función */}
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Briefcase className="h-4 w-4" />
-                      Función *
-                    </label>
-                    <textarea
-                      name="funcion"
-                      value={formData.funcion}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
-                      placeholder="Describe la función principal de tu empresa/facción..."
-                      rows={3}
-                      maxLength={200}
-                    />
-                  </div>
-
-                  {/* Tipo */}
-                  <div className="space-y-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Tag className="h-4 w-4" />
-                      Tipo *
-                    </label>
-                    <div className="relative">
-                      <select
-                        name="tipo"
-                        value={formData.tipo}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
-                      >
-                        <option
-                          value="Empresa Legal"
-                          className="bg-gray-800 text-white"
-                        >
-                          🏢 Empresa Legal
-                        </option>
-                        <option
-                          value="Empresa Ilegal"
-                          className="bg-gray-800 text-white"
-                        >
-                          🏭 Empresa Ilegal
-                        </option>
-                        <option
-                          value="Facción Legal"
-                          className="bg-gray-800 text-white"
-                        >
-                          👮 Facción Legal
-                        </option>
-                        <option
-                          value="Facción Ilegal"
-                          className="bg-gray-800 text-white"
-                        >
-                          🚨 Facción Ilegal
-                        </option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg
-                          className="w-5 h-5 text-white/40"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Color del rol */}
-                  <div className="space-y-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Palette className="h-4 w-4" />
-                      Color del Rol *
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        name="colorRol"
-                        value={formData.colorRol}
-                        onChange={handleInputChange}
-                        className="w-12 h-12 rounded-lg border border-white/10 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        name="colorRol"
-                        value={formData.colorRol}
-                        onChange={handleInputChange}
-                        className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                        placeholder="#5865F2"
-                        pattern="^#[0-9A-Fa-f]{6}$"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Imagen del banner */}
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4" />
-                      Imagen del Banner *
-                    </label>
-                    <input
-                      type="url"
-                      name="imagenBanner"
-                      value={formData.imagenBanner}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      placeholder="https://ejemplo.com/banner.png"
-                    />
-                    {formData.imagenBanner && (
-                      <div className="mt-2">
-                        <img
-                          src={formData.imagenBanner}
-                          alt="Preview"
-                          className="w-full max-w-md h-32 object-cover rounded-lg border border-white/10"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Link al servidor de Discord */}
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-white font-medium flex items-center gap-2">
-                      <Link className="h-4 w-4" />
-                      Link al Servidor de Discord *
-                    </label>
-                    <input
-                      type="url"
-                      name="linkDiscord"
-                      value={formData.linkDiscord}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      placeholder="https://discord.gg/ejemplo"
-                    />
-                  </div>
-                </div>
-
-                {/* Botones */}
-                <div className="flex gap-4 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-medium shadow-lg shadow-blue-500/20 transition-all duration-200"
-                  >
-                    {submitting ? "Enviando..." : "Enviar Solicitud"}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    variant="outline"
-                    className="px-6 py-3"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Lista de solicitudes */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white mb-4">Mis Solicitudes</h2>
-
-          {solicitudes.length === 0 ? (
-            <Card className="bg-black/40 backdrop-blur-md border-white/20">
-              <CardContent className="text-center py-12">
-                <Building2 className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  No tienes solicitudes
-                </h3>
-                <p className="text-white/60">
-                  Crea tu primera solicitud de empresa o facción
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      {/* Tab Content */}
+      {activeTab === "solicitudes" && (
+        <div className="space-y-6">
+          {solicitudes.length > 0 ? (
+            <ResponsiveGrid cols={{ default: 1, lg: 2 }} gap={6}>
               {solicitudes.map((solicitud) => (
-                <Card
-                  key={solicitud.id}
-                  className="bg-black/40 backdrop-blur-md border-white/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
-                >
-                  <CardContent className="p-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-white mb-2 truncate">
+                <CardModern key={solicitud.id} variant="glass" className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500/20 rounded-lg">
+                        <Building2 className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-semibold text-lg">
                           {solicitud.nombreEmpresa}
                         </h3>
-                        <div className="flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-blue-400" />
-                          <p className="text-blue-400 text-sm font-medium">
-                            {solicitud.tipo}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full border flex items-center gap-1 ${getEstadoColor(
-                          solicitud.estado
-                        )}`}
-                      >
-                        {getEstadoIcon(solicitud.estado)}
-                        {solicitud.estado.toUpperCase()}
-                      </span>
-                    </div>
-
-                    {/* Banner en grande */}
-                    {solicitud.imagenBanner && (
-                      <div className="mb-6">
-                        <p className="text-white/60 text-sm mb-2 flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4" />
-                          Banner de la Empresa/Facción
-                        </p>
-                        <div className="relative group">
-                          <img
-                            src={solicitud.imagenBanner}
-                            alt="Banner"
-                            className="w-full h-48 object-cover rounded-lg border border-white/10 hover:border-blue-500/40 transition-all duration-200"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
-                            <Eye className="h-8 w-8 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Información detallada */}
-                    <div className="space-y-4 mb-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-white/60 flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              Creada:
-                            </span>
-                            <span className="text-white font-medium">
-                              {formatDate(solicitud.fechaCreacion)}
-                            </span>
-                          </div>
-                          {solicitud.fechaRevision && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4" />
-                                Revisada:
-                              </span>
-                              <span className="text-white font-medium">
-                                {formatDate(solicitud.fechaRevision)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="space-y-3">
-                          {solicitud.revisadoPor && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <User className="h-4 w-4" />
-                                Revisado por:
-                              </span>
-                              <span className="text-white font-medium">
-                                {solicitud.revisadoPor.username}
-                              </span>
-                            </div>
-                          )}
-                          {solicitud.revisadoPor && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-white/60 flex items-center gap-2">
-                                <Briefcase className="h-4 w-4" />
-                                Rol:
-                              </span>
-                              <span className="text-white font-medium">
-                                {solicitud.revisadoPor.rol}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        <p className="text-white/60 text-sm">{solicitud.tipo}</p>
                       </div>
                     </div>
+                    <StatusBadge
+                      status={
+                        solicitud.estado === "aprobada" ? "success" :
+                        solicitud.estado === "denegada" ? "error" : "warning"
+                      }
+                      text={solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)}
+                      size="sm"
+                    />
+                  </div>
 
-                    {/* Motivos */}
-                    {solicitud.motivoAprobacion && (
-                      <div className="mb-6">
-                        <p className="text-green-400 text-sm mb-2 flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4" />
-                          Motivo de Aprobación
-                        </p>
-                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                          <p className="text-white text-sm leading-relaxed">
-                            {solicitud.motivoAprobacion}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">Dueño:</span>
+                      <span className="text-white text-sm">{solicitud.dueno}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">Función:</span>
+                      <span className="text-white text-sm">{solicitud.funcion}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">Fecha:</span>
+                      <span className="text-white text-sm">{formatDate(solicitud.fechaCreacion)}</span>
+                    </div>
+                  </div>
 
-                    {solicitud.motivoDenegacion && (
-                      <div className="mb-6">
-                        <p className="text-red-400 text-sm mb-2 flex items-center gap-2">
-                          <XCircle className="h-4 w-4" />
-                          Motivo de Denegación
-                        </p>
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                          <p className="text-white text-sm leading-relaxed">
-                            {solicitud.motivoDenegacion}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  {solicitud.colorRol && (
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-white/60 text-sm">Color:</span>
+                      <div 
+                        className="w-4 h-4 rounded-full border border-white/20"
+                        style={{ backgroundColor: solicitud.colorRol }}
+                      />
+                      <span className="text-white/80 text-sm font-mono">{solicitud.colorRol}</span>
+                    </div>
+                  )}
+
+                  <ButtonModern
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedSolicitud(solicitud)}
+                    icon={<Eye className="h-4 w-4" />}
+                    className="w-full"
+                  >
+                    Ver Detalles
+                  </ButtonModern>
+                </CardModern>
               ))}
-            </div>
+            </ResponsiveGrid>
+          ) : (
+            <CardModern variant="glass" className="p-12 text-center">
+              <Building2 className="h-16 w-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-white font-semibold text-xl mb-2">
+                No tienes solicitudes
+              </h3>
+              <p className="text-white/60 mb-6">
+                Crea tu primera solicitud de empresa o facción
+              </p>
+              <ButtonModern
+                variant="primary"
+                size="md"
+                onClick={() => setActiveTab("nueva")}
+                icon={<Building2 className="h-4 w-4" />}
+              >
+                Crear Nueva Solicitud
+              </ButtonModern>
+            </CardModern>
           )}
         </div>
-      </div>
-    </div>
+      )}
+
+      {activeTab === "nueva" && (
+        <CardModern variant="glass" className="p-6 lg:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <Building2 className="h-6 w-6 text-green-400" />
+            </div>
+            <div>
+              <h2 className="text-xl lg:text-2xl font-bold text-white">
+                Nueva Solicitud de Empresa
+              </h2>
+              <p className="text-white/60 text-sm">
+                Completa todos los campos para enviar tu solicitud
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <ResponsiveGrid cols={{ default: 1, lg: 2 }} gap={6}>
+              <div className="space-y-2">
+                <label className="text-white font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Nombre de la Empresa *
+                </label>
+                <input
+                  type="text"
+                  name="nombreEmpresa"
+                  value={formData.nombreEmpresa}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                  placeholder="Ej: Empresa de Transporte MXRP"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white font-medium flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Dueño de la Empresa *
+                </label>
+                <input
+                  type="text"
+                  name="dueno"
+                  value={formData.dueno}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                  placeholder="Nombre del dueño"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white font-medium flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Función de la Empresa *
+                </label>
+                <input
+                  type="text"
+                  name="funcion"
+                  value={formData.funcion}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                  placeholder="Ej: Transporte de mercancías"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white font-medium flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Tipo de Organización *
+                </label>
+                <select
+                  name="tipo"
+                  value={formData.tipo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                  required
+                >
+                  <option value="Empresa Legal">Empresa Legal</option>
+                  <option value="Organización Criminal">Organización Criminal</option>
+                  <option value="Facción">Facción</option>
+                  <option value="Negocio">Negocio</option>
+                </select>
+              </div>
+            </ResponsiveGrid>
+
+            <div className="space-y-2">
+              <label className="text-white font-medium flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Color del Rol
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  name="colorRol"
+                  value={formData.colorRol}
+                  onChange={handleInputChange}
+                  className="w-16 h-12 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                />
+                <input
+                  type="text"
+                  name="colorRol"
+                  value={formData.colorRol}
+                  onChange={handleInputChange}
+                  className="flex-1 px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono"
+                  placeholder="#5865F2"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-white font-medium flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                URL del Banner *
+              </label>
+              <input
+                type="url"
+                name="imagenBanner"
+                value={formData.imagenBanner}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                placeholder="https://ejemplo.com/banner.jpg"
+                required
+              />
+              {formData.imagenBanner && (
+                <div className="mt-2">
+                  <img
+                    src={formData.imagenBanner}
+                    alt="Preview del banner"
+                    className="w-full max-w-md h-32 object-cover rounded-lg border border-white/20"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-white font-medium flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Link de Discord *
+              </label>
+              <input
+                type="url"
+                name="linkDiscord"
+                value={formData.linkDiscord}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                placeholder="https://discord.gg/ejemplo"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-white/10">
+              <ButtonModern
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={() => setActiveTab("solicitudes")}
+                className="flex-1 sm:flex-none"
+              >
+                Cancelar
+              </ButtonModern>
+              
+              <ButtonModern
+                type="submit"
+                variant="success"
+                size="md"
+                icon={<Send className="h-4 w-4" />}
+                loading={submitting}
+                className="flex-1"
+                gradient={true}
+                glow={true}
+              >
+                {submitting ? "Enviando..." : "Enviar Solicitud"}
+              </ButtonModern>
+            </div>
+          </form>
+        </CardModern>
+      )}
+
+      {activeTab === "historial" && (
+        <div className="space-y-6">
+          <CardModern variant="glass" className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Calendar className="h-5 w-5 text-purple-400" />
+              </div>
+              <h3 className="text-white font-semibold text-lg">
+                Historial Completo
+              </h3>
+            </div>
+
+            {solicitudes.length > 0 ? (
+              <div className="space-y-4">
+                {solicitudes.map((solicitud) => (
+                  <div key={solicitud.id} className="p-4 bg-black/20 rounded-lg border border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-medium">{solicitud.nombreEmpresa}</h4>
+                      <StatusBadge
+                        status={
+                          solicitud.estado === "aprobada" ? "success" :
+                          solicitud.estado === "denegada" ? "error" : "warning"
+                        }
+                        text={solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-white/60">Tipo:</span>
+                        <p className="text-white">{solicitud.tipo}</p>
+                      </div>
+                      <div>
+                        <span className="text-white/60">Dueño:</span>
+                        <p className="text-white">{solicitud.dueno}</p>
+                      </div>
+                      <div>
+                        <span className="text-white/60">Creada:</span>
+                        <p className="text-white">{formatDate(solicitud.fechaCreacion)}</p>
+                      </div>
+                      {solicitud.fechaRevision && (
+                        <div>
+                          <span className="text-white/60">Revisada:</span>
+                          <p className="text-white">{formatDate(solicitud.fechaRevision)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/60">No hay historial disponible</p>
+              </div>
+            )}
+          </CardModern>
+        </div>
+      )}
+
+      {/* Modal de Detalles */}
+      {selectedSolicitud && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <CardModern variant="glass" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-500/20 rounded-xl">
+                    <Building2 className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      {selectedSolicitud.nombreEmpresa}
+                    </h2>
+                    <p className="text-white/60">{selectedSolicitud.tipo}</p>
+                  </div>
+                </div>
+                <ButtonModern
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedSolicitud(null)}
+                  icon={<XCircle className="h-4 w-4" />}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <ResponsiveGrid cols={{ default: 1, sm: 2 }} gap={4}>
+                  <div>
+                    <label className="text-white/70 text-sm">Dueño:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.dueno}</p>
+                  </div>
+                  <div>
+                    <label className="text-white/70 text-sm">Función:</label>
+                    <p className="text-white font-medium">{selectedSolicitud.funcion}</p>
+                  </div>
+                  <div>
+                    <label className="text-white/70 text-sm">Estado:</label>
+                    <StatusBadge
+                      status={
+                        selectedSolicitud.estado === "aprobada" ? "success" :
+                        selectedSolicitud.estado === "denegada" ? "error" : "warning"
+                      }
+                      text={selectedSolicitud.estado.charAt(0).toUpperCase() + selectedSolicitud.estado.slice(1)}
+                      size="sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/70 text-sm">Fecha de Creación:</label>
+                    <p className="text-white/80">{formatDate(selectedSolicitud.fechaCreacion)}</p>
+                  </div>
+                </ResponsiveGrid>
+
+                {selectedSolicitud.colorRol && (
+                  <div>
+                    <label className="text-white/70 text-sm">Color del Rol:</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-6 h-6 rounded-full border border-white/20"
+                        style={{ backgroundColor: selectedSolicitud.colorRol }}
+                      />
+                      <span className="text-white font-mono text-sm">{selectedSolicitud.colorRol}</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedSolicitud.imagenBanner && (
+                  <div>
+                    <label className="text-white/70 text-sm">Banner:</label>
+                    <img
+                      src={selectedSolicitud.imagenBanner}
+                      alt="Banner de empresa"
+                      className="w-full max-w-md h-32 object-cover rounded-lg border border-white/20 mt-2"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+
+                {selectedSolicitud.linkDiscord && (
+                  <div>
+                    <label className="text-white/70 text-sm">Link de Discord:</label>
+                    <a
+                      href={selectedSolicitud.linkDiscord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline break-all block mt-1"
+                    >
+                      {selectedSolicitud.linkDiscord}
+                    </a>
+                  </div>
+                )}
+
+                {(selectedSolicitud.motivoAprobacion || selectedSolicitud.motivoDenegacion) && (
+                  <div className="p-4 bg-black/20 rounded-lg border border-white/10">
+                    <label className="text-white/70 text-sm">
+                      {selectedSolicitud.motivoAprobacion ? "Motivo de Aprobación:" : "Motivo de Denegación:"}
+                    </label>
+                    <p className="text-white mt-1">
+                      {selectedSolicitud.motivoAprobacion || selectedSolicitud.motivoDenegacion}
+                    </p>
+                    {selectedSolicitud.revisadoPor && (
+                      <p className="text-white/60 text-sm mt-2">
+                        Revisado por: {selectedSolicitud.revisadoPor.username} ({selectedSolicitud.revisadoPor.rol})
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardModern>
+        </div>
+      )}
+    </MobileLayout>
+  );
+}
+
+export default function SolicitudesEmpresaPage() {
+  return (
+    <Suspense
+      fallback={
+        <LoadingModern
+          variant="pulse"
+          size="lg"
+          text="Cargando solicitudes de empresa..."
+          fullScreen={true}
+        />
+      }
+    >
+      <SolicitudesEmpresaContent />
+    </Suspense>
   );
 }
