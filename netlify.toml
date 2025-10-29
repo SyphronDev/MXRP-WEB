@@ -1,9 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "bun run build"
   publish = "out"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "24"
   REDIRECT_URI = "https://mxrp.site"
 
 # Redirects para SPA
