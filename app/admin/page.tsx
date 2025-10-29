@@ -18,6 +18,7 @@ import {
   Activity,
   BarChart3,
   ArrowLeft,
+  Building2,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -88,9 +89,9 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "statistics">(
-    "profile"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "statistics" | "solicitudes"
+  >("profile");
   const router = useRouter();
 
   // Función helper para obtener el token JWT
@@ -361,6 +362,17 @@ export default function AdminPanel() {
               >
                 <BarChart3 className="h-4 w-4" />
                 <span className="text-sm sm:text-base">Estadísticas</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("solicitudes")}
+                className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-md transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ${
+                  activeTab === "solicitudes"
+                    ? "bg-discord text-white shadow-lg"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm sm:text-base">Solicitudes</span>
               </button>
             </div>
           </div>
@@ -743,6 +755,60 @@ export default function AdminPanel() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Solicitudes Tab */}
+        {activeTab === "solicitudes" && (
+          <div className="space-y-6">
+            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-purple-500/20 rounded-lg">
+                  <Building2 className="h-6 w-6 text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    Gestión de Solicitudes
+                  </h2>
+                  <p className="text-white/60 text-sm">
+                    Revisar y gestionar solicitudes de empresas/facciones
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => router.push("/admin/solicitudes")}
+                  className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 text-left"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <Building2 className="h-5 w-5 text-purple-400" />
+                    <h3 className="font-semibold text-white">
+                      Solicitudes Pendientes
+                    </h3>
+                  </div>
+                  <p className="text-white/60 text-sm">
+                    Revisar y aprobar/denegar solicitudes de empresas y
+                    facciones
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => router.push("/solicitudes-empresa")}
+                  className="p-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-200 text-left"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <FileText className="h-5 w-5 text-blue-400" />
+                    <h3 className="font-semibold text-white">
+                      Crear Solicitud
+                    </h3>
+                  </div>
+                  <p className="text-white/60 text-sm">
+                    Crear una nueva solicitud de empresa o facción
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

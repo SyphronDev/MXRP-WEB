@@ -30,6 +30,7 @@ import {
   Store,
   Settings,
   Newspaper,
+  Building2,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -1016,6 +1017,17 @@ export default function Dashboard() {
                 <span className="text-sm font-medium">Panel Noticias</span>
               </button>
             )}
+
+            {/* Solicitudes de Empresas Button */}
+            <button
+              onClick={() => router.push("/solicitudes-empresa")}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 self-start sm:self-auto"
+            >
+              <Building2 className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Solicitudes de Empresas
+              </span>
+            </button>
 
             {/* MXRP Logo */}
             <div
