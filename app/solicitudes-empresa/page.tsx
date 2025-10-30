@@ -11,22 +11,18 @@ import {
   Palette,
   Image as ImageIcon,
   Link,
-  ArrowLeft,
   CheckCircle,
-  AlertCircle,
   Eye,
   Clock,
   XCircle,
   FileText,
   Send,
   Calendar,
-  Users,
-  Globe,
 } from "lucide-react";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { CardModern } from "@/components/ui/card-modern";
 import { ButtonModern } from "@/components/ui/button-modern";
-import { ResponsiveGrid, ResponsiveContainer } from "@/components/ui/responsive-grid";
+import { ResponsiveGrid } from "@/components/ui/responsive-grid";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LoadingModern } from "@/components/ui/loading-modern";
 import { ToastContainer, useToast } from "@/components/ui/notification-toast";
@@ -133,6 +129,7 @@ function SolicitudesEmpresaContent() {
       }
 
       if (data.success) {
+        console.log("Solicitudes recibidas:", data.solicitudes);
         setSolicitudes(data.solicitudes);
       } else {
         console.error("Error cargando solicitudes:", data.message);
@@ -255,6 +252,10 @@ function SolicitudesEmpresaContent() {
   return (
     <MobileLayout
       user={user}
+      showBackButton={true}
+      backUrl="/dashboard"
+      title="Solicitudes Empresa"
+      subtitle="Gestiona tus solicitudes"
     >
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
 
@@ -398,11 +399,11 @@ function SolicitudesEmpresaContent() {
                   <div className="space-y-3 mb-4">
                     <div className="flex justify-between">
                       <span className="text-white/60 text-sm">Dueño:</span>
-                      <span className="text-white text-sm">{solicitud.dueno}</span>
+                      <span className="text-white text-sm">{solicitud.dueno || "No especificado"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60 text-sm">Función:</span>
-                      <span className="text-white text-sm">{solicitud.funcion}</span>
+                      <span className="text-white text-sm">{solicitud.funcion || "No especificada"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60 text-sm">Fecha:</span>
@@ -671,7 +672,11 @@ function SolicitudesEmpresaContent() {
                       </div>
                       <div>
                         <span className="text-white/60">Dueño:</span>
-                        <p className="text-white">{solicitud.dueno}</p>
+                        <p className="text-white">{solicitud.dueno || "No especificado"}</p>
+                      </div>
+                      <div>
+                        <span className="text-white/60">Función:</span>
+                        <p className="text-white">{solicitud.funcion || "No especificada"}</p>
                       </div>
                       <div>
                         <span className="text-white/60">Creada:</span>
@@ -726,11 +731,11 @@ function SolicitudesEmpresaContent() {
                 <ResponsiveGrid cols={{ default: 1, sm: 2 }} gap={4}>
                   <div>
                     <label className="text-white/70 text-sm">Dueño:</label>
-                    <p className="text-white font-medium">{selectedSolicitud.dueno}</p>
+                    <p className="text-white font-medium">{selectedSolicitud.dueno || "No especificado"}</p>
                   </div>
                   <div>
                     <label className="text-white/70 text-sm">Función:</label>
-                    <p className="text-white font-medium">{selectedSolicitud.funcion}</p>
+                    <p className="text-white font-medium">{selectedSolicitud.funcion || "No especificada"}</p>
                   </div>
                   <div>
                     <label className="text-white/70 text-sm">Estado:</label>

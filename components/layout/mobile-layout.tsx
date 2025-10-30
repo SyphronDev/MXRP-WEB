@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   Bell,
+  ArrowLeft,
 } from "lucide-react";
 import { ButtonModern } from "@/components/ui/button-modern";
 
@@ -31,6 +32,10 @@ interface MobileLayoutProps {
   hasSolicitudesAccess?: boolean;
   showAlerts?: boolean;
   alertsCount?: number;
+  showBackButton?: boolean;
+  backUrl?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 const navigationItems = [
@@ -66,6 +71,10 @@ export default function MobileLayout({
   hasSolicitudesAccess = false,
   showAlerts = false,
   alertsCount = 0,
+  showBackButton = false,
+  backUrl = "/dashboard",
+  title,
+  subtitle,
 }: MobileLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
@@ -119,8 +128,17 @@ export default function MobileLayout({
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 bg-black/30 backdrop-blur-xl border-b border-white/20 lg:hidden">
         <div className="flex items-center justify-between p-4">
-          {/* Logo */}
+          {/* Left side - Logo or Back button */}
           <div className="flex items-center gap-3">
+            {showBackButton ? (
+              <ButtonModern
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(backUrl)}
+                icon={<ArrowLeft className="h-4 w-4" />}
+                className="mr-2"
+              />
+            ) : null}
             <Image
               src="/images/Icon.png"
               alt="MXRP"
@@ -128,7 +146,12 @@ export default function MobileLayout({
               height={32}
               className="rounded-lg"
             />
-            <h1 className="text-lg font-bold text-white">MXRP</h1>
+            <div>
+              <h1 className="text-lg font-bold text-white">{title || "MXRP"}</h1>
+              {subtitle && (
+                <p className="text-xs text-white/60">{subtitle}</p>
+              )}
+            </div>
           </div>
 
           {/* Right side */}
