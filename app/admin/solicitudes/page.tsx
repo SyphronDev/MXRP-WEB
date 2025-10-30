@@ -108,7 +108,7 @@ function AdminSolicitudesContent() {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          action: "obtenerSolicitudes",
+          action: "obtenerSolicitudesPendientes",
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
         }),
       });
@@ -344,9 +344,11 @@ function AdminSolicitudesContent() {
               className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             >
               <option value="all">Todos los tipos</option>
-              <option value="empresa">Empresa</option>
-              <option value="organizacion">Organización</option>
-              <option value="negocio">Negocio</option>
+              <option value="Empresa Legal">Empresa Legal</option>
+              <option value="Facción Ilegal">Facción Ilegal</option>
+              <option value="Organización Criminal">Organización Criminal</option>
+              <option value="Negocio">Negocio</option>
+              <option value="Facción">Facción</option>
             </select>
           </div>
         </ResponsiveGrid>
@@ -364,7 +366,7 @@ function AdminSolicitudesContent() {
                 Solicitudes Pendientes ({filteredSolicitudes.length})
               </h3>
               <p className="text-white/60 text-sm">
-                Gestiona las solicitudes de empresa pendientes de aprobación
+                Solo se muestran las solicitudes pendientes de aprobación
               </p>
             </div>
           </div>

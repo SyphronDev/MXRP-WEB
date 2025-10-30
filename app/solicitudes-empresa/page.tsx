@@ -18,6 +18,7 @@ import {
   FileText,
   Send,
   Calendar,
+  ArrowLeft,
 } from "lucide-react";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { CardModern } from "@/components/ui/card-modern";
@@ -135,7 +136,19 @@ function SolicitudesEmpresaContent() {
         if (data.solicitudes.length > 0) {
           console.log("Primera solicitud completa:", JSON.stringify(data.solicitudes[0], null, 2));
         }
-        setSolicitudes(data.solicitudes);
+        
+        // Mapear los datos para asegurar que tengan todos los campos necesarios
+        const solicitudesCompletas = data.solicitudes.map((solicitud: any) => ({
+          ...solicitud,
+          dueno: solicitud.dueno || solicitud.owner || solicitud.dueño || "No especificado",
+          funcion: solicitud.funcion || solicitud.function || solicitud.función || "No especificada",
+          colorRol: solicitud.colorRol || solicitud.color || "#5865F2",
+          imagenBanner: solicitud.imagenBanner || solicitud.banner || "",
+          linkDiscord: solicitud.linkDiscord || solicitud.discord || "",
+        }));
+        
+        console.log("Solicitudes procesadas:", solicitudesCompletas);
+        setSolicitudes(solicitudesCompletas);
       } else {
         console.error("Error cargando solicitudes:", data.message);
       }
@@ -263,6 +276,22 @@ function SolicitudesEmpresaContent() {
       subtitle="Gestiona tus solicitudes"
     >
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+
+      {/* Back Button - Solo visible en desktop */}
+      <div className="hidden lg:block mb-6 px-4 lg:px-6">
+        <ButtonModern
+          variant="outline"
+          size="md"
+          onClick={() => router.push("/dashboard")}
+          icon={<ArrowLeft className="h-4 w-4" />}
+          className="mb-4"
+        >
+          Volver al Dashboard
+        </ButtonModern>
+      </div>
+
+      {/* Content Container */}
+      <div className="px-4 lg:px-6">
 
       {/* Solicitudes Stats */}
       <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }} gap={6} className="mb-8">
@@ -820,6 +849,7 @@ function SolicitudesEmpresaContent() {
           </CardModern>
         </div>
       )}
+      </div>
     </MobileLayout>
   );
 }
