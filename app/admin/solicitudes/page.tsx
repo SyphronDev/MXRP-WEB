@@ -108,7 +108,7 @@ function AdminSolicitudesContent() {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          action: "obtenerSolicitudesPendientes",
+          action: "obtenerSolicitudes",
           guildId: process.env.NEXT_PUBLIC_GUILD_ID,
         }),
       });
@@ -123,8 +123,10 @@ function AdminSolicitudesContent() {
       }
 
       if (data.success) {
+        console.log("Admin - Solicitudes recibidas:", data.solicitudes);
         setSolicitudes(data.solicitudes);
       } else {
+        console.log("Admin - Error:", data);
         toast.addToast({
           type: "error",
           title: "Error al cargar",

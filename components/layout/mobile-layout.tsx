@@ -76,6 +76,7 @@ export default function MobileLayout({
   title,
   subtitle,
 }: MobileLayoutProps) {
+  console.log("MobileLayout props:", { showBackButton, backUrl, title, subtitle });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();

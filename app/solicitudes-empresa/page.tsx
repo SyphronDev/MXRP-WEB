@@ -40,12 +40,12 @@ interface DiscordUser {
 interface SolicitudEmpresa {
   id: string;
   nombreEmpresa: string;
-  dueno: string;
-  funcion: string;
+  dueno?: string;
+  funcion?: string;
   tipo: string;
-  colorRol: string;
-  imagenBanner: string;
-  linkDiscord: string;
+  colorRol?: string;
+  imagenBanner?: string;
+  linkDiscord?: string;
   estado: string;
   fechaCreacion: string;
   fechaRevision?: string;
@@ -55,6 +55,8 @@ interface SolicitudEmpresa {
     username: string;
     rol: string;
   };
+  // Campos adicionales que pueden venir del servidor
+  [key: string]: any;
 }
 
 function SolicitudesEmpresaContent() {
@@ -130,6 +132,9 @@ function SolicitudesEmpresaContent() {
 
       if (data.success) {
         console.log("Solicitudes recibidas:", data.solicitudes);
+        if (data.solicitudes.length > 0) {
+          console.log("Primera solicitud completa:", JSON.stringify(data.solicitudes[0], null, 2));
+        }
         setSolicitudes(data.solicitudes);
       } else {
         console.error("Error cargando solicitudes:", data.message);
