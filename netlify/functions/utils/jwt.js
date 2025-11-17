@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 // Clave secreta para firmar los JWT (debe estar en variables de entorno)
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
-const JWT_EXPIRATION = "7d"; // Token válido por 7 días
+const JWT_EXPIRATION = "30d"; // Token válido por 30 días
 
 /**
  * Genera un JWT con los datos del usuario
@@ -90,6 +90,3 @@ module.exports = {
   verifyToken,
   authenticateRequest,
 };
-
-
-
